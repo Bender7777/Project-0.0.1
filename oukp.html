@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ОУКП — Реестр сотрудников</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --panel:#11161d;
+    --panel-2:#161d26;
+    --border:#232b35;
+    --border-soft:#1a212a;
+    --text:#e7ecf2;
+    --muted:#8a96a3;
+    --muted-2:#5e6a77;
+    --accent:#5b9bd9;
+    --accent-dim:#3a6a94;
+    --amber:#d99a3d;
+    --amber-dim:#8a642a;
+    --danger:#c1554d;
+    --danger-dim:#7a332e;
+    --ok:#4caf7d;
+    --radius:8px;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, #10202f22, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #1a1f2e33, transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--accent-dim); color:#fff;}
+
+  .app{max-width:1400px; margin:0 auto; padding:24px 20px 60px;}
+
+  header.top{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap:16px; margin-bottom:20px; flex-wrap:wrap;
+  }
+  .brand{display:flex; align-items:center; gap:14px;}
+  .brand .mark{
+    width:42px; height:42px; border-radius:10px;
+    background:linear-gradient(155deg, var(--accent), var(--accent-dim));
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-weight:700; font-size:13px; color:#0b0f14;
+    letter-spacing:-0.5px;
+    box-shadow:0 0 0 1px #ffffff14, 0 8px 20px -8px #5b9bd980;
+  }
+  .brand h1{font-size:19px; margin:0; font-weight:600; letter-spacing:0.2px;}
+  .brand .sub{font-size:12.5px; color:var(--muted); margin-top:2px; font-family:var(--mono);}
+
+  .stat-pill{
+    font-family:var(--mono); font-size:12px; color:var(--muted);
+    background:var(--panel); border:1px solid var(--border);
+    padding:7px 12px; border-radius:20px; white-space:nowrap;
+  }
+  .stat-pill b{color:var(--text); font-weight:600;}
+
+  .toolbar{
+    display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap;
+  }
+  .search-wrap{position:relative; flex:1 1 260px; min-width:220px;}
+  .search-wrap input{
+    width:100%; background:var(--panel); border:1px solid var(--border);
+    color:var(--text); padding:9px 12px 9px 34px; border-radius:8px;
+    font-family:var(--sans); font-size:13.5px; outline:none;
+    transition:border-color .15s;
+  }
+  .search-wrap input:focus{border-color:var(--accent-dim);}
+  .search-wrap svg{position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:.5;}
+  .search-wrap input::placeholder{color:var(--muted-2);}
+
+  button{
+    font-family:var(--sans); font-size:13px; font-weight:500; cursor:pointer;
+    border-radius:8px; padding:9px 14px; border:1px solid var(--border);
+    background:var(--panel); color:var(--text); display:inline-flex; align-items:center; gap:7px;
+    transition:background .12s, border-color .12s, transform .05s;
+    white-space:nowrap;
+  }
+  button:hover{background:var(--panel-2); border-color:#2c3540;}
+  button:active{transform:translateY(1px);}
+  button.primary{background:var(--accent); border-color:var(--accent); color:#0a1420; font-weight:600;}
+  button.primary:hover{background:#6ba6df;}
+  button.ghost{background:transparent;}
+  button.danger-o{color:#e39a94; border-color:#3a2523;}
+  button.danger-o:hover{background:#2a1918; border-color:var(--danger-dim);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  button svg{flex-shrink:0;}
+
+  .table-shell{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    overflow:hidden;
+  }
+  .table-scroll{overflow-x:auto;}
+  table{border-collapse:collapse; width:100%; min-width:1180px;}
+  thead th{
+    position:sticky; top:0; z-index:2;
+    background:#141b23; text-align:left; font-size:11.5px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--muted); font-weight:600;
+    padding:0; border-bottom:1px solid var(--border);
+  }
+  .th-inner{display:flex; align-items:center; gap:6px; padding:11px 10px; white-space:nowrap;}
+  .th-label{cursor:pointer; display:flex; align-items:center; gap:5px; user-select:none;}
+  .th-label:hover{color:var(--text);}
+  .sort-arrow{font-size:10px; opacity:.7;}
+  .filter-btn{
+    margin-left:auto; background:none; border:none; padding:4px; border-radius:5px;
+    color:var(--muted-2); display:flex; align-items:center; justify-content:center;
+  }
+  .filter-btn:hover{color:var(--text); background:#1d2530;}
+  .filter-btn.active{color:var(--amber);}
+  th.col-actions .th-inner{justify-content:flex-end;}
+
+  tbody td{
+    padding:9px 10px; border-bottom:1px solid var(--border-soft); font-size:13.3px;
+    color:#d9e0e8; vertical-align:middle;
+  }
+  tbody tr{transition:background .1s;}
+  tbody tr:hover{background:#141a21;}
+  tbody tr.editing{background:#151c2a;}
+  tbody tr.new-row{background:#16241c;}
+  td.col-fio{font-weight:500; color:var(--text); min-width:220px;}
+  td.col-fio2{color:var(--muted); font-family:var(--mono); font-size:12.5px;}
+  td.col-sap{font-family:var(--mono); font-size:12.5px; color:var(--muted);}
+  td.col-email{font-family:var(--mono); font-size:12px; color:#9fb2c4;}
+  td.col-dr{font-family:var(--mono); font-size:12.5px; color:var(--muted);}
+  td.col-vrm{font-family:var(--mono); font-size:12px;}
+  .badge{
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:11.5px;
+    font-weight:500; border:1px solid transparent;
+  }
+  .badge-chief{background:#3a2a12; color:var(--amber); border-color:#5a4420;}
+  .badge-lead{background:#12283a; color:#7fb4e0; border-color:#204a68;}
+  .badge-spec{background:#1a2a1e; color:#7fc79a; border-color:#2c4a34;}
+  .badge-def{background:#1a2028; color:var(--muted); border-color:var(--border);}
+  .vrm-x{color:var(--muted-2); font-style:italic;}
+  .vrm-empty{color:var(--muted-2);}
+
+  td.editable{cursor:text;}
+  td.editable:hover{outline:1px dashed #2c3948; outline-offset:-3px;}
+  .cell-input{
+    width:100%; background:#0d1319; border:1px solid var(--accent-dim); color:var(--text);
+    padding:5px 7px; border-radius:5px; font-family:inherit; font-size:inherit; outline:none;
+  }
+
+  .row-actions{display:flex; gap:4px; justify-content:flex-end;}
+  .icon-btn{
+    background:none; border:1px solid transparent; padding:6px; border-radius:6px;
+    color:var(--muted-2); display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:hover{background:#1d2530; color:var(--text);}
+  .icon-btn.save-btn{color:var(--ok);}
+  .icon-btn.save-btn:hover{background:#12241a;}
+  .icon-btn.del-btn:hover{color:var(--danger); background:#2a1918;}
+
+  .empty-state{padding:50px 20px; text-align:center; color:var(--muted);}
+  .empty-state svg{opacity:.35; margin-bottom:10px;}
+  .empty-state .hint{font-size:12.5px; margin-top:6px; color:var(--muted-2);}
+
+  /* Filter popover */
+  .popover{
+    position:absolute; z-index:50; background:#151b23; border:1px solid #2a3440;
+    border-radius:10px; box-shadow:0 20px 40px -12px #000000a0; width:240px;
+    padding:10px; display:none;
+  }
+  .popover.open{display:block;}
+  .popover input[type=text]{
+    width:100%; background:#0d1319; border:1px solid var(--border); color:var(--text);
+    padding:7px 9px; border-radius:6px; font-size:12.5px; margin-bottom:8px; outline:none;
+  }
+  .popover .plist{max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:1px; margin-bottom:8px;}
+  .popover label{
+    display:flex; align-items:center; gap:8px; font-size:12.5px; padding:5px 6px;
+    border-radius:5px; cursor:pointer; color:#c7d0da;
+  }
+  .popover label:hover{background:#1c2530;}
+  .popover label input{accent-color:var(--accent);}
+  .popover .prow{display:flex; gap:6px; margin-bottom:8px;}
+  .popover .prow button{flex:1; padding:6px 8px; font-size:11.5px;}
+  .popover .pfooter{display:flex; gap:6px;}
+  .popover .pfooter button{flex:1; padding:7px; font-size:12px; justify-content:center;}
+
+  .toast{
+    position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:#161d26; border:1px solid #2a3440; color:var(--text); padding:10px 18px;
+    border-radius:9px; font-size:13px; opacity:0; transition:opacity .2s, transform .2s;
+    pointer-events:none; z-index:100; display:flex; align-items:center; gap:8px;
+    box-shadow:0 10px 30px -8px #000a;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .toast .dot{width:7px; height:7px; border-radius:50%; background:var(--ok);}
+
+  .modal-backdrop{
+    position:fixed; inset:0; background:#000000a0; display:none; align-items:center;
+    justify-content:center; z-index:200; backdrop-filter:blur(2px);
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:#151b23; border:1px solid #2a3440; border-radius:12px; padding:22px;
+    width:340px; box-shadow:0 30px 60px -15px #000c;
+  }
+  .modal h3{margin:0 0 8px; font-size:15px;}
+  .modal p{margin:0 0 18px; font-size:13px; color:var(--muted); line-height:1.5;}
+  .modal .mbtns{display:flex; gap:8px; justify-content:flex-end;}
+
+  th.col-check .th-inner, td.col-check{padding-left:14px; padding-right:6px;}
+  input[type=checkbox].row-check, input[type=checkbox].head-check{
+    width:16px; height:16px; accent-color:var(--accent); cursor:pointer;
+  }
+  td.col-check{vertical-align:middle;}
+
+  th.col-drag .th-inner{padding-left:10px; padding-right:2px;}
+  td.col-drag{
+    width:26px; text-align:center; color:var(--muted-2); cursor:grab;
+    user-select:none; vertical-align:middle;
+  }
+  td.col-drag:active{cursor:grabbing;}
+  td.col-drag svg{pointer-events:none; opacity:.6;}
+  tr[draggable="true"]:hover td.col-drag svg{opacity:1;}
+  tbody tr.dragging{opacity:.35;}
+  tbody tr.drag-over-top{box-shadow: inset 0 2px 0 0 var(--accent);}
+  tbody tr.drag-over-bottom{box-shadow: inset 0 -2px 0 0 var(--accent);}
+
+  .lo-badge{
+    background:var(--amber); color:#241a06; border-radius:20px; font-size:11px;
+    font-weight:700; padding:1px 7px; margin-left:2px;
+  }
+
+  .modal.modal-lg{width:560px; max-height:88vh; overflow-y:auto;}
+  .lo-section-title{
+    font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted-2);
+    margin:16px 0 8px; font-weight:600;
+  }
+  .lo-section-title:first-of-type{margin-top:0;}
+  .lo-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .lo-field{display:flex; flex-direction:column; gap:5px; margin-bottom:2px;}
+  .lo-field label{font-size:12px; color:var(--muted);}
+  .lo-field input{
+    background:#0d1319; border:1px solid var(--border); color:var(--text);
+    padding:8px 10px; border-radius:7px; font-family:inherit; font-size:13px; outline:none;
+    width:100%;
+  }
+  .lo-field textarea{
+    background:#0d1319; border:1px solid var(--border); color:var(--text);
+    padding:8px 10px; border-radius:7px; font-family:inherit; font-size:13px; outline:none;
+    width:100%; resize:vertical; min-height:90px;
+  }
+  .lo-field textarea:focus{border-color:var(--accent-dim);}
+  .lo-field input:focus{border-color:var(--accent-dim);}
+  .lo-field.invalid input{border-color:var(--danger);}
+  .lo-chips{display:flex; flex-wrap:wrap; gap:6px; max-height:150px; overflow-y:auto; padding:2px;}
+  .lo-chip{
+    display:flex; align-items:center; gap:6px; background:#1a2129; border:1px solid var(--border);
+    border-radius:20px; padding:5px 6px 5px 12px; font-size:12px; color:#d9e0e8;
+  }
+  .lo-chip button{
+    padding:2px; border:none; background:#232c37; border-radius:50%; width:18px; height:18px;
+    display:flex; align-items:center; justify-content:center; color:var(--muted);
+  }
+  .lo-chip button:hover{background:var(--danger-dim); color:#fff;}
+  .lo-empty-sel{font-size:12.5px; color:var(--muted-2); padding:6px 0;}
+
+  footer.foot{
+    margin-top:16px; display:flex; justify-content:space-between; align-items:center;
+    font-size:11.5px; color:var(--muted-2); font-family:var(--mono); flex-wrap:wrap; gap:8px;
+  }
+
+  @media (max-width: 720px){
+    .app{padding:16px 12px 40px;}
+    .toolbar{flex-direction:column; align-items:stretch;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="mark">ОУКП</div>
+      <div>
+        <h1>Реестр сотрудников</h1>
+        <div class="sub">Отдел управления квалификацией персонала · офлайн-редактор</div>
+      </div>
+    </div>
+    <div class="stat-pill" id="statPill">Показано <b id="shownCount">0</b> из <b id="totalCount">0</b></div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="globalSearch" type="text" placeholder="Поиск по всем полям…" autocomplete="off">
+    </div>
+    <button class="primary" id="addRowBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>
+      Добавить сотрудника
+    </button>
+    <button class="ghost" id="clearFiltersBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h18M6 4v16m12-16v10"/></svg>
+      Сбросить фильтры
+    </button>
+    <button class="ghost" id="exportBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16"/></svg>
+      Экспорт в Excel
+    </button>
+    <button class="ghost" id="createLoBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3v5h5M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 13h6M9 17h6"/></svg>
+      Создать ЛО<span class="lo-badge" id="loCountBadge" style="display:none">0</span>
+    </button>
+    <button class="ghost" id="emailBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/><path d="m3 6 9 7 9-7"/></svg>
+      Письмо выбранным<span class="lo-badge" id="emailCountBadge" style="display:none">0</span>
+    </button>
+    <button class="danger-o" id="resetBtn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+      К исходным данным
+    </button>
+  </div>
+
+  <div class="table-shell">
+    <div class="table-scroll">
+      <table id="dataTable">
+        <thead>
+          <tr id="headRow"></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+      <div>Ничего не найдено</div>
+      <div class="hint">Измените поиск или сбросьте фильтры колонок</div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <span id="saveState">данные сохранены локально в этом приложении</span>
+    <span>двойной клик по ячейке — редактирование</span>
+  </footer>
+</div>
+
+<div class="popover" id="popover"></div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3 id="modalTitle">Удалить запись?</h3>
+    <p id="modalText">Это действие нельзя отменить.</p>
+    <div class="mbtns">
+      <button class="ghost" id="modalCancel">Отмена</button>
+      <button class="danger-o" id="modalConfirm" style="background:var(--danger); border-color:var(--danger); color:#fff;">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="loModalBackdrop">
+  <div class="modal modal-lg">
+    <h3>Создание листа ознакомления</h3>
+    <p style="margin-bottom:14px;">Заполните реквизиты документа — шапка и подпись сформируются автоматически.</p>
+
+    <div class="lo-section-title">Реквизиты документа</div>
+    <div class="lo-grid">
+      <div class="lo-field" id="loFieldDocNumber">
+        <label>Номер документа</label>
+        <input type="text" id="loDocNumber" placeholder="РИ-ГД-267А">
+      </div>
+      <div class="lo-field" id="loFieldKasud">
+        <label>№ КАСУД</label>
+        <input type="text" id="loKasud" placeholder="543/И">
+      </div>
+      <div class="lo-field" id="loFieldTitle" style="grid-column:1/-1">
+        <label>Название документа</label>
+        <input type="text" id="loDocTitle" placeholder="Инструкция о пропускном режиме">
+      </div>
+      <div class="lo-field" id="loFieldDate">
+        <label>Дата документа</label>
+        <input type="date" id="loDocDate">
+      </div>
+    </div>
+
+    <div class="lo-section-title">Необязательно — блок «Исп.» внизу документа</div>
+    <div class="lo-grid">
+      <div class="lo-field">
+        <label>Исполнитель</label>
+        <input type="text" id="loExecutor" placeholder="Шалаев А.А.">
+      </div>
+      <div class="lo-field">
+        <label>Телефон</label>
+        <input type="text" id="loPhone" placeholder="450-88">
+      </div>
+    </div>
+
+    <div class="lo-section-title">Сотрудники в списке (<span id="loSelCount">0</span>)</div>
+    <div class="lo-chips" id="loChips"></div>
+
+    <div class="mbtns" style="margin-top:18px;">
+      <button class="ghost" id="loCancelBtn">Отмена</button>
+      <button class="primary" id="loGenerateBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 21h16"/></svg>
+        Сформировать .docx
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="emailModalBackdrop">
+  <div class="modal modal-lg">
+    <h3>Письмо выбранным сотрудникам</h3>
+    <p style="margin-bottom:14px;">Откроется почтовый клиент по умолчанию со всеми адресами уже подставленными в поле «Скрытая копия».</p>
+
+    <div class="lo-section-title">Получатели (<span id="emailSelCount">0</span>)</div>
+    <div class="lo-chips" id="emailChips"></div>
+
+    <div class="lo-section-title">Тема письма</div>
+    <div class="lo-field">
+      <input type="text" id="emailSubject" placeholder="Информация от ОУКП">
+    </div>
+
+    <div class="lo-section-title">Текст письма (необязательно)</div>
+    <div class="lo-field">
+      <textarea id="emailBody" placeholder="Текст сообщения…"></textarea>
+    </div>
+
+    <div class="mbtns" style="margin-top:18px;">
+      <button class="ghost" id="emailCancelBtn">Отмена</button>
+      <button class="primary" id="emailSendBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/><path d="m3 6 9 7 9-7"/></svg>
+        Открыть почтовый клиент
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg">Сохранено</span></div>
+
+<script>
+const FIELDS = [
+  { key: 'ФИО',                    label: 'ФИО',           type: 'text',  cls: 'col-fio' },
+  { key: 'ФИО 2',                  label: 'ФИО (кратко)',  type: 'text',  cls: 'col-fio2' },
+  { key: 'sap-номер',              label: 'SAP-номер',     type: 'number',cls: 'col-sap' },
+  { key: 'эл.почта',               label: 'Эл. почта',     type: 'email', cls: 'col-email' },
+  { key: 'Выполняемый функционал', label: 'Функционал',    type: 'text',  cls: 'col-func' },
+  { key: 'ДР',                     label: 'Дата рождения', type: 'date',  cls: 'col-dr' },
+  { key: 'ВРМ',                    label: 'ВРМ',           type: 'text',  cls: 'col-vrm' },
+];
+
+const DEFAULT_DATA = [{"ФИО": "Решетников Алексей Сергеевич", "ФИО 2": "Решетников А.С.", "sap-номер": 48581, "эл.почта": "asreshetnikov@aeroflot.ru", "Выполняемый функционал": "Начальник отдела", "ДР": "1985-07-29", "ВРМ": "VM-909-003133"}, {"ФИО": "Карпунина Светлана Васильевна", "ФИО 2": "Карпунина С.В.", "sap-номер": 46056, "эл.почта": "skarpunina@aeroflot.ru", "Выполняемый функционал": "Замначальника", "ДР": "1972-08-06", "ВРМ": "VM-909-002478"}, {"ФИО": "Абдуллин Эдуард Азатович", "ФИО 2": "Абдуллин Э.А.", "sap-номер": 102167, "эл.почта": "eabdullin@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1994-01-06", "ВРМ": "X"}, {"ФИО": "Акимова Юлия Александровна", "ФИО 2": "Акимова Ю.А.", "sap-номер": 48895, "эл.почта": "yuaakimova@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1975-09-13", "ВРМ": "X"}, {"ФИО": "Арсентьева Ирина Александровна", "ФИО 2": "Арсентьева И.А.", "sap-номер": 44594, "эл.почта": "iaarsenteva@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1979-04-21", "ВРМ": "X"}, {"ФИО": "Беловский Иван Владимирович", "ФИО 2": "Беловский И.В.", "sap-номер": 87304, "эл.почта": "ibelovskiy@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1978-03-09", "ВРМ": "VM-909-003106"}, {"ФИО": "Гребенников Андрей Станиславович", "ФИО 2": "Гребенников А.С.", "sap-номер": 94287, "эл.почта": "agrebennikov@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1989-11-15", "ВРМ": "VM-909-002837"}, {"ФИО": "Дымицкий Дмитрий Андреевич", "ФИО 2": "Дымицкий Д.А.", "sap-номер": 98180, "эл.почта": "ddymitskiy@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1985-05-07", "ВРМ": "X"}, {"ФИО": "Елин Кирилл Евгеньевич", "ФИО 2": "Елин К.Е.", "sap-номер": 48646, "эл.почта": "kelin@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1968-01-14", "ВРМ": "VM-909-002523"}, {"ФИО": "Жалик Валерия Олеговна", "ФИО 2": "Жалик В.О.", "sap-номер": 48172, "эл.почта": "vzhalik@aeroflot.ru", "Выполняемый функционал": "Главный специалист", "ДР": "1966-08-06", "ВРМ": ""}, {"ФИО": "Зверкова Светлана Олеговна", "ФИО 2": "Зверкова С.О.", "sap-номер": 48368, "эл.почта": "szverkova@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1971-02-12", "ВРМ": "VM-909-002527"}, {"ФИО": "Кожухов Алексей Владимирович", "ФИО 2": "Кожухов А.В.", "sap-номер": 46565, "эл.почта": "akozhukhov@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1970-03-29", "ВРМ": "VM-909-002530"}, {"ФИО": "Красноштанов Владислав Александрович", "ФИО 2": "Красноштанов В.А.", "sap-номер": 95676, "эл.почта": "vkrasnoshtanov@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1994-09-05", "ВРМ": "X"}, {"ФИО": "Кузьмина Галина Анатольевна", "ФИО 2": "Кузьмина Г.А.", "sap-номер": 110012, "эл.почта": "gkuzmina@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1994-01-09", "ВРМ": "X"}, {"ФИО": "Лапина Асия Наиловна", "ФИО 2": "Лапина А.Н.", "sap-номер": 44791, "эл.почта": "alapina@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1986-05-11", "ВРМ": "X"}, {"ФИО": "Лебедева Людмила Вальдемаровна", "ФИО 2": "Лебедева Л.В.", "sap-номер": 46285, "эл.почта": "lvlebedeva@aeroflot.ru", "Выполняемый функционал": "Главный специалист", "ДР": "1969-10-22", "ВРМ": "VM-909-002482"}, {"ФИО": "Лифоренко Анатолий", "ФИО 2": "Лифоренко А.", "sap-номер": 88481, "эл.почта": "aliforenko@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1985-06-17", "ВРМ": "VM-909-003134"}, {"ФИО": "Макаревич Ирина Анатольевна", "ФИО 2": "Макаревич И.А.", "sap-номер": 87064, "эл.почта": "imakarevich@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1982-04-29", "ВРМ": "VM-909-002533"}, {"ФИО": "Максимов Максим Станиславович", "ФИО 2": "Максимов М.С.", "sap-номер": 98613, "эл.почта": "msmaksimov1@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1983-05-16", "ВРМ": "X"}, {"ФИО": "Мельник Дмитрий Петрович", "ФИО 2": "Мельник Д.П.", "sap-номер": 93253, "эл.почта": "dpmelnik@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1988-10-28", "ВРМ": "X"}, {"ФИО": "Пелихов Евгений Сергеевич", "ФИО 2": "Пелихов Е.С.", "sap-номер": 98350, "эл.почта": "epelikhov@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1983-11-02", "ВРМ": "VM-909-002536"}, {"ФИО": "Пенкин Михаил Станиславович", "ФИО 2": "Пенкин М.С.", "sap-номер": 42006, "эл.почта": "mpenkin@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1986-11-12", "ВРМ": ""}, {"ФИО": "Степанищева Анастасия Олеговна", "ФИО 2": "Степанищева А.О.", "sap-номер": 42717, "эл.почта": "astepanischeva@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1985-05-11", "ВРМ": "VM-909-003118"}, {"ФИО": "Титов Александр Николаевич", "ФИО 2": "Титов А.Н.", "sap-номер": 44599, "эл.почта": "antitov@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1973-11-24", "ВРМ": "X"}, {"ФИО": "Холопова Ирина Евгеньевна", "ФИО 2": "Холопова И.Е.", "sap-номер": 48443, "эл.почта": "ikholopova@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1967-09-17", "ВРМ": "VM-909-002528"}, {"ФИО": "Шалаев Антон Андреевич", "ФИО 2": "Шалаев А.А.", "sap-номер": 98161, "эл.почта": "ashalaev@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1985-07-27", "ВРМ": "VM-909-002495"}, {"ФИО": "Шаронова Нина Валерьевна", "ФИО 2": "Шаронова Н.В.", "sap-номер": 94269, "эл.почта": "ngotsalyuk@aeroflot.ru", "Выполняемый функционал": "БПИ по ЛМР", "ДР": "1989-06-12", "ВРМ": ""}];
+
+const STORAGE_KEY = 'oukp-records';
+let records = [];
+let editingId = null;
+let newRowId = null;
+const filters = {};      // key -> Set of allowed values (absence = no filter)
+let sortState = { key: null, dir: 1 };
+let globalQuery = '';
+let idCounter = 1;
+const selectedIds = new Set();
+
+function uid(){ return 'r' + (idCounter++) + '-' + Math.random().toString(36).slice(2,7); }
+
+function withIds(arr){
+  return arr.map(r => ({ id: uid(), ...r }));
+}
+
+function hasClaudeStorage(){
+  return typeof window.storage === 'object' && window.storage !== null
+    && typeof window.storage.get === 'function' && typeof window.storage.set === 'function';
+}
+
+async function loadRecords(){
+  try{
+    if(hasClaudeStorage()){
+      const res = await window.storage.get(STORAGE_KEY, false);
+      if(res && res.value){ records = JSON.parse(res.value); return; }
+    } else {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){ records = JSON.parse(raw); return; }
+    }
+  }catch(e){ /* nothing stored yet, or storage unavailable */ }
+  records = withIds(DEFAULT_DATA);
+  await persist();
+}
+
+async function persist(){
+  try{
+    if(hasClaudeStorage()){
+      await window.storage.set(STORAGE_KEY, JSON.stringify(records), false);
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+    flashSaveState('данные сохранены');
+  }catch(e){
+    flashSaveState('не удалось сохранить — хранилище недоступно', true);
+  }
+}
+
+let saveTimer = null;
+function flashSaveState(msg, isErr){
+  const el = document.getElementById('saveState');
+  el.textContent = msg;
+  el.style.color = isErr ? 'var(--danger)' : 'var(--muted-2)';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{ el.textContent = 'данные сохранены локально в этом приложении'; el.style.color = 'var(--muted-2)'; }, 2200);
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function uniqueValues(key){
+  const set = new Set();
+  records.forEach(r => set.add((r[key] ?? '').toString()));
+  return Array.from(set).sort((a,b)=>a.localeCompare(b,'ru'));
+}
+
+function applyFiltersAndSearch(){
+  // The row currently being added/edited must always stay visible,
+  // even if it doesn't (yet) match active filters or search — otherwise
+  // a blank new row can vanish from view before the person can fill it in.
+  const pinnedId = newRowId || editingId;
+  let pinnedRow = null;
+  let rows = records;
+  if(pinnedId){
+    pinnedRow = records.find(r => r.id === pinnedId) || null;
+    rows = records.filter(r => r.id !== pinnedId);
+  }
+  Object.entries(filters).forEach(([key, allowed])=>{
+    if(!allowed) return;
+    rows = rows.filter(r => allowed.has((r[key] ?? '').toString()));
+  });
+  if(globalQuery.trim()){
+    const q = globalQuery.trim().toLowerCase();
+    rows = rows.filter(r => FIELDS.some(f => (r[f.key] ?? '').toString().toLowerCase().includes(q)));
+  }
+  if(sortState.key){
+    const k = sortState.key, dir = sortState.dir;
+    rows = [...rows].sort((a,b)=>{
+      let av = (a[k] ?? '').toString(), bv = (b[k] ?? '').toString();
+      if(k === 'sap-номер'){ av = Number(a[k])||0; bv = Number(b[k])||0; return (av-bv)*dir; }
+      if(k === 'ДР'){ return (new Date(av||'1900-01-01') - new Date(bv||'1900-01-01'))*dir; }
+      return av.localeCompare(bv,'ru')*dir;
+    });
+  }
+  if(pinnedRow) rows = [pinnedRow, ...rows];
+  return rows;
+}
+
+function funcBadgeClass(val){
+  if(!val) return 'badge-def';
+  if(val.includes('Начальник')) return 'badge-chief';
+  if(val.includes('Зам')) return 'badge-chief';
+  if(val.includes('Главный')) return 'badge-spec';
+  if(val.includes('БПИ')) return 'badge-lead';
+  return 'badge-def';
+}
+
+function renderHead(){
+  const tr = document.getElementById('headRow');
+  tr.innerHTML = '';
+  const thDrag = document.createElement('th');
+  thDrag.className = 'col-drag';
+  thDrag.innerHTML = `<div class="th-inner"></div>`;
+  tr.appendChild(thDrag);
+  const thCheck = document.createElement('th');
+  thCheck.className = 'col-check';
+  const visibleIds = applyFiltersAndSearch().map(r=>r.id);
+  const allChecked = visibleIds.length>0 && visibleIds.every(id=>selectedIds.has(id));
+  thCheck.innerHTML = `<div class="th-inner"><input type="checkbox" class="head-check" id="headCheck" ${allChecked?'checked':''} title="Выбрать все видимые"></div>`;
+  tr.appendChild(thCheck);
+  FIELDS.forEach(f=>{
+    const th = document.createElement('th');
+    const filterActive = !!filters[f.key];
+    th.innerHTML = `
+      <div class="th-inner">
+        <span class="th-label" data-sort="${f.key}">
+          ${f.label}
+          ${sortState.key===f.key ? `<span class="sort-arrow">${sortState.dir===1?'▲':'▼'}</span>` : ''}
+        </span>
+        <button class="filter-btn ${filterActive?'active':''}" data-filter="${f.key}" title="Фильтр">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 8v6l-4 2v-8L4 5Z"/></svg>
+        </button>
+      </div>`;
+    tr.appendChild(th);
+  });
+  const thAct = document.createElement('th');
+  thAct.className = 'col-actions';
+  thAct.innerHTML = `<div class="th-inner">Действия</div>`;
+  tr.appendChild(thAct);
+}
+
+function inputForField(f, value){
+  if(f.type === 'date'){
+    return `<input type="date" class="cell-input" value="${value||''}">`;
+  }
+  if(f.type === 'number'){
+    return `<input type="number" class="cell-input" value="${value ?? ''}">`;
+  }
+  return `<input type="${f.type==='email'?'email':'text'}" class="cell-input" value="${(value??'').toString().replace(/"/g,'&quot;')}">`;
+}
+
+function renderRowCells(row, isEditing){
+  return FIELDS.map(f=>{
+    const val = row[f.key];
+    if(isEditing){
+      return `<td class="${f.cls} editable" data-key="${f.key}">${inputForField(f, val)}</td>`;
+    }
+    let display;
+    if(f.key === 'Выполняемый функционал'){
+      display = val ? `<span class="badge ${funcBadgeClass(val)}">${escapeHtml(val)}</span>` : '<span class="vrm-empty">—</span>';
+    } else if(f.key === 'ВРМ'){
+      if(!val) display = '<span class="vrm-empty">—</span>';
+      else if(val.trim().toUpperCase()==='X') display = '<span class="vrm-x">X</span>';
+      else display = escapeHtml(val);
+    } else if(f.key === 'ДР'){
+      display = val ? formatDate(val) : '<span class="vrm-empty">—</span>';
+    } else {
+      display = val ? escapeHtml(val) : '<span class="vrm-empty">—</span>';
+    }
+    return `<td class="${f.cls} editable" data-key="${f.key}">${display}</td>`;
+  }).join('');
+}
+
+function formatDate(iso){
+  const parts = (iso||'').split('-');
+  if(parts.length!==3) return escapeHtml(iso);
+  return `${parts[2]}.${parts[1]}.${parts[0]}`;
+}
+
+function escapeHtml(s){
+  return s.toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderBody(){
+  const tbody = document.getElementById('tbody');
+  const rows = applyFiltersAndSearch();
+  document.getElementById('shownCount').textContent = rows.length;
+  document.getElementById('totalCount').textContent = records.length;
+  document.getElementById('emptyState').style.display = rows.length ? 'none' : 'block';
+  document.getElementById('dataTable').style.display = rows.length ? '' : 'none';
+
+  tbody.innerHTML = rows.map(row=>{
+    const isEditing = row.id === editingId;
+    const isNew = row.id === newRowId;
+    const cells = renderRowCells(row, isEditing);
+    const actions = isEditing ? `
+      <button class="icon-btn save-btn" data-save="${row.id}" title="Сохранить">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg>
+      </button>
+      <button class="icon-btn" data-cancel="${row.id}" title="Отменить">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>` : `
+      <button class="icon-btn" data-edit="${row.id}" title="Редактировать">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      </button>
+      <button class="icon-btn del-btn" data-del="${row.id}" title="Удалить">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2m-1 0v14a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V6h8Z"/></svg>
+      </button>`;
+    const checked = selectedIds.has(row.id);
+    const canDrag = !isEditing;
+    return `<tr class="${isEditing?'editing':''} ${isNew?'new-row':''}" data-row="${row.id}" ${canDrag?'draggable="true"':''}>
+      <td class="col-drag" title="Перетащите, чтобы изменить порядок">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="6" r="1.2"/><circle cx="9" cy="12" r="1.2"/><circle cx="9" cy="18" r="1.2"/><circle cx="15" cy="6" r="1.2"/><circle cx="15" cy="12" r="1.2"/><circle cx="15" cy="18" r="1.2"/></svg>
+      </td>
+      <td class="col-check"><input type="checkbox" class="row-check" data-select="${row.id}" ${checked?'checked':''}></td>
+      ${cells}
+      <td class="col-actions"><div class="row-actions">${actions}</div></td>
+    </tr>`;
+  }).join('');
+
+  updateLoBadge();
+  updateEmailBadge();
+
+  // focus first input if a row just entered edit mode
+  if(editingId){
+    const firstInput = tbody.querySelector(`tr[data-row="${editingId}"] input`);
+    if(firstInput){ firstInput.focus(); firstInput.select && firstInput.select(); }
+  }
+}
+
+function render(){ renderHead(); renderBody(); }
+
+// ---------- Editing ----------
+function startEdit(id){
+  if(editingId && editingId !== id) commitEdit(editingId, true);
+  editingId = id;
+  render();
+}
+
+function collectRowInputs(id){
+  const tr = document.querySelector(`tr[data-row="${id}"]`);
+  const data = {};
+  FIELDS.forEach(f=>{
+    const cell = tr.querySelector(`td[data-key="${f.key}"] input`);
+    let v = cell.value;
+    if(f.type === 'number') v = v === '' ? '' : Number(v);
+    data[f.key] = v;
+  });
+  return data;
+}
+
+async function commitEdit(id, silent){
+  const tr = document.querySelector(`tr[data-row="${id}"]`);
+  if(!tr) { editingId = null; newRowId = null; return; }
+  const data = collectRowInputs(id);
+  const idx = records.findIndex(r=>r.id===id);
+  if(idx>-1) records[idx] = { ...records[idx], ...data };
+  editingId = null;
+  const wasNew = newRowId === id;
+  newRowId = null;
+  await persist();
+  render();
+  if(!silent) showToast(wasNew ? 'Сотрудник добавлен' : 'Изменения сохранены');
+}
+
+async function cancelEdit(id){
+  const wasNew = newRowId === id;
+  if(wasNew){
+    records = records.filter(r=>r.id!==id);
+  }
+  editingId = null;
+  newRowId = null;
+  render();
+}
+
+async function addRow(){
+  if(editingId) await commitEdit(editingId, true);
+  const blank = {};
+  FIELDS.forEach(f=> blank[f.key] = '');
+  const row = { id: uid(), ...blank };
+  records.unshift(row);
+  editingId = row.id;
+  newRowId = row.id;
+  filters && (globalQuery = '');
+  document.getElementById('globalSearch').value = '';
+  render();
+}
+
+let pendingDelete = null;
+function requestDelete(id){
+  const row = records.find(r=>r.id===id);
+  pendingDelete = id;
+  document.getElementById('modalTitle').textContent = 'Удалить запись?';
+  document.getElementById('modalText').textContent = row ? `Сотрудник «${row['ФИО']||'без имени'}» будет удалён без возможности восстановления.` : 'Это действие нельзя отменить.';
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+async function confirmDelete(){
+  if(pendingDelete){
+    records = records.filter(r=>r.id!==pendingDelete);
+    selectedIds.delete(pendingDelete);
+    await persist();
+    render();
+    showToast('Запись удалена');
+  }
+  pendingDelete = null;
+  document.getElementById('modalBackdrop').classList.remove('open');
+}
+
+let pendingReset = false;
+function requestReset(){
+  pendingReset = true;
+  document.getElementById('modalTitle').textContent = 'Сбросить все данные?';
+  document.getElementById('modalText').textContent = 'Все изменения будут потеряны, реестр вернётся к исходному файлу ОУКП.xlsx.';
+  document.getElementById('modalBackdrop').classList.add('open');
+}
+
+async function confirmReset(){
+  records = withIds(DEFAULT_DATA);
+  editingId = null; newRowId = null;
+  selectedIds.clear();
+  Object.keys(filters).forEach(k=>delete filters[k]);
+  await persist();
+  render();
+  showToast('Данные сброшены к исходным');
+}
+
+document.getElementById('modalConfirm').addEventListener('click', ()=>{
+  if(pendingDelete) confirmDelete();
+  else if(pendingReset){ pendingReset=false; document.getElementById('modalBackdrop').classList.remove('open'); confirmReset(); }
+});
+document.getElementById('modalCancel').addEventListener('click', ()=>{
+  pendingDelete = null; pendingReset = false;
+  document.getElementById('modalBackdrop').classList.remove('open');
+});
+document.getElementById('resetBtn').addEventListener('click', requestReset);
+
+// ---------- Filters popover ----------
+const popover = document.getElementById('popover');
+let openFilterKey = null;
+
+function closePopover(){
+  popover.classList.remove('open');
+  openFilterKey = null;
+}
+
+function openPopoverFor(key, anchorBtn){
+  openFilterKey = key;
+  const values = uniqueValues(key);
+  const selected = filters[key] || new Set(values);
+  popover.innerHTML = `
+    <input type="text" id="popSearch" placeholder="Поиск значения…">
+    <div class="prow">
+      <button data-all>Выделить всё</button>
+      <button data-none>Снять всё</button>
+    </div>
+    <div class="plist" id="popList"></div>
+    <div class="pfooter">
+      <button class="ghost" data-clear>Сбросить</button>
+      <button class="primary" data-apply>Применить</button>
+    </div>
+  `;
+  const listEl = popover.querySelector('#popList');
+  function renderList(filterText){
+    const ft = (filterText||'').toLowerCase();
+    listEl.innerHTML = values
+      .filter(v => v.toLowerCase().includes(ft))
+      .map(v=>{
+        const checked = selected.has(v);
+        const displayV = v === '' ? '(пусто)' : escapeHtml(v);
+        return `<label><input type="checkbox" value="${escapeHtml(v)}" ${checked?'checked':''}> ${displayV}</label>`;
+      }).join('') || '<div style="padding:8px; color:var(--muted-2); font-size:12px;">Нет совпадений</div>';
+  }
+  renderList('');
+
+  popover.querySelector('#popSearch').addEventListener('input', e=> renderList(e.target.value));
+  popover.querySelector('[data-all]').addEventListener('click', ()=>{
+    listEl.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=true);
+  });
+  popover.querySelector('[data-none]').addEventListener('click', ()=>{
+    listEl.querySelectorAll('input[type=checkbox]').forEach(cb=>cb.checked=false);
+  });
+  popover.querySelector('[data-clear]').addEventListener('click', ()=>{
+    delete filters[key];
+    closePopover();
+    render();
+  });
+  popover.querySelector('[data-apply]').addEventListener('click', ()=>{
+    const chosen = new Set(Array.from(listEl.querySelectorAll('input[type=checkbox]:checked')).map(cb=>cb.value));
+    if(chosen.size === values.length) delete filters[key];
+    else filters[key] = chosen;
+    closePopover();
+    render();
+  });
+
+  const rect = anchorBtn.getBoundingClientRect();
+  const appRect = document.querySelector('.app').getBoundingClientRect();
+  popover.style.top = (rect.bottom - appRect.top + document.querySelector('.app').scrollTop + window.scrollY - (appRect.top - document.querySelector('.app').getBoundingClientRect().top)) + 'px';
+  popover.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
+  popover.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  popover.classList.add('open');
+}
+
+document.addEventListener('click', (e)=>{
+  const filterBtn = e.target.closest('[data-filter]');
+  if(filterBtn){
+    e.stopPropagation();
+    const key = filterBtn.getAttribute('data-filter');
+    if(openFilterKey === key){ closePopover(); return; }
+    openPopoverFor(key, filterBtn);
+    return;
+  }
+  if(!e.target.closest('.popover')) closePopover();
+});
+
+// ---------- Table event delegation ----------
+document.getElementById('tbody').addEventListener('dblclick', (e)=>{
+  const td = e.target.closest('td.editable');
+  if(!td) return;
+  const tr = td.closest('tr');
+  const id = tr.getAttribute('data-row');
+  if(editingId !== id) startEdit(id);
+});
+
+document.getElementById('tbody').addEventListener('click', (e)=>{
+  const editBtn = e.target.closest('[data-edit]');
+  if(editBtn){ startEdit(editBtn.getAttribute('data-edit')); return; }
+  const saveBtn = e.target.closest('[data-save]');
+  if(saveBtn){ commitEdit(saveBtn.getAttribute('data-save')); return; }
+  const cancelBtn = e.target.closest('[data-cancel]');
+  if(cancelBtn){ cancelEdit(cancelBtn.getAttribute('data-cancel')); return; }
+  const delBtn = e.target.closest('[data-del]');
+  if(delBtn){ requestDelete(delBtn.getAttribute('data-del')); return; }
+});
+
+document.getElementById('tbody').addEventListener('change', (e)=>{
+  const cb = e.target.closest('[data-select]');
+  if(!cb) return;
+  const id = cb.getAttribute('data-select');
+  if(cb.checked) selectedIds.add(id); else selectedIds.delete(id);
+  updateLoBadge();
+  updateEmailBadge();
+  const headCheck = document.getElementById('headCheck');
+  if(headCheck){
+    const visibleIds = applyFiltersAndSearch().map(r=>r.id);
+    headCheck.checked = visibleIds.length>0 && visibleIds.every(vid=>selectedIds.has(vid));
+  }
+});
+
+document.getElementById('headRow').addEventListener('change', (e)=>{
+  const cb = e.target.closest('#headCheck');
+  if(!cb) return;
+  const visibleIds = applyFiltersAndSearch().map(r=>r.id);
+  visibleIds.forEach(id=> cb.checked ? selectedIds.add(id) : selectedIds.delete(id));
+  renderBody();
+});
+
+document.getElementById('tbody').addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && editingId){
+    e.preventDefault();
+    commitEdit(editingId);
+  } else if(e.key === 'Escape' && editingId){
+    cancelEdit(editingId);
+  }
+});
+
+document.getElementById('headRow').addEventListener('click', (e)=>{
+  const label = e.target.closest('.th-label');
+  if(!label) return;
+  const key = label.getAttribute('data-sort');
+  if(sortState.key === key) sortState.dir *= -1;
+  else { sortState.key = key; sortState.dir = 1; }
+  render();
+});
+
+document.getElementById('globalSearch').addEventListener('input', (e)=>{
+  globalQuery = e.target.value;
+  renderBody();
+});
+
+document.getElementById('addRowBtn').addEventListener('click', addRow);
+
+document.getElementById('clearFiltersBtn').addEventListener('click', ()=>{
+  Object.keys(filters).forEach(k=>delete filters[k]);
+  globalQuery = '';
+  document.getElementById('globalSearch').value = '';
+  sortState = { key:null, dir:1 };
+  render();
+});
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const rows = applyFiltersAndSearch();
+  const dataForSheet = rows.map(r=>{
+    const o = {};
+    FIELDS.forEach(f=> o[f.label==='ФИО (кратко)'?'ФИО 2':f.key] = r[f.key]);
+    return o;
+  });
+  const ws = XLSX.utils.json_to_sheet(dataForSheet, { header: FIELDS.map(f=>f.key) });
+  ws['!cols'] = [{wch:32},{wch:18},{wch:12},{wch:26},{wch:20},{wch:12},{wch:16}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Лист1');
+  const stamp = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `ОУКП_${stamp}.xlsx`);
+  showToast('Файл экспортирован');
+});
+
+// ---------- Acquaintance sheet (Лист ознакомления) ----------
+function updateLoBadge(){
+  const badge = document.getElementById('loCountBadge');
+  if(!badge) return;
+  const n = selectedIds.size;
+  badge.textContent = n;
+  badge.style.display = n>0 ? '' : 'none';
+}
+
+function findDeptHead(){
+  const head = records.find(r => (r['Выполняемый функционал']||'').toLowerCase().includes('начальник отдела'));
+  return head ? (head['ФИО 2'] || head['ФИО'] || '') : '';
+}
+
+function selectedRecords(){
+  return records.filter(r => selectedIds.has(r.id));
+}
+
+function renderLoChips(){
+  const wrap = document.getElementById('loChips');
+  const sel = selectedRecords();
+  document.getElementById('loSelCount').textContent = sel.length;
+  if(!sel.length){
+    wrap.innerHTML = '<div class="lo-empty-sel">Ничего не выбрано — отметьте сотрудников галочками в таблице слева от ФИО.</div>';
+    return;
+  }
+  wrap.innerHTML = sel.map(r => `
+    <div class="lo-chip">
+      ${escapeHtml(r['ФИО 2'] || r['ФИО'] || 'Без имени')}
+      <button data-remove-sel="${r.id}" title="Убрать из списка">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+function openLoModal(){
+  if(selectedIds.size === 0){
+    showToast('Сначала отметьте сотрудников галочками в таблице');
+    return;
+  }
+  renderLoChips();
+  document.getElementById('loModalBackdrop').classList.add('open');
+}
+
+function closeLoModal(){
+  document.getElementById('loModalBackdrop').classList.remove('open');
+}
+
+document.getElementById('createLoBtn').addEventListener('click', openLoModal);
+document.getElementById('loCancelBtn').addEventListener('click', closeLoModal);
+
+document.getElementById('loChips').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-remove-sel]');
+  if(!btn) return;
+  selectedIds.delete(btn.getAttribute('data-remove-sel'));
+  updateLoBadge();
+  updateEmailBadge();
+  renderLoChips();
+});
+
+function loFormatDate(iso){
+  if(!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}.${m}.${y}`;
+}
+
+function escXml(s){
+  return (s ?? '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+}
+
+function xmlPara(text, opts){
+  opts = opts || {};
+  const jc = opts.center ? '<w:jc w:val="center"/>' : '';
+  const spacing = opts.spacingAfter!==undefined ? `<w:spacing w:after="${opts.spacingAfter}"/>` : '';
+  const pPr = (jc || spacing) ? `<w:pPr>${jc}${spacing}</w:pPr>` : '';
+  const b = opts.bold ? '<w:b/>' : '';
+  const sz = opts.size ? `<w:sz w:val="${opts.size}"/><w:szCs w:val="${opts.size}"/>` : '';
+  const rPr = (b || sz) ? `<w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/>${b}${sz}</w:rPr>` : '<w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr>';
+  return `<w:p>${pPr}<w:r>${rPr}<w:t xml:space="preserve">${escXml(text)}</w:t></w:r></w:p>`;
+}
+
+function buildLoDocumentXml(data){
+  const { docNumber, docTitle, kasud, dateStr, headName, executor, phone, people } = data;
+
+  const headerTbl = `
+  <w:tbl>
+    <w:tblPr>
+      <w:tblW w:w="0" w:type="auto"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:color="000000"/>
+        <w:left w:val="single" w:sz="4" w:color="000000"/>
+        <w:bottom w:val="single" w:sz="4" w:color="000000"/>
+        <w:right w:val="single" w:sz="4" w:color="000000"/>
+        <w:insideH w:val="single" w:sz="4" w:color="000000"/>
+        <w:insideV w:val="single" w:sz="4" w:color="000000"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid><w:gridCol w:w="2100"/><w:gridCol w:w="5400"/><w:gridCol w:w="1900"/></w:tblGrid>
+    <w:tr>
+      <w:tc><w:tcPr><w:tcW w:w="2100" w:type="dxa"/><w:vMerge w:val="restart"/><w:vAlign w:val="center"/></w:tcPr>
+        <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:drawing>
+          <wp:inline distT="0" distB="0" distL="0" distR="0">
+            <wp:extent cx="1114425" cy="313055"/>
+            <wp:effectExtent l="0" t="0" r="0" b="0"/>
+            <wp:docPr id="1" name="AeroflotLogo"/>
+            <wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr>
+            <a:graphic>
+              <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+                <pic:pic>
+                  <pic:nvPicPr><pic:cNvPr id="0" name="logo.png"/><pic:cNvPicPr/></pic:nvPicPr>
+                  <pic:blipFill><a:blip r:embed="rIdLogo"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>
+                  <pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1114425" cy="313055"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>
+                </pic:pic>
+              </a:graphicData>
+            </a:graphic>
+          </wp:inline>
+        </w:drawing></w:r></w:p>
+      </w:tc>
+      <w:tc><w:tcPr><w:tcW w:w="5400" w:type="dxa"/><w:vMerge w:val="restart"/><w:vAlign w:val="center"/></w:tcPr>
+        <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:b/></w:rPr><w:t>Лист ознакомления работников структурного подразделения/ структурной единицы с документами</w:t></w:r></w:p>
+      </w:tc>
+      <w:tc><w:tcPr><w:tcW w:w="1900" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr>
+        <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:b/></w:rPr><w:t>ЗК-ГД-012B</w:t></w:r></w:p>
+      </w:tc>
+    </w:tr>
+    <w:tr>
+      <w:tc><w:tcPr><w:tcW w:w="2100" w:type="dxa"/><w:vMerge/></w:tcPr><w:p/></w:tc>
+      <w:tc><w:tcPr><w:tcW w:w="5400" w:type="dxa"/><w:vMerge/></w:tcPr><w:p/></w:tc>
+      <w:tc><w:tcPr><w:tcW w:w="1900" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr>
+        <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr><w:t>Стр. 1  из 1</w:t></w:r></w:p>
+      </w:tc>
+    </w:tr>
+  </w:tbl>`;
+
+  const titleParas =
+    xmlPara('Лист ознакомления', {center:true, bold:true, size:26, spacingAfter:0}) +
+    xmlPara(`работников отдела управления квалификацией персонала департамента обслуживания на борту с ${docNumber} «${docTitle}» № ${kasud} от ${dateStr} г.`, {center:true, bold:true, size:26});
+
+  const headerRowCells = ['№ п/п','Фамилия, инициалы','Должность','Дата','Подпись'];
+  const colW = [700, 2900, 3300, 1500, 1500];
+  const grid = colW.map(w=>`<w:gridCol w:w="${w}"/>`).join('');
+
+  const trCell = (text, w, bold, center) => `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="dxa"/><w:vAlign w:val="center"/></w:tcPr><w:p><w:pPr>${center?'<w:jc w:val="center"/>':''}</w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/>${bold?'<w:b/>':''}</w:rPr><w:t xml:space="preserve">${escXml(text)}</w:t></w:r></w:p></w:tc>`;
+
+  const headRow = `<w:tr>${headerRowCells.map((t,i)=>trCell(t, colW[i], true, true)).join('')}</w:tr>`;
+  const dataRows = people.map((p, i) => `<w:tr>
+      ${trCell(String(i+1), colW[0], false, true)}
+      ${trCell(p['ФИО 2'] || p['ФИО'] || '', colW[1], false, false)}
+      ${trCell(p['Выполняемый функционал'] || '', colW[2], false, false)}
+      ${trCell('', colW[3], false, false)}
+      ${trCell('', colW[4], false, false)}
+    </w:tr>`).join('');
+  const blankRows = Array.from({length:2}).map(()=>`<w:tr>
+      ${trCell('', colW[0], false, true)}
+      ${trCell('', colW[1], false, false)}
+      ${trCell('', colW[2], false, false)}
+      ${trCell('', colW[3], false, false)}
+      ${trCell('', colW[4], false, false)}
+    </w:tr>`).join('');
+
+  const mainTbl = `
+  <w:tbl>
+    <w:tblPr>
+      <w:tblW w:w="0" w:type="auto"/>
+      <w:tblBorders>
+        <w:top w:val="single" w:sz="4" w:color="000000"/>
+        <w:left w:val="single" w:sz="4" w:color="000000"/>
+        <w:bottom w:val="single" w:sz="4" w:color="000000"/>
+        <w:right w:val="single" w:sz="4" w:color="000000"/>
+        <w:insideH w:val="single" w:sz="4" w:color="000000"/>
+        <w:insideV w:val="single" w:sz="4" w:color="000000"/>
+      </w:tblBorders>
+    </w:tblPr>
+    <w:tblGrid>${grid}</w:tblGrid>
+    ${headRow}${dataRows}${blankRows}
+  </w:tbl>`;
+
+  let tailParas = xmlPara('') +
+    xmlPara('Проведено ознакомление работников с доведением всей информации по документу.') +
+    xmlPara('') +
+    xmlPara('Начальник отдела управления') +
+    `<w:p><w:pPr><w:tabs><w:tab w:val="right" w:pos="9350"/></w:tabs></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr><w:t xml:space="preserve">квалификацией персонала</w:t></w:r><w:r><w:tab/><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr></w:r><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/></w:rPr><w:t xml:space="preserve">${escXml(headName || '')}</w:t></w:r></w:p>`;
+
+  if(executor || phone){
+    tailParas += xmlPara('');
+    if(executor) tailParas += xmlPara(`Исп. ${executor}`);
+    if(phone) tailParas += xmlPara(`Тел.: ${phone}`);
+  }
+
+  const sectPr = `<w:sectPr>
+    <w:footerReference w:type="default" r:id="rId1"/>
+    <w:pgSz w:w="11906" w:h="16838"/>
+    <w:pgMar w:top="850" w:right="850" w:bottom="850" w:left="1417" w:header="708" w:footer="708" w:gutter="0"/>
+  </w:sectPr>`;
+
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+<w:body>
+${headerTbl}
+${xmlPara('')}
+${titleParas}
+${xmlPara('')}
+${mainTbl}
+${tailParas}
+${sectPr}
+</w:body>
+</w:document>`;
+}
+
+const LO_CONTENT_TYPES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>
+  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+  <Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>
+</Types>`;
+
+const LO_RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+</Relationships>`;
+
+const LO_DOC_RELS = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>
+  <Relationship Id="rIdLogo" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/logo.png"/>
+</Relationships>`;
+
+const LOGO_PNG_BASE64 = "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";
+
+const LO_FOOTER = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman"/><w:i/><w:sz w:val="16"/><w:szCs w:val="16"/></w:rPr><w:t xml:space="preserve">Проверьте актуальность документа на https://qms.aeroflot.ru и/или https://kasud1.aeroflot.ru перед его использованием</w:t></w:r></w:p>
+</w:ftr>`;
+
+function loCoreXml(title){
+  const now = new Date().toISOString();
+  return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <dc:title>${escXml(title)}</dc:title>
+  <dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified>
+</cp:coreProperties>`;
+}
+
+const LO_APP_XML = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties"><Application>ОУКП registry app</Application></Properties>`;
+
+async function generateLoDocx(){
+  const docNumber = document.getElementById('loDocNumber').value.trim();
+  const docTitle = document.getElementById('loDocTitle').value.trim();
+  const kasud = document.getElementById('loKasud').value.trim();
+  const dateRaw = document.getElementById('loDocDate').value;
+  const executor = document.getElementById('loExecutor').value.trim();
+  const phone = document.getElementById('loPhone').value.trim();
+
+  const fields = [
+    ['loFieldDocNumber', docNumber], ['loFieldTitle', docTitle],
+    ['loFieldKasud', kasud], ['loFieldDate', dateRaw]
+  ];
+  let valid = true;
+  fields.forEach(([id, val])=>{
+    const el = document.getElementById(id);
+    if(!val){ el.classList.add('invalid'); valid = false; } else el.classList.remove('invalid');
+  });
+  if(!valid){ showToast('Заполните все реквизиты документа'); return; }
+  const people = selectedRecords();
+  if(!people.length){ showToast('Список сотрудников пуст'); return; }
+
+  const dateStr = loFormatDate(dateRaw);
+  const headName = findDeptHead();
+
+  const documentXml = buildLoDocumentXml({ docNumber, docTitle, kasud, dateStr, headName, executor, phone, people });
+
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', LO_CONTENT_TYPES);
+  zip.folder('_rels').file('.rels', LO_RELS);
+  const wordFolder = zip.folder('word');
+  wordFolder.file('document.xml', documentXml);
+  wordFolder.file('footer1.xml', LO_FOOTER);
+  wordFolder.folder('media').file('logo.png', LOGO_PNG_BASE64, { base64: true });
+  wordFolder.folder('_rels').file('document.xml.rels', LO_DOC_RELS);
+  zip.folder('docProps').file('core.xml', loCoreXml(`ЛО ${docNumber}`));
+  zip.folder('docProps').file('app.xml', LO_APP_XML);
+
+  try{
+    const blob = await zip.generateAsync({ type:'blob', mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ЛО_${docNumber.replace(/[\\/:*?"<>|]/g,'_')}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+    showToast('Документ сформирован');
+    closeLoModal();
+  }catch(e){
+    showToast('Не удалось собрать документ');
+  }
+}
+
+document.getElementById('loGenerateBtn').addEventListener('click', generateLoDocx);
+
+// ---------- Email to selected employees ----------
+function updateEmailBadge(){
+  const badge = document.getElementById('emailCountBadge');
+  if(!badge) return;
+  const n = selectedIds.size;
+  badge.textContent = n;
+  badge.style.display = n>0 ? '' : 'none';
+}
+
+function renderEmailChips(){
+  const wrap = document.getElementById('emailChips');
+  const sel = selectedRecords();
+  document.getElementById('emailSelCount').textContent = sel.length;
+  if(!sel.length){
+    wrap.innerHTML = '<div class="lo-empty-sel">Ничего не выбрано — отметьте сотрудников галочками в таблице слева от ФИО.</div>';
+    return;
+  }
+  const withoutEmail = sel.filter(r => !r['эл.почта']).length;
+  wrap.innerHTML = sel.map(r => {
+    const hasEmail = !!r['эл.почта'];
+    return `<div class="lo-chip" ${hasEmail ? '' : 'style="opacity:.5;"'}>
+      ${escapeHtml(r['ФИО 2'] || r['ФИО'] || 'Без имени')}${hasEmail ? '' : ' · нет почты'}
+      <button data-remove-email-sel="${r.id}" title="Убрать из списка">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>`;
+  }).join('');
+  if(withoutEmail > 0){
+    wrap.insertAdjacentHTML('beforeend', `<div class="lo-empty-sel" style="width:100%;">У ${withoutEmail} из выбранных не указан адрес эл. почты — они не попадут в письмо.</div>`);
+  }
+}
+
+function openEmailModal(){
+  if(selectedIds.size === 0){
+    showToast('Сначала отметьте сотрудников галочками в таблице');
+    return;
+  }
+  renderEmailChips();
+  document.getElementById('emailModalBackdrop').classList.add('open');
+}
+
+function closeEmailModal(){
+  document.getElementById('emailModalBackdrop').classList.remove('open');
+}
+
+document.getElementById('emailBtn').addEventListener('click', openEmailModal);
+document.getElementById('emailCancelBtn').addEventListener('click', closeEmailModal);
+
+document.getElementById('emailChips').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[data-remove-email-sel]');
+  if(!btn) return;
+  selectedIds.delete(btn.getAttribute('data-remove-email-sel'));
+  updateLoBadge();
+  updateEmailBadge();
+  renderEmailChips();
+});
+
+document.getElementById('emailSendBtn').addEventListener('click', ()=>{
+  const sel = selectedRecords().filter(r => r['эл.почта']);
+  if(!sel.length){
+    showToast('Ни у кого из выбранных нет адреса эл. почты');
+    return;
+  }
+  const subject = document.getElementById('emailSubject').value.trim();
+  const body = document.getElementById('emailBody').value;
+  const bcc = sel.map(r => r['эл.почта']).join(',');
+  const params = [`bcc=${encodeURIComponent(bcc)}`];
+  if(subject) params.push(`subject=${encodeURIComponent(subject)}`);
+  if(body) params.push(`body=${encodeURIComponent(body)}`);
+  const mailto = `mailto:?${params.join('&')}`;
+  window.location.href = mailto;
+  showToast('Открываю почтовый клиент…');
+  closeEmailModal();
+});
+
+// ---------- Drag-and-drop row reordering ----------
+let dragSrcId = null;
+
+document.getElementById('tbody').addEventListener('dragstart', (e)=>{
+  const tr = e.target.closest('tr[data-row]');
+  if(!tr || tr.getAttribute('draggable') !== 'true'){ e.preventDefault(); return; }
+  dragSrcId = tr.getAttribute('data-row');
+  e.dataTransfer.effectAllowed = 'move';
+  try{ e.dataTransfer.setData('text/plain', dragSrcId); }catch(err){ /* Safari/Firefox compat */ }
+  tr.classList.add('dragging');
+});
+
+document.getElementById('tbody').addEventListener('dragend', (e)=>{
+  document.querySelectorAll('#tbody tr').forEach(r => r.classList.remove('dragging','drag-over-top','drag-over-bottom'));
+  dragSrcId = null;
+});
+
+document.getElementById('tbody').addEventListener('dragover', (e)=>{
+  if(!dragSrcId) return;
+  const tr = e.target.closest('tr[data-row]');
+  if(!tr || tr.getAttribute('data-row') === dragSrcId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const rect = tr.getBoundingClientRect();
+  const isAfter = (e.clientY - rect.top) > rect.height / 2;
+  tr.classList.toggle('drag-over-bottom', isAfter);
+  tr.classList.toggle('drag-over-top', !isAfter);
+});
+
+document.getElementById('tbody').addEventListener('dragleave', (e)=>{
+  const tr = e.target.closest('tr[data-row]');
+  if(tr) tr.classList.remove('drag-over-top','drag-over-bottom');
+});
+
+document.getElementById('tbody').addEventListener('drop', async (e)=>{
+  const tr = e.target.closest('tr[data-row]');
+  if(!tr || !dragSrcId) return;
+  e.preventDefault();
+  const targetId = tr.getAttribute('data-row');
+  const isAfter = tr.classList.contains('drag-over-bottom');
+  tr.classList.remove('drag-over-top','drag-over-bottom');
+  const srcId = dragSrcId;
+  dragSrcId = null;
+  if(targetId === srcId) return;
+
+  const fromIdx = records.findIndex(r => r.id === srcId);
+  if(fromIdx < 0) return;
+  const [moved] = records.splice(fromIdx, 1);
+  let toIdx = records.findIndex(r => r.id === targetId);
+  if(toIdx < 0){ records.splice(fromIdx, 0, moved); return; }
+  records.splice(isAfter ? toIdx + 1 : toIdx, 0, moved);
+
+  sortState = { key: null, dir: 1 }; // manual order takes over from column sort
+  await persist();
+  render();
+  showToast('Порядок сотрудников обновлён');
+});
+
+// ---------- Init ----------
+(async function init(){
+  await loadRecords();
+  render();
+})();
+</script>
+</body>
+</html>
