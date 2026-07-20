@@ -582,7 +582,7 @@
 <div class="modal-backdrop" id="emailModalBackdrop">
   <div class="modal modal-lg">
     <h3>Письмо выбранным сотрудникам</h3>
-    <p style="margin-bottom:14px;">Откроется почтовый клиент по умолчанию со всеми адресами уже подставленными в поле «Скрытая копия».</p>
+    <p style="margin-bottom:14px;">Откроется почтовый клиент по умолчанию со всеми адресами уже подставленными в поле «Кому».</p>
 
     <div class="lo-section-title">Получатели (<span id="emailSelCount">0</span>)</div>
     <div class="lo-chips" id="emailChips"></div>
@@ -1549,11 +1549,11 @@ document.getElementById('emailSendBtn').addEventListener('click', ()=>{
   }
   const subject = document.getElementById('emailSubject').value.trim();
   const body = document.getElementById('emailBody').value;
-  const bcc = sel.map(r => r['эл.почта']).join(',');
-  const params = [`bcc=${encodeURIComponent(bcc)}`];
+  const to = sel.map(r => r['эл.почта']).join(',');
+  const params = [];
   if(subject) params.push(`subject=${encodeURIComponent(subject)}`);
   if(body) params.push(`body=${encodeURIComponent(body)}`);
-  const mailto = `mailto:?${params.join('&')}`;
+  const mailto = `mailto:${to}${params.length ? '?' + params.join('&') : ''}`;
   window.location.href = mailto;
   showToast('Открываю почтовый клиент…');
   closeEmailModal();
