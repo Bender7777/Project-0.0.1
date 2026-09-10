@@ -104,16 +104,11 @@ td.del{width:30px; text-align:center;}
 }
 .doc-chip button{background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; line-height:1; padding:0;}
 .doc-chip button:hover{color:var(--bad);}
-.doc-add-row{display:flex; gap:4px;}
-select.doc-select, #metaDeptSelect{
-  flex:1; min-width:0; background:var(--panel2); border:1px solid var(--border); border-radius:6px;
-  color:var(--text); padding:5px 6px; font-size:12px; font-family:inherit;
+.chip-add-btn{
+  background:none; border:1px dashed var(--border); color:var(--muted);
+  padding:4px 10px; border-radius:6px; cursor:pointer; font-size:11.5px;
 }
-.doc-add-btn{
-  background:var(--panel2); border:1px solid var(--border); color:var(--muted); border-radius:6px;
-  width:26px; cursor:pointer; font-size:14px; line-height:1;
-}
-.doc-add-btn:hover{border-color:var(--accent); color:var(--accent2);}
+.chip-add-btn:hover{border-color:var(--accent); color:var(--accent2);}
 select.status-select{
   width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:6px;
   color:var(--text); padding:6px 6px; font-size:12.5px;
@@ -155,12 +150,20 @@ footer{text-align:center; color:var(--muted); font-size:11.5px; padding:20px; op
 .modal-close{background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer;}
 .modal-close:hover{color:var(--bad);}
 .modal-body{padding:14px 18px; overflow-y:auto;}
+.db-filter{
+  width:100%; margin-top:10px; background:var(--panel2); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); padding:8px 10px; font-size:13px; font-family:inherit;
+}
+.modal-foot{padding:12px 18px; border-top:1px solid var(--border); display:flex; justify-content:flex-end;}
 .db-list{margin-top:12px; display:flex; flex-direction:column; gap:6px;}
 .db-item{
   display:flex; justify-content:space-between; align-items:center; background:var(--panel2);
   border:1px solid var(--border); border-radius:8px; padding:7px 10px; font-size:13px;
 }
-.db-item button{background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px;}
+.db-item label{display:flex; align-items:center; gap:8px; flex:1; min-width:0; cursor:pointer;}
+.db-item label span{overflow-wrap:anywhere;}
+.db-item input[type="checkbox"]{flex:none; width:15px; height:15px; cursor:pointer;}
+.db-item button{background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; flex:none; margin-left:8px;}
 .db-item button:hover{color:var(--bad);}
 .db-empty{color:var(--muted); font-size:12.5px; padding:8px 2px;}
 </style>
@@ -194,11 +197,8 @@ footer{text-align:center; color:var(--muted); font-size:11.5px; padding:20px; op
     <div><label>Аудитор</label><input type="text" id="metaAuditor" placeholder="ФИО"></div>
     <div>
       <label>Проверяемые подразделения</label>
-      <div class="meta-add-row">
-        <select id="metaDeptSelect"><option value="">— выбрать подразделение —</option></select>
-        <button class="btn" onclick="addDeptFromSelect()">+ Добавить</button>
-      </div>
       <div class="dept-chips" id="deptChips"></div>
+      <button class="chip-add-btn" onclick="openDb('dept','meta')">+ Подразделение</button>
     </div>
     <div><label>№ аудита</label><input type="text" id="metaNumber" placeholder="напр. А-2026-014"></div>
   </div>
@@ -211,15 +211,19 @@ footer{text-align:center; color:var(--muted); font-size:11.5px; padding:20px; op
 <div class="modal-overlay" id="dbModalOverlay" onclick="if(event.target===this) closeDb()">
   <div class="modal">
     <div class="modal-head">
-      <span id="dbModalTitle">База документов</span>
+      <span id="dbModalTitle">Документы</span>
       <button class="modal-close" onclick="closeDb()">✕</button>
     </div>
     <div class="modal-body">
       <div class="meta-add-row">
-        <input type="text" id="dbModalInput" placeholder="Название" onkeydown="if(event.key==='Enter'){event.preventDefault(); addDbEntry();}">
-        <button class="btn" onclick="addDbEntry()">+ Добавить</button>
+        <input type="text" id="dbModalInput" placeholder="Новый документ..." onkeydown="if(event.key==='Enter'){event.preventDefault(); addDbEntry();}">
+        <button class="btn" onclick="addDbEntry()">+ В базу</button>
       </div>
+      <input type="text" id="dbModalFilter" class="db-filter" placeholder="Фильтр..." oninput="renderDbModalList()">
       <div class="db-list" id="dbModalList"></div>
+    </div>
+    <div class="modal-foot" id="dbModalFoot" style="display:none;">
+      <button class="btn primary" onclick="closeDb()">Готово</button>
     </div>
   </div>
 </div>
@@ -295,8 +299,9 @@ const DEFAULT_DATA = [
 const SEED_DOC_DB = ['СТО ДОУ 10.2','РИ-805-021С','Электрон 2026 — Сводная ведомость ТЗ','КАСУД','РИ-805.05-006','РИ-805.05-008С','БУЗ-анализатор','stat.html — Статистика по БП'];
 const SEED_DEPT_DB = ['ОУКП','ДОБ'];
 
-let state = { meta:{date:'',auditor:'',depts:[],number:''}, clauses:[], docDB:[], deptDB:[] };
+let state = { meta:{date:'',auditor:'',depts:[],number:''}, clauses:[] };
 let dbModalType = null;
+let dbModalCtx = null;
 
 function load(){
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -320,7 +325,6 @@ function load(){
   document.getElementById('metaAuditor').value = state.meta.auditor||'';
   document.getElementById('metaNumber').value = state.meta.number||'';
   renderDeptChips();
-  populateMetaDeptSelect();
   render();
 }
 
@@ -342,16 +346,6 @@ function manualSave(){
   setTimeout(()=>{ btn.textContent = original; btn.disabled = false; }, 1200);
 }
 
-function addDeptFromSelect(){
-  const sel = document.getElementById('metaDeptSelect');
-  const val = sel.value;
-  if(!val) return;
-  if(!state.meta.depts.includes(val)) state.meta.depts.push(val);
-  sel.value = '';
-  save();
-  renderDeptChips();
-}
-
 function delDept(i){
   state.meta.depts.splice(i,1);
   save();
@@ -366,25 +360,21 @@ function renderDeptChips(){
   `).join('');
 }
 
-function populateMetaDeptSelect(){
-  const sel = document.getElementById('metaDeptSelect');
-  if(!sel) return;
-  sel.innerHTML = '<option value="">— выбрать подразделение —</option>' +
-    (state.deptDB||[]).map(d=>`<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
-}
-
-function openDb(type){
+function openDb(type, ctx){
   dbModalType = type;
-  document.getElementById('dbModalTitle').textContent = type==='doc' ? 'База документов' : 'База подразделений';
+  dbModalCtx = ctx || null;
+  document.getElementById('dbModalTitle').textContent = type==='doc' ? 'Документы' : 'Подразделения';
   document.getElementById('dbModalInput').value = '';
+  document.getElementById('dbModalFilter').value = '';
   renderDbModalList();
   document.getElementById('dbModalOverlay').style.display = 'flex';
-  document.getElementById('dbModalInput').focus();
+  document.getElementById('dbModalFilter').focus();
 }
 
 function closeDb(){
   document.getElementById('dbModalOverlay').style.display = 'none';
   dbModalType = null;
+  dbModalCtx = null;
 }
 
 function addDbEntry(){
@@ -394,9 +384,9 @@ function addDbEntry(){
   const list = dbModalType==='doc' ? state.docDB : state.deptDB;
   if(!list.includes(val)) list.push(val);
   input.value = '';
+  if(dbModalCtx) toggleDbSelection(val, true);
   save();
   renderDbModalList();
-  refreshDbSelects();
 }
 
 function delDbEntry(i){
@@ -404,23 +394,53 @@ function delDbEntry(i){
   list.splice(i,1);
   save();
   renderDbModalList();
-  refreshDbSelects();
+}
+
+function isDbSelected(val){
+  if(!dbModalCtx) return false;
+  if(dbModalCtx==='meta') return (state.meta.depts||[]).includes(val);
+  const item = state.clauses[dbModalCtx.ci].items[dbModalCtx.ii];
+  return (item.doc||[]).includes(val);
+}
+
+function toggleDbSelection(val, checked){
+  if(!dbModalCtx) return;
+  if(dbModalCtx==='meta'){
+    if(checked){ if(!state.meta.depts.includes(val)) state.meta.depts.push(val); }
+    else{ state.meta.depts = state.meta.depts.filter(d=>d!==val); }
+    renderDeptChips();
+  }else{
+    const item = state.clauses[dbModalCtx.ci].items[dbModalCtx.ii];
+    if(!Array.isArray(item.doc)) item.doc = [];
+    if(checked){ if(!item.doc.includes(val)) item.doc.push(val); }
+    else{ item.doc = item.doc.filter(d=>d!==val); }
+    renderDocList(dbModalCtx.ci, dbModalCtx.ii);
+  }
+  save();
+}
+
+function escForJsAttr(s){
+  return escapeHtml(String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"));
 }
 
 function renderDbModalList(){
   const list = dbModalType==='doc' ? state.docDB : state.deptDB;
+  const filterVal = (document.getElementById('dbModalFilter').value||'').trim().toLowerCase();
+  const filtered = filterVal ? list.filter(v=>v.toLowerCase().includes(filterVal)) : list;
   const wrap = document.getElementById('dbModalList');
-  wrap.innerHTML = list.length ? list.map((v,i)=>`
-    <div class="db-item"><span>${escapeHtml(v)}</span><button onclick="delDbEntry(${i})" title="Удалить">✕</button></div>
-  `).join('') : `<div class="db-empty">Список пуст</div>`;
-}
-
-function refreshDbSelects(){
-  document.querySelectorAll('select.doc-select').forEach(sel=>{
-    const m = sel.id.match(/^docSelect-(\d+)-(\d+)$/);
-    if(m) populateDocSelect(+m[1], +m[2]);
-  });
-  populateMetaDeptSelect();
+  document.getElementById('dbModalFoot').style.display = dbModalCtx ? 'flex' : 'none';
+  if(!filtered.length){
+    wrap.innerHTML = `<div class="db-empty">${list.length ? 'Ничего не найдено' : 'Список пуст'}</div>`;
+    return;
+  }
+  wrap.innerHTML = filtered.map(v=>{
+    const idx = list.indexOf(v);
+    if(dbModalCtx){
+      const checked = isDbSelected(v);
+      return `<div class="db-item"><label><input type="checkbox" ${checked?'checked':''} onchange="toggleDbSelection('${escForJsAttr(v)}', this.checked)"><span>${escapeHtml(v)}</span></label><button onclick="delDbEntry(${idx})" title="Удалить из базы">✕</button></div>`;
+    }
+    return `<div class="db-item"><span>${escapeHtml(v)}</span><button onclick="delDbEntry(${idx})" title="Удалить">✕</button></div>`;
+  }).join('');
 }
 
 function addAllDefault(){
@@ -442,7 +462,7 @@ function resetAll(){
   document.getElementById('metaDate').value='';
   document.getElementById('metaAuditor').value='';
   document.getElementById('metaNumber').value='';
-  save(); renderDeptChips(); populateMetaDeptSelect(); render();
+  save(); renderDeptChips(); render();
 }
 
 function render(){
@@ -482,10 +502,7 @@ function render(){
         <td class="q"><textarea class="q-text" rows="1" oninput="autoGrow(this)" onblur="updateItem(${ci},${ii},'q',this.value)">${escapeHtml(item.q)}</textarea></td>
         <td class="doc">
           <div class="doc-list" id="docList-${ci}-${ii}"></div>
-          <div class="doc-add-row">
-            <select class="doc-select" id="docSelect-${ci}-${ii}"><option value="">— выбрать документ —</option></select>
-            <button class="doc-add-btn" onclick="addDocFromSelect(${ci},${ii})" title="Добавить документ">+</button>
-          </div>
+          <button class="chip-add-btn" onclick="openDb('doc',{ci:${ci},ii:${ii}})">+ Документ</button>
         </td>
         <td class="status">
           <select class="status-select" data-val="${item.status}" onchange="updateItem(${ci},${ii},'status',this.value); this.setAttribute('data-val', this.value)">
@@ -499,7 +516,6 @@ function render(){
         <td class="del"><button class="del-btn" onclick="delItem(${ci},${ii})" title="Удалить">✕</button></td>
       `;
       tbody.appendChild(tr);
-      populateDocSelect(ci, ii);
       renderDocList(ci, ii);
     });
   });
@@ -538,24 +554,6 @@ function addItem(ci){
 function delItem(ci, ii){
   state.clauses[ci].items.splice(ii,1);
   save(); render();
-}
-
-function addDocFromSelect(ci, ii){
-  const sel = document.getElementById(`docSelect-${ci}-${ii}`);
-  const val = sel.value;
-  if(!val) return;
-  if(!Array.isArray(state.clauses[ci].items[ii].doc)) state.clauses[ci].items[ii].doc = [];
-  if(!state.clauses[ci].items[ii].doc.includes(val)) state.clauses[ci].items[ii].doc.push(val);
-  sel.value = '';
-  save();
-  renderDocList(ci, ii);
-}
-
-function populateDocSelect(ci, ii){
-  const sel = document.getElementById(`docSelect-${ci}-${ii}`);
-  if(!sel) return;
-  sel.innerHTML = '<option value="">— выбрать документ —</option>' +
-    (state.docDB||[]).map(d=>`<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`).join('');
 }
 
 function delDoc(ci, ii, di){
@@ -631,7 +629,6 @@ function importJSON(e){
       document.getElementById('metaAuditor').value = state.meta.auditor||'';
       document.getElementById('metaNumber').value = state.meta.number||'';
       renderDeptChips();
-      populateMetaDeptSelect();
       save(); render();
     }catch(err){
       alert('Ошибка импорта: файл повреждён или имеет неверный формат.');
