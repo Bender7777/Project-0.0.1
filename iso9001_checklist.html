@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Чек-лист аудита СМК — ISO 9001:2015</title>
+<style>
+:root[data-theme="dark"]{
+  --bg:#0a0e1a; --bg2:#0f1626; --panel:#141c30; --panel2:#1a2438;
+  --border:#25324d; --text:#e6ecf5; --muted:#8a99b8; --accent:#3fa9ff;
+  --accent2:#6fd6ff; --ok:#3ddc84; --warn:#ffb547; --bad:#ff5d6c;
+  --shadow:0 8px 30px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; font-family:'Segoe UI',Roboto,Arial,sans-serif;
+  background:radial-gradient(1200px 600px at 80% -10%, #142035 0%, var(--bg) 55%) fixed;
+  color:var(--text); min-height:100vh;
+}
+header{
+  padding:22px 28px; background:linear-gradient(180deg,var(--bg2),transparent);
+  border-bottom:1px solid var(--border); position:sticky; top:0; z-index:20;
+  backdrop-filter:blur(8px);
+}
+header h1{margin:0 0 4px; font-size:20px; letter-spacing:.3px;}
+header p{margin:0; color:var(--muted); font-size:13px;}
+.toolbar{
+  display:flex; gap:10px; flex-wrap:wrap; padding:14px 28px;
+  border-bottom:1px solid var(--border); background:var(--bg2);
+  position:sticky; top:76px; z-index:19; align-items:center;
+}
+.btn{
+  background:var(--panel2); color:var(--text); border:1px solid var(--border);
+  padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px;
+  transition:.15s; white-space:nowrap;
+}
+.btn:hover{border-color:var(--accent); color:var(--accent2);}
+.btn.primary{background:linear-gradient(135deg,var(--accent),#2477c9); border:none; color:#fff; font-weight:600;}
+.btn.primary:hover{filter:brightness(1.1);}
+.btn.primary:disabled{opacity:.75; cursor:default; filter:none;}
+.btn.danger{border-color:var(--bad); color:var(--bad);}
+.progress-wrap{flex:1; min-width:200px; display:flex; align-items:center; gap:10px;}
+.progress-bar{flex:1; height:10px; background:var(--panel); border-radius:6px; overflow:hidden; border:1px solid var(--border);}
+.progress-fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--ok)); width:0%; transition:width .3s;}
+#progressLabel{font-size:12px; color:var(--muted); min-width:90px; text-align:right;}
+main{padding:20px 28px 60px; max-width:1200px; margin:0 auto;}
+.meta-panel{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px; margin-bottom:22px;
+}
+.meta-panel label{display:block; font-size:12px; color:var(--muted); margin-bottom:5px;}
+.meta-panel input{
+  width:100%; background:var(--panel); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); padding:9px 10px; font-size:13px;
+}
+.meta-add-row{display:flex; gap:6px;}
+.meta-add-row input{flex:1; min-width:0;}
+.dept-chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;}
+.dept-chip{
+  display:inline-flex; align-items:center; gap:6px; background:var(--panel2); border:1px solid var(--border);
+  border-radius:14px; padding:4px 10px; font-size:12px;
+}
+.dept-chip button{background:none; border:none; color:var(--muted); cursor:pointer; font-size:13px; padding:0; line-height:1;}
+.dept-chip button:hover{color:var(--bad);}
+.clause{
+  background:var(--panel); border:1px solid var(--border); border-radius:12px;
+  margin-bottom:16px; overflow:hidden; box-shadow:var(--shadow);
+}
+.clause-head{
+  padding:14px 18px; display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer; background:var(--panel2); user-select:none;
+}
+.clause-head:hover{background:#1f2c47;}
+.clause-title{font-size:14.5px; font-weight:600;}
+.clause-sub{color:var(--muted); font-size:12px; margin-top:2px;}
+.clause-stats{font-size:12px; color:var(--accent2); white-space:nowrap; margin-left:12px;}
+.chev{transition:.2s; color:var(--muted);}
+.clause.collapsed .chev{transform:rotate(-90deg);}
+.clause-body{padding:6px 12px 14px;}
+.clause.collapsed .clause-body{display:none;}
+table{width:100%; border-collapse:collapse; font-size:13px;}
+thead th{
+  text-align:left; color:var(--muted); font-weight:500; font-size:11.5px;
+  text-transform:uppercase; letter-spacing:.4px; padding:8px 8px; border-bottom:1px solid var(--border);
+}
+tbody tr{border-bottom:1px solid #1c2740;}
+tbody tr:hover{background:#111a2c;}
+td{padding:8px 8px; vertical-align:top;}
+td.q{width:36%;}
+td.doc{width:18%; color:var(--muted); font-size:12px;}
+td.status{width:16%;}
+td.comment{width:24%;}
+td.del{width:30px; text-align:center;}
+.q-text, .comment-text{
+  width:100%; background:transparent; border:1px solid transparent; border-radius:6px;
+  color:var(--text); padding:5px 6px; font-size:13px; resize:none; overflow:hidden; min-height:34px;
+  font-family:inherit;
+}
+.q-text:focus, .comment-text:focus{background:var(--bg2); border-color:var(--accent);}
+.doc-list{display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px;}
+.doc-chip{
+  display:inline-flex; align-items:center; gap:5px; background:var(--panel2); border:1px solid var(--border);
+  border-radius:6px; padding:3px 6px; font-size:11.5px; color:var(--text);
+}
+.doc-chip button{background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; line-height:1; padding:0;}
+.doc-chip button:hover{color:var(--bad);}
+.doc-add-row{display:flex; gap:4px;}
+.doc-input{
+  flex:1; min-width:0; background:transparent; border:1px solid var(--border); border-radius:6px;
+  color:var(--text); padding:5px 6px; font-size:12px; font-family:inherit;
+}
+.doc-input:focus{background:var(--bg2); border-color:var(--accent);}
+.doc-add-btn{
+  background:var(--panel2); border:1px solid var(--border); color:var(--muted); border-radius:6px;
+  width:26px; cursor:pointer; font-size:14px; line-height:1;
+}
+.doc-add-btn:hover{border-color:var(--accent); color:var(--accent2);}
+select.status-select{
+  width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:6px;
+  color:var(--text); padding:6px 6px; font-size:12.5px;
+}
+select.status-select[data-val="ok"]{color:var(--ok); border-color:var(--ok);}
+select.status-select[data-val="bad"]{color:var(--bad); border-color:var(--bad);}
+select.status-select[data-val="warn"]{color:var(--warn); border-color:var(--warn);}
+.del-btn{background:none; border:none; color:var(--muted); cursor:pointer; font-size:15px;}
+.del-btn:hover{color:var(--bad);}
+.add-row-btn{
+  margin:8px 4px 2px; background:none; border:1px dashed var(--border); color:var(--muted);
+  padding:7px 12px; border-radius:8px; cursor:pointer; font-size:12.5px;
+}
+.add-row-btn:hover{border-color:var(--accent); color:var(--accent2);}
+.summary{
+  background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:16px 18px;
+  margin-top:22px; display:flex; gap:26px; flex-wrap:wrap;
+}
+.summary .stat{min-width:110px;}
+.summary .stat .n{font-size:22px; font-weight:700;}
+.summary .stat .l{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px;}
+.stat.ok .n{color:var(--ok);} .stat.bad .n{color:var(--bad);} .stat.warn .n{color:var(--warn);} .stat.total .n{color:var(--accent2);}
+footer{text-align:center; color:var(--muted); font-size:11.5px; padding:20px; opacity:.7;}
+::-webkit-scrollbar{width:10px; height:10px;}
+::-webkit-scrollbar-thumb{background:#2a3752; border-radius:6px;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Чек-лист внутреннего аудита СМК — ISO 9001:2015</h1>
+  <p>ОУКП / ДОБ · Автономный офлайн-инструмент · данные сохраняются локально в браузере</p>
+</header>
+
+<div class="toolbar">
+  <button class="btn primary" id="saveBtn" onclick="manualSave()">💾 Сохранить</button>
+  <button class="btn primary" onclick="addAllDefault()">↺ Загрузить шаблон по умолчанию</button>
+  <button class="btn" onclick="exportExcel()">⬇ Экспорт в Excel</button>
+  <button class="btn" onclick="exportJSON()">⬇ Экспорт JSON (резервная копия)</button>
+  <button class="btn" onclick="document.getElementById('importFile').click()">⬆ Импорт JSON</button>
+  <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(event)">
+  <button class="btn danger" onclick="resetAll()">✕ Очистить всё</button>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <span id="progressLabel">0 / 0 (0%)</span>
+  </div>
+</div>
+
+<main>
+  <div class="meta-panel">
+    <div><label>Дата аудита</label><input type="date" id="metaDate"></div>
+    <div><label>Аудитор</label><input type="text" id="metaAuditor" placeholder="ФИО"></div>
+    <div>
+      <label>Проверяемые подразделения</label>
+      <div class="meta-add-row">
+        <input type="text" id="metaDeptInput" placeholder="Например, ОУКП" onkeydown="if(event.key==='Enter'){event.preventDefault(); addDept();}">
+        <button class="btn" onclick="addDept()">+ Добавить</button>
+      </div>
+      <div class="dept-chips" id="deptChips"></div>
+    </div>
+    <div><label>№ аудита</label><input type="text" id="metaNumber" placeholder="напр. А-2026-014"></div>
+  </div>
+
+  <div id="clausesContainer"></div>
+
+  <div class="summary" id="summaryPanel"></div>
+</main>
+
+<footer>ISO 9001:2015 Audit Checklist · offline single-file tool · localStorage</footer>
+
+<script>
+const STORAGE_KEY = 'iso9001_checklist_oukp_v1';
+
+// Клаузулы ISO 9001:2015 + предзаполненные пункты (частично на основе внутренних документов ОУКП/ДОБ)
+const DEFAULT_DATA = [
+  {
+    id:'c4', title:'П.4 — Контекст организации', sub:'Заинтересованные стороны, границы СМК',
+    items:[
+      {q:'Определены ли внешние и внутренние факторы, влияющие на СМК подразделения?', doc:[], status:'', comment:''},
+      {q:'Определены ли заинтересованные стороны и их требования?', doc:[], status:'', comment:''},
+      {q:'Установлены и документированы ли границы применения СМК?', doc:['СТО ДОУ 10.2'], status:'', comment:''},
+    ]
+  },
+  {
+    id:'c5', title:'П.5 — Лидерство', sub:'Политика качества, роли и ответственность',
+    items:[
+      {q:'Утверждена и доведена ли политика качества до персонала?', doc:[], status:'', comment:''},
+      {q:'Распределены ли роли, ответственность и полномочия в подразделении?', doc:[], status:'', comment:''},
+      {q:'Демонстрирует ли руководство вовлечённость в функционирование СМК?', doc:[], status:'', comment:''},
+    ]
+  },
+  {
+    id:'c6', title:'П.6 — Планирование', sub:'Риски и возможности, цели по качеству',
+    items:[
+      {q:'Проведена ли оценка рисков и возможностей для процессов подразделения?', doc:[], status:'', comment:''},
+      {q:'Установлены ли измеримые цели в области качества?', doc:[], status:'', comment:''},
+      {q:'Спланированы ли действия по достижению целей и оценке результатов?', doc:[], status:'', comment:''},
+    ]
+  },
+  {
+    id:'c7', title:'П.7 — Обеспечение', sub:'Ресурсы, компетентность, документированная информация',
+    items:[
+      {q:'Достаточны ли ресурсы (кадровые, инфраструктурные) для функционирования процессов?', doc:[], status:'', comment:''},
+      {q:'Определены и подтверждены ли требования к компетентности персонала?', doc:['РИ-805-021С'], status:'', comment:''},
+      {q:'Ведётся ли учёт подготовки, обучения и допусков сотрудников?', doc:['Электрон 2026 — Сводная ведомость ТЗ'], status:'', comment:''},
+      {q:'Актуальна ли документированная информация (версии, статусы согласования)?', doc:['КАСУД'], status:'', comment:''},
+      {q:'Обеспечена ли осведомлённость персонала о политике и целях качества?', doc:[], status:'', comment:''},
+    ]
+  },
+  {
+    id:'c8', title:'П.8 — Деятельность (операционное планирование)', sub:'Требования к процессам и услугам',
+    items:[
+      {q:'Спланированы и управляются ли процессы, необходимые для оказания услуг?', doc:['РИ-805.05-006'], status:'', comment:''},
+      {q:'Определены ли требования, относящиеся к услугам подразделения?', doc:['РИ-805.05-008С'], status:'', comment:''},
+      {q:'Контролируются ли изменения в процессах?', doc:[], status:'', comment:''},
+      {q:'Ведётся ли учёт несоответствий/замечаний по итогам полётов (БУЗ)?', doc:['БУЗ-анализатор'], status:'', comment:''},
+    ]
+  },
+  {
+    id:'c9', title:'П.9 — Оценка результатов деятельности', sub:'Мониторинг, внутренний аудит, анализ руководства',
+    items:[
+      {q:'Проводится ли мониторинг и анализ показателей результативности процессов?', doc:['stat.html — Статистика по БП'], status:'', comment:''},
+      {q:'Выполняется ли программа внутренних аудитов по графику?', doc:[], status:'', comment:''},
+      {q:'Проводится ли анализ СМК со стороны руководства с документированием решений?', doc:[], status:'', comment:''},
+    ]
+  },
+  {
+    id:'c10', title:'П.10 — Улучшение', sub:'Несоответствия, корректирующие действия, постоянное улучшение',
+    items:[
+      {q:'Регистрируются и анализируются ли несоответствия?', doc:[], status:'', comment:''},
+      {q:'Разрабатываются и выполняются ли корректирующие действия по итогам аудитов?', doc:[], status:'', comment:''},
+      {q:'Есть ли свидетельства постоянного улучшения процессов подразделения?', doc:[], status:'', comment:''},
+    ]
+  },
+];
+
+let state = { meta:{date:'',auditor:'',depts:[],number:''}, clauses:[] };
+
+function load(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{ state = JSON.parse(raw); }catch(e){ state = {meta:{date:'',auditor:'',depts:[],number:''}, clauses:[]}; }
+  }
+  if(!state.meta) state.meta = {date:'',auditor:'',depts:[],number:''};
+  if(!Array.isArray(state.meta.depts)){
+    state.meta.depts = state.meta.dept ? [state.meta.dept] : [];
+  }
+  delete state.meta.dept;
+  if(!state.clauses || state.clauses.length===0){
+    state.clauses = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  }
+  state.clauses.forEach(c=>c.items.forEach(i=>{
+    if(!Array.isArray(i.doc)) i.doc = i.doc ? [i.doc] : [];
+  }));
+  document.getElementById('metaDate').value = state.meta.date||'';
+  document.getElementById('metaAuditor').value = state.meta.auditor||'';
+  document.getElementById('metaNumber').value = state.meta.number||'';
+  renderDeptChips();
+  render();
+}
+
+function save(){
+  state.meta.date = document.getElementById('metaDate').value;
+  state.meta.auditor = document.getElementById('metaAuditor').value;
+  state.meta.number = document.getElementById('metaNumber').value;
+  if(!Array.isArray(state.meta.depts)) state.meta.depts = [];
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function manualSave(){
+  save();
+  const btn = document.getElementById('saveBtn');
+  if(!btn) return;
+  const original = btn.textContent;
+  btn.textContent = '✓ Сохранено';
+  btn.disabled = true;
+  setTimeout(()=>{ btn.textContent = original; btn.disabled = false; }, 1200);
+}
+
+function addDept(){
+  const input = document.getElementById('metaDeptInput');
+  const val = input.value.trim();
+  if(!val) return;
+  state.meta.depts.push(val);
+  input.value = '';
+  save();
+  renderDeptChips();
+}
+
+function delDept(i){
+  state.meta.depts.splice(i,1);
+  save();
+  renderDeptChips();
+}
+
+function renderDeptChips(){
+  const wrap = document.getElementById('deptChips');
+  if(!wrap) return;
+  wrap.innerHTML = (state.meta.depts||[]).map((d,i)=>`
+    <span class="dept-chip">${escapeHtml(d)}<button onclick="delDept(${i})" title="Удалить">✕</button></span>
+  `).join('');
+}
+
+function addAllDefault(){
+  if(state.clauses.length>0){
+    if(!confirm('Текущие данные будут заменены шаблоном по умолчанию. Продолжить?')) return;
+  }
+  state.clauses = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  save(); render();
+}
+
+function resetAll(){
+  if(!confirm('Удалить все данные чек-листа безвозвратно?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = {meta:{date:'',auditor:'',depts:[],number:''}, clauses:JSON.parse(JSON.stringify(DEFAULT_DATA))};
+  document.getElementById('metaDate').value='';
+  document.getElementById('metaAuditor').value='';
+  document.getElementById('metaNumber').value='';
+  save(); renderDeptChips(); render();
+}
+
+function render(){
+  const container = document.getElementById('clausesContainer');
+  container.innerHTML = '';
+  state.clauses.forEach((clause, ci)=>{
+    const total = clause.items.length;
+    const done = clause.items.filter(i=>i.status).length;
+    const div = document.createElement('div');
+    div.className = 'clause';
+    div.innerHTML = `
+      <div class="clause-head" onclick="toggleClause(${ci})">
+        <div>
+          <div class="clause-title">${escapeHtml(clause.title)}</div>
+          <div class="clause-sub">${escapeHtml(clause.sub)}</div>
+        </div>
+        <div style="display:flex;align-items:center;">
+          <span class="clause-stats">${done}/${total} заполнено</span>
+          <span class="chev">▾</span>
+        </div>
+      </div>
+      <div class="clause-body">
+        <table>
+          <thead><tr>
+            <th>Критерий проверки</th><th>Документ</th><th>Статус</th><th>Комментарий</th><th></th>
+          </tr></thead>
+          <tbody id="tbody-${ci}"></tbody>
+        </table>
+        <button class="add-row-btn" onclick="addItem(${ci})">+ добавить пункт</button>
+      </div>
+    `;
+    container.appendChild(div);
+    const tbody = div.querySelector(`#tbody-${ci}`);
+    clause.items.forEach((item, ii)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="q"><textarea class="q-text" rows="1" oninput="autoGrow(this)" onblur="updateItem(${ci},${ii},'q',this.value)">${escapeHtml(item.q)}</textarea></td>
+        <td class="doc">
+          <div class="doc-list" id="docList-${ci}-${ii}"></div>
+          <div class="doc-add-row">
+            <input type="text" class="doc-input" id="docInput-${ci}-${ii}" placeholder="Название документа" onkeydown="if(event.key==='Enter'){event.preventDefault(); addDoc(${ci},${ii});}">
+            <button class="doc-add-btn" onclick="addDoc(${ci},${ii})" title="Добавить документ">+</button>
+          </div>
+        </td>
+        <td class="status">
+          <select class="status-select" data-val="${item.status}" onchange="updateItem(${ci},${ii},'status',this.value); this.setAttribute('data-val', this.value)">
+            <option value="" ${item.status===''?'selected':''}>— не проверено —</option>
+            <option value="ok" ${item.status==='ok'?'selected':''}>✓ Соответствует</option>
+            <option value="warn" ${item.status==='warn'?'selected':''}>△ Наблюдение</option>
+            <option value="bad" ${item.status==='bad'?'selected':''}>✕ Несоответствие</option>
+          </select>
+        </td>
+        <td class="comment"><textarea class="comment-text" rows="1" oninput="autoGrow(this)" onblur="updateItem(${ci},${ii},'comment',this.value)">${escapeHtml(item.comment)}</textarea></td>
+        <td class="del"><button class="del-btn" onclick="delItem(${ci},${ii})" title="Удалить">✕</button></td>
+      `;
+      tbody.appendChild(tr);
+      renderDocList(ci, ii);
+    });
+  });
+  container.querySelectorAll('textarea.q-text, textarea.comment-text').forEach(autoGrow);
+  renderSummary();
+}
+
+function autoGrow(el){
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function toggleClause(ci){
+  document.querySelectorAll('.clause')[ci].classList.toggle('collapsed');
+}
+
+function updateItem(ci, ii, field, value){
+  state.clauses[ci].items[ii][field] = value;
+  save();
+  renderSummary();
+  updateClauseStat(ci);
+}
+
+function updateClauseStat(ci){
+  const clause = state.clauses[ci];
+  const total = clause.items.length;
+  const done = clause.items.filter(i=>i.status).length;
+  const statEl = document.querySelectorAll('.clause-stats')[ci];
+  if(statEl) statEl.textContent = `${done}/${total} заполнено`;
+}
+
+function addItem(ci){
+  state.clauses[ci].items.push({q:'', doc:[], status:'', comment:''});
+  save(); render();
+}
+function delItem(ci, ii){
+  state.clauses[ci].items.splice(ii,1);
+  save(); render();
+}
+
+function addDoc(ci, ii){
+  const input = document.getElementById(`docInput-${ci}-${ii}`);
+  const val = input.value.trim();
+  if(!val) return;
+  if(!Array.isArray(state.clauses[ci].items[ii].doc)) state.clauses[ci].items[ii].doc = [];
+  state.clauses[ci].items[ii].doc.push(val);
+  input.value = '';
+  save();
+  renderDocList(ci, ii);
+}
+
+function delDoc(ci, ii, di){
+  state.clauses[ci].items[ii].doc.splice(di, 1);
+  save();
+  renderDocList(ci, ii);
+}
+
+function renderDocList(ci, ii){
+  const wrap = document.getElementById(`docList-${ci}-${ii}`);
+  if(!wrap) return;
+  const docs = state.clauses[ci].items[ii].doc || [];
+  wrap.innerHTML = docs.map((d, di)=>`
+    <span class="doc-chip">${escapeHtml(d)}<button onclick="delDoc(${ci},${ii},${di})" title="Удалить">✕</button></span>
+  `).join('');
+}
+
+function renderSummary(){
+  let total=0, ok=0, warn=0, bad=0, empty=0;
+  state.clauses.forEach(c=>c.items.forEach(i=>{
+    total++;
+    if(i.status==='ok') ok++;
+    else if(i.status==='warn') warn++;
+    else if(i.status==='bad') bad++;
+    else empty++;
+  }));
+  const filled = total-empty;
+  const pct = total? Math.round(filled/total*100):0;
+  document.getElementById('progressFill').style.width = pct+'%';
+  document.getElementById('progressLabel').textContent = `${filled} / ${total} (${pct}%)`;
+  document.getElementById('summaryPanel').innerHTML = `
+    <div class="stat total"><div class="n">${total}</div><div class="l">Всего пунктов</div></div>
+    <div class="stat ok"><div class="n">${ok}</div><div class="l">Соответствует</div></div>
+    <div class="stat warn"><div class="n">${warn}</div><div class="l">Наблюдения</div></div>
+    <div class="stat bad"><div class="n">${bad}</div><div class="l">Несоответствия</div></div>
+  `;
+}
+
+function escapeHtml(s){
+  if(s===undefined||s===null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function exportJSON(){
+  save();
+  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/octet-stream'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `iso9001_checklist_${(state.meta.number||'audit')}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+function importJSON(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try{
+      const data = JSON.parse(ev.target.result);
+      if(!data.clauses) throw new Error('bad format');
+      state = data;
+      if(!state.meta) state.meta = {date:'',auditor:'',depts:[],number:''};
+      if(!Array.isArray(state.meta.depts)){
+        state.meta.depts = state.meta.dept ? [state.meta.dept] : [];
+      }
+      delete state.meta.dept;
+      state.clauses.forEach(c=>c.items.forEach(i=>{
+        if(!Array.isArray(i.doc)) i.doc = i.doc ? [i.doc] : [];
+      }));
+      document.getElementById('metaDate').value = state.meta.date||'';
+      document.getElementById('metaAuditor').value = state.meta.auditor||'';
+      document.getElementById('metaNumber').value = state.meta.number||'';
+      renderDeptChips();
+      save(); render();
+    }catch(err){
+      alert('Ошибка импорта: файл повреждён или имеет неверный формат.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// Экспорт в Excel — CSV с BOM (открывается в Excel корректно с кириллицей, без сторонних библиотек)
+function exportExcel(){
+  save();
+  const statusLabel = {ok:'Соответствует', warn:'Наблюдение', bad:'Несоответствие', '':'Не проверено'};
+  let rows = [['Клаузула','Критерий проверки','Документ','Статус','Комментарий']];
+  state.clauses.forEach(c=>{
+    c.items.forEach(i=>{
+      rows.push([c.title, i.q, (i.doc||[]).join('; '), statusLabel[i.status]||'', i.comment]);
+    });
+  });
+  const csv = rows.map(r=>r.map(cell=>{
+    const s = String(cell??'').replace(/"/g,'""');
+    return `"${s}"`;
+  }).join(';')).join('\r\n');
+  const blob = new Blob(['﻿'+csv], {type:'application/octet-stream'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  const meta = state.meta||{};
+  const deptPart = meta.depts && meta.depts.length ? meta.depts.join('_') : '';
+  a.download = `Чек-лист_аудита_ISO9001_${meta.number||deptPart||'ОУКП'}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// автосохранение мета-полей
+['metaDate','metaAuditor','metaNumber'].forEach(id=>{
+  document.getElementById(id).addEventListener('change', save);
+});
+
+load();
+</script>
+</body>
+</html>
