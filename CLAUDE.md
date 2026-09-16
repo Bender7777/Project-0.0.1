@@ -72,6 +72,20 @@ selected. Panel open/close state lives in `dropdown.is-open` + the panel's `hidd
 toggled by the trigger, an outside-click listener, and Escape. `computeStats`/`charts.js` are
 filter-agnostic — they just operate on whatever row array they're given.
 
+The panel itself is Excel-style: opening it snapshots `excludedDepts` into a separate
+`pendingExcludedDepts`, and every control inside (checkbox rows, "Выбрать все", "Сбросить")
+only mutates that pending copy via `syncDeptOptionVisuals()`/direct classList toggles — nothing
+touches `excludedDepts` or calls `refreshDashboard()` until "Ок" (`applyDeptDropdown()`)
+commits it and closes the panel. Closing any other way (outside click, Escape, re-clicking the
+trigger) just discards the pending edits, same as Excel's own filter dropdown. **Don't rebuild
+`els.deptList`'s DOM (innerHTML) in a checkbox's own click handler** — that was the bug that
+used to close the panel on every check: the click bubbles to the document-level outside-click
+listener afterward, and if the clicked `<button>` has already been replaced by then, the old
+detached node fails the `deptDropdown.contains(e.target)` check and reads as an outside click.
+Checkbox clicks must only toggle that button's own class/dataset, never touch `innerHTML`. The
+Ok button is disabled (`updateDeptOkState()`) whenever the pending set would exclude every
+department — a filter with nothing selected isn't a valid state to commit.
+
 **Visual theme:** chrome (header, primary/danger buttons, the dropdown trigger/checkboxes, the
 top `flag-ribbon` bar) uses Russian-flag colors (`--flag-white`/`--flag-blue`/`--flag-red` in
 `style.css`, white `#fff`, blue `#0039a6`/`#3987e5` dark, red `#d52b1e`/`#e66767` dark) via
@@ -110,6 +124,15 @@ a bar chart sitting on its axis) — `borderRadius` alone gives the rounded top.
 have no border (`borderWidth: 0`) since a white ring reads as a seam once the fill itself is
 shaded; `donutGlossPlugin` adds a soft specular highlight near the top of the ring instead,
 clipped to the annulus via `arc.innerRadius`/`outerRadius`/`x`/`y` off the first `ArcElement`.
+Entrance animation is staggered rather than everything popping in at once: `marksAnimation()`
+(shared by `baseChartOptions` and `donutChart`) sets `easing: 'easeOutBack'` (a slight
+overshoot) with a scriptable `delay` of `dataIndex * 45 + datasetIndex * 90` ms — but only when
+`ctx.type === 'data' && ctx.mode === 'default' && !ctx.active`, so hover/click re-draws stay
+instant rather than re-running the stagger. Donuts additionally set `animateScale: true` so
+they grow from the center instead of only sweeping around. Both bar and donut options set
+`transitions.active` to a short `easeOutQuart` (200–300ms) explicitly, overriding the base
+animation for just the hover/active state — without it, hover color transitions would inherit
+the 700ms bounce and feel sluggish.
 
 **Chart cards are bento tiles too:** every `.card` in `index.html` carries a `.card--1`…
 `.card--4` class that cycles through the same 4 hero-palette tokens as the KPI cards (same

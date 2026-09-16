@@ -63,7 +63,11 @@
         <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
           <div class="dropdown__list" id="dept-dropdown-list"></div>
           <div class="dropdown__footer">
-            <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+            <div class="dropdown__quick-actions">
+              <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
+              <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+            </div>
+            <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
           </div>
         </div>
       </div>

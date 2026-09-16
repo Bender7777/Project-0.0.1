@@ -10,13 +10,25 @@ function destroyChart(id) {
   }
 }
 
+// A staggered, slightly overshooting entrance (each mark grows in a beat
+// after the last) reads as more "alive" than everything popping in at
+// once — but only on the initial draw, never on hover/active redraws.
+function marksAnimation() {
+  return {
+    duration: 700,
+    easing: 'easeOutBack',
+    delay: (ctx) => (ctx.type === 'data' && ctx.mode === 'default' && !ctx.active ? ctx.dataIndex * 45 + (ctx.datasetIndex || 0) * 90 : 0),
+  };
+}
+
 function baseChartOptions(p) {
   Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", sans-serif';
   Chart.defaults.color = p.textSecondary;
   return {
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 250 },
+    animation: marksAnimation(),
+    transitions: { active: { animation: { duration: 200, easing: 'easeOutQuart' } } },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -87,7 +99,7 @@ function darken(hex, amount) {
 
 function obliqueGradient(ctx, area, hex, opts) {
   if (!area) return hex;
-  const { horizontal = false, lightAmt = 0.45, darkAmt = 0.36 } = opts || {};
+  const { horizontal = false, lightAmt = 0.52, darkAmt = 0.42 } = opts || {};
   const grad = horizontal
     ? ctx.createLinearGradient(area.left, 0, area.right, 0)
     : ctx.createLinearGradient(0, area.top, 0, area.bottom);
@@ -115,7 +127,7 @@ function glossyColorByIndex(colors, opts) {
 }
 
 function shadowColorForMode() {
-  return currentThemeMode() === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(15,15,15,0.4)';
+  return currentThemeMode() === 'dark' ? 'rgba(0,0,0,0.78)' : 'rgba(15,15,15,0.46)';
 }
 
 const volumeShadowPlugin = {
@@ -124,9 +136,9 @@ const volumeShadowPlugin = {
     const ctx = chart.ctx;
     ctx.save();
     ctx.shadowColor = shadowColorForMode();
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 26;
     ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 9;
+    ctx.shadowOffsetY = 13;
   },
   afterDatasetsDraw(chart) {
     chart.ctx.restore();
@@ -152,8 +164,8 @@ const donutGlossPlugin = {
     const hx = cx - outerRadius * 0.28;
     const hy = cy - outerRadius * 0.62;
     const grad = ctx.createRadialGradient(hx, hy, 1, hx, hy, outerRadius * 1.15);
-    grad.addColorStop(0, 'rgba(255,255,255,0.65)');
-    grad.addColorStop(0.45, 'rgba(255,255,255,0.16)');
+    grad.addColorStop(0, 'rgba(255,255,255,0.78)');
+    grad.addColorStop(0.45, 'rgba(255,255,255,0.22)');
     grad.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = grad;
     ctx.fillRect(cx - outerRadius, cy - outerRadius, outerRadius * 2, outerRadius * 2);
@@ -290,10 +302,10 @@ function donutChart(canvasId, p, labels, data, colors, opts) {
       datasets: [
         {
           data,
-          backgroundColor: glossyColorByIndex(colors, { lightAmt: 0.5, darkAmt: 0.3 }),
-          hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.62, darkAmt: 0.22 }),
+          backgroundColor: glossyColorByIndex(colors, { lightAmt: 0.58, darkAmt: 0.38 }),
+          hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.7, darkAmt: 0.26 }),
           borderWidth: 0,
-          hoverOffset: 10,
+          hoverOffset: 14,
           hoverBorderWidth: 0,
         },
       ],
@@ -302,7 +314,8 @@ function donutChart(canvasId, p, labels, data, colors, opts) {
       responsive: true,
       maintainAspectRatio: false,
       cutout: '62%',
-      animation: { duration: 250 },
+      animation: Object.assign(marksAnimation(), { animateScale: true, animateRotate: true }),
+      transitions: { active: { animation: { duration: 300, easing: 'easeOutQuart' } } },
       plugins: {
         legend: {
           position: 'bottom',

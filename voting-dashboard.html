@@ -398,10 +398,17 @@ body {
 .dropdown__footer {
   border-top: 1px solid var(--grid);
   margin-top: 6px;
-  padding-top: 6px;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dropdown__quick-actions {
+  display: flex;
+  gap: 6px;
 }
 .dropdown__reset {
-  width: 100%;
+  flex: 1;
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
@@ -414,6 +421,19 @@ body {
   text-align: center;
 }
 .dropdown__reset:hover { background: var(--grid); }
+.dropdown__ok {
+  width: 100%;
+  justify-content: center;
+  padding: 9px 10px;
+}
+.dropdown__ok:disabled,
+.dropdown__ok:disabled:hover {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+  box-shadow: var(--shadow-blue);
+}
 
 .kpi-grid {
   display: grid;
@@ -790,7 +810,11 @@ body {
         <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
           <div class="dropdown__list" id="dept-dropdown-list"></div>
           <div class="dropdown__footer">
-            <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+            <div class="dropdown__quick-actions">
+              <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
+              <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+            </div>
+            <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
           </div>
         </div>
       </div>
@@ -1343,13 +1367,25 @@ function destroyChart(id) {
   }
 }
 
+// A staggered, slightly overshooting entrance (each mark grows in a beat
+// after the last) reads as more "alive" than everything popping in at
+// once — but only on the initial draw, never on hover/active redraws.
+function marksAnimation() {
+  return {
+    duration: 700,
+    easing: 'easeOutBack',
+    delay: (ctx) => (ctx.type === 'data' && ctx.mode === 'default' && !ctx.active ? ctx.dataIndex * 45 + (ctx.datasetIndex || 0) * 90 : 0),
+  };
+}
+
 function baseChartOptions(p) {
   Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", sans-serif';
   Chart.defaults.color = p.textSecondary;
   return {
     responsive: true,
     maintainAspectRatio: false,
-    animation: { duration: 250 },
+    animation: marksAnimation(),
+    transitions: { active: { animation: { duration: 200, easing: 'easeOutQuart' } } },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -1420,7 +1456,7 @@ function darken(hex, amount) {
 
 function obliqueGradient(ctx, area, hex, opts) {
   if (!area) return hex;
-  const { horizontal = false, lightAmt = 0.45, darkAmt = 0.36 } = opts || {};
+  const { horizontal = false, lightAmt = 0.52, darkAmt = 0.42 } = opts || {};
   const grad = horizontal
     ? ctx.createLinearGradient(area.left, 0, area.right, 0)
     : ctx.createLinearGradient(0, area.top, 0, area.bottom);
@@ -1448,7 +1484,7 @@ function glossyColorByIndex(colors, opts) {
 }
 
 function shadowColorForMode() {
-  return currentThemeMode() === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(15,15,15,0.4)';
+  return currentThemeMode() === 'dark' ? 'rgba(0,0,0,0.78)' : 'rgba(15,15,15,0.46)';
 }
 
 const volumeShadowPlugin = {
@@ -1457,9 +1493,9 @@ const volumeShadowPlugin = {
     const ctx = chart.ctx;
     ctx.save();
     ctx.shadowColor = shadowColorForMode();
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 26;
     ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 9;
+    ctx.shadowOffsetY = 13;
   },
   afterDatasetsDraw(chart) {
     chart.ctx.restore();
@@ -1485,8 +1521,8 @@ const donutGlossPlugin = {
     const hx = cx - outerRadius * 0.28;
     const hy = cy - outerRadius * 0.62;
     const grad = ctx.createRadialGradient(hx, hy, 1, hx, hy, outerRadius * 1.15);
-    grad.addColorStop(0, 'rgba(255,255,255,0.65)');
-    grad.addColorStop(0.45, 'rgba(255,255,255,0.16)');
+    grad.addColorStop(0, 'rgba(255,255,255,0.78)');
+    grad.addColorStop(0.45, 'rgba(255,255,255,0.22)');
     grad.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = grad;
     ctx.fillRect(cx - outerRadius, cy - outerRadius, outerRadius * 2, outerRadius * 2);
@@ -1623,10 +1659,10 @@ function donutChart(canvasId, p, labels, data, colors, opts) {
       datasets: [
         {
           data,
-          backgroundColor: glossyColorByIndex(colors, { lightAmt: 0.5, darkAmt: 0.3 }),
-          hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.62, darkAmt: 0.22 }),
+          backgroundColor: glossyColorByIndex(colors, { lightAmt: 0.58, darkAmt: 0.38 }),
+          hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.7, darkAmt: 0.26 }),
           borderWidth: 0,
-          hoverOffset: 10,
+          hoverOffset: 14,
           hoverBorderWidth: 0,
         },
       ],
@@ -1635,7 +1671,8 @@ function donutChart(canvasId, p, labels, data, colors, opts) {
       responsive: true,
       maintainAspectRatio: false,
       cutout: '62%',
-      animation: { duration: 250 },
+      animation: Object.assign(marksAnimation(), { animateScale: true, animateRotate: true }),
+      transitions: { active: { animation: { duration: 300, easing: 'easeOutQuart' } } },
       plugins: {
         legend: {
           position: 'bottom',
@@ -1977,7 +2014,9 @@ const els = {
   deptLabel: document.getElementById('dept-dropdown-label'),
   deptPanel: document.getElementById('dept-dropdown-panel'),
   deptList: document.getElementById('dept-dropdown-list'),
+  deptSelectAll: document.getElementById('dept-dropdown-select-all'),
   deptReset: document.getElementById('dept-dropdown-reset'),
+  deptOk: document.getElementById('dept-dropdown-ok'),
   drilldownOverlay: document.getElementById('drilldown-overlay'),
   drilldownTitle: document.getElementById('drilldown-title'),
   drilldownCount: document.getElementById('drilldown-count'),
@@ -2008,13 +2047,37 @@ function deserializeRows(rows) {
 }
 
 // --- Department filter -----------------------------------------------------
+//
+// Excel-style: opening the panel snapshots the applied `excludedDepts` into
+// `pendingExcludedDepts`; checkboxes and the select-all/reset actions only
+// edit that pending copy. Nothing is applied to the dashboard (and the panel
+// never closes) until "Ок" commits it — closing any other way (outside
+// click, Escape, re-clicking the trigger) just discards the pending edits.
+
+let allDeptNames = [];
+let pendingExcludedDepts = new Set();
 
 function getFilteredRows() {
   if (!excludedDepts.size) return currentRows;
   return currentRows.filter((r) => !excludedDepts.has(r.dept));
 }
 
+function updateDeptOkState() {
+  els.deptOk.disabled = pendingExcludedDepts.size >= allDeptNames.length;
+}
+
+function syncDeptOptionVisuals() {
+  for (const btn of els.deptList.children) {
+    const checked = !pendingExcludedDepts.has(btn.dataset.dept);
+    btn.classList.toggle('is-checked', checked);
+    btn.setAttribute('aria-selected', String(checked));
+  }
+  updateDeptOkState();
+}
+
 function openDeptDropdown() {
+  pendingExcludedDepts = new Set(excludedDepts);
+  syncDeptOptionVisuals();
   els.deptDropdown.classList.add('is-open');
   els.deptPanel.hidden = false;
   els.deptTrigger.setAttribute('aria-expanded', 'true');
@@ -2031,12 +2094,20 @@ function toggleDeptDropdown() {
   else closeDeptDropdown();
 }
 
-function deptOptionRow({ label, count, checked }) {
+function applyDeptDropdown() {
+  if (els.deptOk.disabled) return;
+  excludedDepts = new Set(pendingExcludedDepts);
+  closeDeptDropdown();
+  refreshDashboard();
+}
+
+function deptOptionRow({ dept, count, checked }) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'dropdown__option' + (checked ? ' is-checked' : '');
   btn.setAttribute('role', 'option');
   btn.setAttribute('aria-selected', String(checked));
+  btn.dataset.dept = dept;
 
   const check = document.createElement('span');
   check.className = 'dropdown__check';
@@ -2045,13 +2116,22 @@ function deptOptionRow({ label, count, checked }) {
 
   const labelSpan = document.createElement('span');
   labelSpan.className = 'dropdown__option-label';
-  labelSpan.textContent = label;
+  labelSpan.textContent = dept;
   btn.appendChild(labelSpan);
 
   const countSpan = document.createElement('span');
   countSpan.className = 'dropdown__option-count';
   countSpan.textContent = count;
   btn.appendChild(countSpan);
+
+  btn.addEventListener('click', () => {
+    if (pendingExcludedDepts.has(dept)) pendingExcludedDepts.delete(dept);
+    else pendingExcludedDepts.add(dept);
+    const checkedNow = !pendingExcludedDepts.has(dept);
+    btn.classList.toggle('is-checked', checkedNow);
+    btn.setAttribute('aria-selected', String(checkedNow));
+    updateDeptOkState();
+  });
 
   return btn;
 }
@@ -2060,6 +2140,7 @@ function renderDeptFilter() {
   const deptMap = new Map();
   for (const r of currentRows) deptMap.set(r.dept, (deptMap.get(r.dept) || 0) + 1);
   const depts = [...deptMap.entries()].sort((a, b) => b[1] - a[1]);
+  allDeptNames = depts.map(([dept]) => dept);
 
   if (depts.length < 2) {
     els.filterBar.hidden = true;
@@ -2079,19 +2160,7 @@ function renderDeptFilter() {
 
   els.deptList.innerHTML = '';
   for (const [dept, count] of depts) {
-    const checked = !excludedDepts.has(dept);
-    const option = deptOptionRow({ label: dept, count, checked });
-    option.addEventListener('click', () => {
-      if (checked) {
-        // Keep at least one department selected.
-        if (excludedDepts.size >= depts.length - 1) return;
-        excludedDepts.add(dept);
-      } else {
-        excludedDepts.delete(dept);
-      }
-      refreshDashboard();
-    });
-    els.deptList.appendChild(option);
+    els.deptList.appendChild(deptOptionRow({ dept, count, checked: !excludedDepts.has(dept) }));
   }
 }
 
@@ -2243,10 +2312,15 @@ els.clearBtn.addEventListener('click', clearData);
 els.themeToggle.addEventListener('click', toggleTheme);
 
 els.deptTrigger.addEventListener('click', toggleDeptDropdown);
-els.deptReset.addEventListener('click', () => {
-  excludedDepts.clear();
-  refreshDashboard();
+els.deptSelectAll.addEventListener('click', () => {
+  pendingExcludedDepts.clear();
+  syncDeptOptionVisuals();
 });
+els.deptReset.addEventListener('click', () => {
+  pendingExcludedDepts = new Set(allDeptNames);
+  syncDeptOptionVisuals();
+});
+els.deptOk.addEventListener('click', applyDeptDropdown);
 document.addEventListener('click', (e) => {
   if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
 });

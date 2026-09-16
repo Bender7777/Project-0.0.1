@@ -20,7 +20,9 @@ const els = {
   deptLabel: document.getElementById('dept-dropdown-label'),
   deptPanel: document.getElementById('dept-dropdown-panel'),
   deptList: document.getElementById('dept-dropdown-list'),
+  deptSelectAll: document.getElementById('dept-dropdown-select-all'),
   deptReset: document.getElementById('dept-dropdown-reset'),
+  deptOk: document.getElementById('dept-dropdown-ok'),
   drilldownOverlay: document.getElementById('drilldown-overlay'),
   drilldownTitle: document.getElementById('drilldown-title'),
   drilldownCount: document.getElementById('drilldown-count'),
@@ -51,13 +53,37 @@ function deserializeRows(rows) {
 }
 
 // --- Department filter -----------------------------------------------------
+//
+// Excel-style: opening the panel snapshots the applied `excludedDepts` into
+// `pendingExcludedDepts`; checkboxes and the select-all/reset actions only
+// edit that pending copy. Nothing is applied to the dashboard (and the panel
+// never closes) until "Ок" commits it — closing any other way (outside
+// click, Escape, re-clicking the trigger) just discards the pending edits.
+
+let allDeptNames = [];
+let pendingExcludedDepts = new Set();
 
 function getFilteredRows() {
   if (!excludedDepts.size) return currentRows;
   return currentRows.filter((r) => !excludedDepts.has(r.dept));
 }
 
+function updateDeptOkState() {
+  els.deptOk.disabled = pendingExcludedDepts.size >= allDeptNames.length;
+}
+
+function syncDeptOptionVisuals() {
+  for (const btn of els.deptList.children) {
+    const checked = !pendingExcludedDepts.has(btn.dataset.dept);
+    btn.classList.toggle('is-checked', checked);
+    btn.setAttribute('aria-selected', String(checked));
+  }
+  updateDeptOkState();
+}
+
 function openDeptDropdown() {
+  pendingExcludedDepts = new Set(excludedDepts);
+  syncDeptOptionVisuals();
   els.deptDropdown.classList.add('is-open');
   els.deptPanel.hidden = false;
   els.deptTrigger.setAttribute('aria-expanded', 'true');
@@ -74,12 +100,20 @@ function toggleDeptDropdown() {
   else closeDeptDropdown();
 }
 
-function deptOptionRow({ label, count, checked }) {
+function applyDeptDropdown() {
+  if (els.deptOk.disabled) return;
+  excludedDepts = new Set(pendingExcludedDepts);
+  closeDeptDropdown();
+  refreshDashboard();
+}
+
+function deptOptionRow({ dept, count, checked }) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'dropdown__option' + (checked ? ' is-checked' : '');
   btn.setAttribute('role', 'option');
   btn.setAttribute('aria-selected', String(checked));
+  btn.dataset.dept = dept;
 
   const check = document.createElement('span');
   check.className = 'dropdown__check';
@@ -88,13 +122,22 @@ function deptOptionRow({ label, count, checked }) {
 
   const labelSpan = document.createElement('span');
   labelSpan.className = 'dropdown__option-label';
-  labelSpan.textContent = label;
+  labelSpan.textContent = dept;
   btn.appendChild(labelSpan);
 
   const countSpan = document.createElement('span');
   countSpan.className = 'dropdown__option-count';
   countSpan.textContent = count;
   btn.appendChild(countSpan);
+
+  btn.addEventListener('click', () => {
+    if (pendingExcludedDepts.has(dept)) pendingExcludedDepts.delete(dept);
+    else pendingExcludedDepts.add(dept);
+    const checkedNow = !pendingExcludedDepts.has(dept);
+    btn.classList.toggle('is-checked', checkedNow);
+    btn.setAttribute('aria-selected', String(checkedNow));
+    updateDeptOkState();
+  });
 
   return btn;
 }
@@ -103,6 +146,7 @@ function renderDeptFilter() {
   const deptMap = new Map();
   for (const r of currentRows) deptMap.set(r.dept, (deptMap.get(r.dept) || 0) + 1);
   const depts = [...deptMap.entries()].sort((a, b) => b[1] - a[1]);
+  allDeptNames = depts.map(([dept]) => dept);
 
   if (depts.length < 2) {
     els.filterBar.hidden = true;
@@ -122,19 +166,7 @@ function renderDeptFilter() {
 
   els.deptList.innerHTML = '';
   for (const [dept, count] of depts) {
-    const checked = !excludedDepts.has(dept);
-    const option = deptOptionRow({ label: dept, count, checked });
-    option.addEventListener('click', () => {
-      if (checked) {
-        // Keep at least one department selected.
-        if (excludedDepts.size >= depts.length - 1) return;
-        excludedDepts.add(dept);
-      } else {
-        excludedDepts.delete(dept);
-      }
-      refreshDashboard();
-    });
-    els.deptList.appendChild(option);
+    els.deptList.appendChild(deptOptionRow({ dept, count, checked: !excludedDepts.has(dept) }));
   }
 }
 
@@ -286,10 +318,15 @@ els.clearBtn.addEventListener('click', clearData);
 els.themeToggle.addEventListener('click', toggleTheme);
 
 els.deptTrigger.addEventListener('click', toggleDeptDropdown);
-els.deptReset.addEventListener('click', () => {
-  excludedDepts.clear();
-  refreshDashboard();
+els.deptSelectAll.addEventListener('click', () => {
+  pendingExcludedDepts.clear();
+  syncDeptOptionVisuals();
 });
+els.deptReset.addEventListener('click', () => {
+  pendingExcludedDepts = new Set(allDeptNames);
+  syncDeptOptionVisuals();
+});
+els.deptOk.addEventListener('click', applyDeptDropdown);
 document.addEventListener('click', (e) => {
   if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
 });
