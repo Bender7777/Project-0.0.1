@@ -40,19 +40,7 @@ function computeStats(rows) {
     .map(([name, groupedRows]) => ({ name, count: groupedRows.length, pct: pct(groupedRows.length, total), rows: groupedRows }))
     .sort((a, b) => b.count - a.count);
 
-  // 2. Dekret vs without.
-  const dekretRows = rows.filter((r) => r.dekret);
-  const nonDekretRows = rows.filter((r) => !r.dekret);
-  const dekret = {
-    count: dekretRows.length,
-    pct: pct(dekretRows.length, total),
-    withoutCount: nonDekretRows.length,
-    withoutPct: pct(nonDekretRows.length, total),
-    rows: dekretRows,
-    withoutRows: nonDekretRows,
-  };
-
-  // 3. Voted by day.
+  // 2. Voted by day.
   const dayBuckets = new Map();
   for (const r of rows) {
     const k = dateKey(r.date);
@@ -78,33 +66,7 @@ function computeStats(rows) {
   const notVotedRows = rows.filter((r) => !r.voted);
   const turnout = { count: votedRows.length, pct: pct(votedRows.length, total), rows: votedRows };
 
-  // Who didn't vote: split into decree (ДО) vs everyone else.
-  const notVotedDekretRows = notVotedRows.filter((r) => r.dekret);
-  const notVotedOtherRows = notVotedRows.filter((r) => !r.dekret);
-  const notVoted = {
-    count: notVotedRows.length,
-    pct: pct(notVotedRows.length, total),
-    rows: notVotedRows,
-    dekret: { count: notVotedDekretRows.length, pct: pct(notVotedDekretRows.length, notVotedRows.length), rows: notVotedDekretRows },
-    other: { count: notVotedOtherRows.length, pct: pct(notVotedOtherRows.length, notVotedRows.length), rows: notVotedOtherRows },
-  };
-
-  // 4. Dekret turnout: how many of the dekret group voted.
-  const dekretVotedRows = dekretRows.filter((r) => r.voted);
-  const dekretNotVotedRows = dekretRows.filter((r) => !r.voted);
-  const dekretTurnout = {
-    count: dekretVotedRows.length,
-    pct: pct(dekretVotedRows.length, dekretRows.length),
-    baseCount: dekretRows.length,
-    rows: dekretVotedRows,
-    notVotedRows: dekretNotVotedRows,
-  };
-
-  // 5. Dekret voters by format (ДЭГ / ОЧНО).
-  const dekretFormatGroups = groupRows(dekretVotedRows, (r) => r.format || 'Не указано');
-  const dekretFormat = [...dekretFormatGroups.entries()]
-    .map(([name, groupedRows]) => ({ name, count: groupedRows.length, pct: pct(groupedRows.length, dekretVotedRows.length), rows: groupedRows }))
-    .sort((a, b) => b.count - a.count);
+  const notVoted = { count: notVotedRows.length, pct: pct(notVotedRows.length, total), rows: notVotedRows };
 
   // Overall format among all voters.
   const formatGroups = groupRows(votedRows, (r) => r.format || 'Не указано');
@@ -147,12 +109,9 @@ function computeStats(rows) {
     total,
     allRows: rows,
     byDept,
-    dekret,
     byDay,
     turnout,
     notVoted,
-    dekretTurnout,
-    dekretFormat,
     format,
     deptTurnout,
     dayFormat,

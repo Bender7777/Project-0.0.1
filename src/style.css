@@ -276,12 +276,6 @@ body {
   color: var(--text-secondary);
 }
 
-.filter-bar__group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .segmented {
   display: inline-flex;
   padding: 3px;
@@ -567,6 +561,18 @@ body {
 .kpi--2 .kpi__sub strong { color: var(--kpi-2-text); }
 .kpi--3 .kpi__sub strong { color: var(--kpi-3-text); }
 .kpi--4 .kpi__sub strong { color: var(--kpi-4-text); }
+
+/* Card 2 is a pure Все/ЧКЭ/ДО filter control, not a clickable metric —
+   opt it out of the KPI tiles' pointer cursor and give its segmented
+   control room to fill the card's width instead of a value/sub pair. */
+.kpi--scope { cursor: default; }
+.kpi__segmented {
+  margin-top: 14px;
+  display: flex;
+  position: relative;
+  z-index: 1;
+}
+.kpi__segmented .segmented__btn { flex: 1; text-align: center; }
 
 .chart-grid {
   display: grid;

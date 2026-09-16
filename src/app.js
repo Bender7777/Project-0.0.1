@@ -2,6 +2,7 @@ const STORAGE_KEY = 'voting-dashboard:last-dataset:v1';
 const THEME_KEY = 'voting-dashboard:theme';
 
 let currentStats = null;
+let currentDeptStats = null;
 let currentRows = [];
 let excludedDepts = new Set();
 let scopeFilter = 'all'; // 'all' | 'chke' | 'do'
@@ -16,8 +17,6 @@ const els = {
   fileMeta: document.getElementById('file-meta'),
   toast: document.getElementById('toast'),
   filterBar: document.getElementById('filter-bar'),
-  deptFilterGroup: document.getElementById('dept-filter-group'),
-  scopeSegmented: document.getElementById('scope-segmented'),
   deptDropdown: document.getElementById('dept-dropdown'),
   deptTrigger: document.getElementById('dept-dropdown-trigger'),
   deptLabel: document.getElementById('dept-dropdown-label'),
@@ -80,18 +79,13 @@ function getFilteredRows() {
   return scoped.filter((r) => !excludedDepts.has(r.dept));
 }
 
-function syncScopeVisuals() {
-  els.scopeSegmented.querySelectorAll('.segmented__btn').forEach((btn) => {
-    const active = btn.dataset.scope === scopeFilter;
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-selected', String(active));
-  });
-}
-
+// The Все/ЧКЭ/ДО buttons live inside the "Категория" KPI tile
+// (renderKPIs in charts.js), rebuilt on every refreshDashboard() — so
+// there's no persistent DOM to keep in sync here, renderKPIs reads
+// `scopeFilter` fresh each time it runs.
 function setScope(scope) {
   if (scope === scopeFilter) return;
   scopeFilter = scope;
-  syncScopeVisuals();
   refreshDashboard();
 }
 
@@ -186,11 +180,11 @@ function renderDeptFilter() {
   allDeptNames = depts.map(([dept]) => dept);
 
   if (depts.length < 2) {
-    els.deptFilterGroup.hidden = true;
+    els.filterBar.hidden = true;
     closeDeptDropdown();
     return;
   }
-  els.deptFilterGroup.hidden = false;
+  els.filterBar.hidden = false;
 
   const includedCount = depts.length - excludedDepts.size;
   if (excludedDepts.size === 0) {
@@ -212,7 +206,9 @@ function renderDeptFilter() {
 function refreshDashboard(meta) {
   const filtered = getFilteredRows();
   const stats = computeStats(filtered);
+  const deptStats = computeStats(getScopedRows());
   currentStats = stats;
+  currentDeptStats = deptStats;
   els.emptyState.hidden = true;
   els.dashboard.hidden = false;
   els.clearBtn.hidden = false;
@@ -225,9 +221,8 @@ function refreshDashboard(meta) {
   els.subtitle.textContent = `${stats.total} записей${filterNote} • обновлено ${new Date().toLocaleString('ru-RU')}`;
   if (meta) els.fileMeta.textContent = meta;
 
-  els.filterBar.hidden = false;
   renderDeptFilter();
-  renderAllCharts(stats);
+  renderAllCharts(stats, deptStats);
 }
 
 async function handleFile(file) {
@@ -237,7 +232,6 @@ async function handleFile(file) {
     currentRows = rows;
     excludedDepts = new Set();
     scopeFilter = 'all';
-    syncScopeVisuals();
     refreshDashboard(`Файл: ${file.name} • ${rows.length} строк`);
     localStorage.setItem(
       STORAGE_KEY,
@@ -259,7 +253,6 @@ function restoreFromStorage() {
     currentRows = deserializeRows(rows);
     excludedDepts = new Set();
     scopeFilter = 'all';
-    syncScopeVisuals();
     refreshDashboard(`Файл: ${fileName} • сохранено ${new Date(savedAt).toLocaleString('ru-RU')}`);
   } catch (err) {
     console.warn('Не удалось восстановить сохранённые данные', err);
@@ -269,10 +262,10 @@ function restoreFromStorage() {
 function clearData() {
   localStorage.removeItem(STORAGE_KEY);
   currentStats = null;
+  currentDeptStats = null;
   currentRows = [];
   excludedDepts = new Set();
   scopeFilter = 'all';
-  syncScopeVisuals();
   els.dashboard.hidden = true;
   els.emptyState.hidden = false;
   els.clearBtn.hidden = true;
@@ -344,7 +337,7 @@ function applyTheme(mode) {
   } else {
     document.documentElement.removeAttribute('data-theme');
   }
-  if (currentStats) renderAllCharts(currentStats);
+  if (currentStats) renderAllCharts(currentStats, currentDeptStats);
 }
 
 function toggleTheme() {
@@ -375,10 +368,6 @@ els.deptReset.addEventListener('click', () => {
   syncDeptOptionVisuals();
 });
 els.deptOk.addEventListener('click', applyDeptDropdown);
-els.scopeSegmented.addEventListener('click', (e) => {
-  const btn = e.target.closest('.segmented__btn');
-  if (btn) setScope(btn.dataset.scope);
-});
 document.addEventListener('click', (e) => {
   if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
 });

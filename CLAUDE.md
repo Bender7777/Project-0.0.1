@@ -72,35 +72,49 @@ selected. Panel open/close state lives in `dropdown.is-open` + the panel's `hidd
 toggled by the trigger, an outside-click listener, and Escape. `computeStats`/`charts.js` are
 filter-agnostic — they just operate on whatever row array they're given.
 
-**Category scope filter (Все/ЧКЭ/ДО):** a `.segmented` control (`#scope-segmented`, next to the
-department dropdown inside `.filter-bar`) narrows `currentRows` by `r.dekret` *before* the
-department filter applies — `getScopedRows()` returns that scope-only slice (used to build the
-department checkbox list/counts so they reflect the active scope), and `getFilteredRows()` layers
-`excludedDepts` on top of it. The two filters combine, same as the subtitle's filter note (`(ДО,
-отфильтровано из N)`). `scopeFilter` ('all'|'chke'|'do') is separate app state alongside
-`excludedDepts`, reset to `'all'` in `handleFile`/`restoreFromStorage`/`clearData` exactly where
-`excludedDepts` is reset. `setScope()` re-renders via the same `refreshDashboard()` every other
-filter change goes through — `renderDeptFilter`/`renderAllCharts` don't know a scope filter
-exists, they just see a different row array.
+**Category scope filter (Все/ЧКЭ/ДО):** three buttons live inside the "Категория" KPI tile
+(`renderKPIs` in `charts.js` — card 2, `.kpi--scope`, not a stat card, see KPI hero tiles below)
+rather than in the filter bar; each calls the global `setScope()` in `app.js`. `getScopedRows()`
+narrows `currentRows` by `r.dekret` *before* the department filter applies, and
+`getFilteredRows()` layers `excludedDepts` on top of it — the two filters combine, same as the
+subtitle's filter note (`(ДО, отфильтровано из N)`). `scopeFilter` ('all'|'chke'|'do') is
+separate app state alongside `excludedDepts`, reset to `'all'` in
+`handleFile`/`restoreFromStorage`/`clearData` exactly where `excludedDepts` is reset. Since the
+buttons live inside `#kpi-grid`, which `renderKPIs` rebuilds (`innerHTML`) on every render,
+there's no persistent DOM to keep in sync — `setScope()` just flips `scopeFilter` and calls
+`refreshDashboard()`; the next `renderKPIs` reads `scopeFilter` fresh and sets `is-active` on
+the matching button itself. Don't reintroduce a `syncScopeVisuals()`-style helper for this — it
+would go stale the instant `renderKPIs` rebuilds the grid.
 
-Because `.filter-bar` now holds two independently-relevant controls (department dropdown — only
-meaningful with ≥2 departments; scope switcher — always meaningful once data is loaded), the
-group and the bar have separate visibility: `els.filterBar.hidden` is only ever tied to whether
-data is loaded (set in `refreshDashboard`/`clearData`), while `#dept-filter-group`'s own `hidden`
-is what `renderDeptFilter` toggles on the `depts.length < 2` check that used to hide the whole bar.
+**"По отделам" always shows every department, even while filtered.** `refreshDashboard`
+computes two stats objects — one from `getFilteredRows()` (scope + department, drives every
+other chart/KPI) and one from `getScopedRows()` (scope only) — and `renderAllCharts(stats,
+deptStats)` passes the latter to `renderDeptChart` alone, so this one chart never shrinks down
+to a single bar when a department gets selected elsewhere; it stays the full scoped list.
+Selection shows up two other ways instead: `deptRowHighlightPlugin` (`beforeDatasetsDraw`,
+skipped entirely when `excludedDepts` is empty) draws a full-width tinted band behind the bar
+of every currently-included department, and `renderDeptChart`'s own `colors` array swaps an
+excluded department's categorical color for `p.muted`. Both read the global `excludedDepts`
+directly — safe despite `charts.js` loading before `app.js` in `index.html`, since the
+functions that read it only run later, well after `app.js`'s top-level code has defined it
+(same pattern already used by `filterByDepartment`/`currentThemeMode()` calls from this file).
 
 **Department-bar click filters the dashboard, it doesn't drill down.** Unlike every other
-chart mark, clicking a bar in "По отделам" doesn't open the row modal — `renderDeptChart`
-sets its own `onHover`/`onClick` (not `drilldownHandlers()`) and calls `filterByDepartment(name)`
-in `app.js`, which drives the *same* `excludedDepts` state as the dropdown above it: clicking a
-department selects only that one, and clicking the currently-sole-selected department again
-toggles back to "all departments" (`excludedDepts.size === allDeptNames.length - 1 &&
-!excludedDepts.has(name)`). The click handler defers the actual filter/refresh with
-`setTimeout(fn, 0)` — calling `refreshDashboard()` (which destroys and recreates this exact
-chart via `destroyChart('dept')` → `new Chart(...)`) synchronously from inside Chart.js's own
-click dispatch for that same canvas throws `Cannot read properties of undefined (reading
-'handleEvent')` once Chart.js's internal event handling continues after the callback returns;
-deferring one tick lets Chart.js finish before the canvas it's still processing gets torn down.
+chart mark, clicking or hovering anywhere along a bar's row in "По отделам" doesn't open the
+row modal. `renderDeptChart` sets `options.interaction = { mode: 'y', intersect: false }` so
+the hit target is the whole row across the chart's full width, not just the rendered bar
+length — a low-headcount department's bar can be only a few pixels long, which would otherwise
+be nearly unclickable. Its own `onHover`/`onClick` (not `drilldownHandlers()`) call
+`filterByDepartment(name)` in `app.js`, which drives the *same* `excludedDepts` state as the
+dropdown above it: clicking a department selects only that one, and clicking the
+currently-sole-selected department again toggles back to "all departments"
+(`excludedDepts.size === allDeptNames.length - 1 && !excludedDepts.has(name)`). The click
+handler defers the actual filter/refresh with `setTimeout(fn, 0)` — calling
+`refreshDashboard()` (which destroys and recreates this exact chart via `destroyChart('dept')`
+→ `new Chart(...)`) synchronously from inside Chart.js's own click dispatch for that same
+canvas throws `Cannot read properties of undefined (reading 'handleEvent')` once Chart.js's
+internal event handling continues after the callback returns; deferring one tick lets Chart.js
+finish before the canvas it's still processing gets torn down.
 
 The panel itself is Excel-style: opening it snapshots `excludedDepts` into a separate
 `pendingExcludedDepts`, and every control inside (checkbox rows, "Выбрать все", "Сбросить")
@@ -134,15 +148,19 @@ independent of light/dark mode, each with a glass icon badge (`renderKPIs`'s `KP
 `charts.js` picks the SVG per card by index). The grid is an explicit asymmetric layout
 (`.kpi-grid` in `style.css`: card 1 spans both rows on the left, cards 2–4 fill the right)
 that collapses to a single column under 720px — `renderKPIs` always emits exactly 4 cards in
-this order, so adding/removing a KPI tile means updating both the JS array and the CSS
-grid-area rules together. Each tile is a real `<button>` (not a styled `<div>`) with a
-`rows`/`title` drill-down wired the same way as chart marks — `renderKPIs` attaches a click
-listener per card straight to the global `openDrilldown` after building the grid, rather than
-going through `drilldownHandlers()` (that helper is Chart.js-element-shaped; KPI tiles are
-plain DOM). The "Всего сотрудников" tile's rows come from `stats.allRows` — `computeStats`
-returns the untouched input row array under that key specifically so this tile has something
-to show (every other KPI already had a rows-bearing stat object — `turnout`, `dekret`,
-`dekretTurnout` — to point at).
+this order, so adding/removing a KPI tile means updating both the JS and the CSS grid-area
+rules together. Card 2 ("Категория") is the odd one out: it's a `<div class="kpi--scope">`,
+not a `<button>` — it carries no value/sub of its own and isn't a drilldown target, only the
+Все/ЧКЭ/ДО segmented control (see above). Cards 1/3/4 ("Всего сотрудников"/"Проголосовали"/"Не
+проголосовали") are real `<button>`s with a `rows`/`title` drill-down wired the same way as
+chart marks — `renderKPIs` attaches a click listener per stat card straight to the global
+`openDrilldown` after building the grid, rather than going through `drilldownHandlers()` (that
+helper is Chart.js-element-shaped; KPI tiles are plain DOM). The "Всего сотрудников" tile's
+rows come from `stats.allRows` — `computeStats` returns the untouched input row array under
+that key specifically so this tile has something to show (`turnout`/`notVoted` already had
+rows-bearing stat objects to point at for the other two). Card 3 "Проголосовали" and card 4
+"Не проголосовали" both react to the active department + scope filter same as everything else,
+since `renderKPIs` is handed the same filtered `stats` object as every other render function.
 
 **Volume on the marks themselves:** bars and donut arcs in `charts.js` aren't flat fills —
 `glossyColor`/`glossyColorByIndex` (built on `obliqueGradient`, `lighten`/`darken`) turn each
@@ -203,8 +221,8 @@ the `new Chart(...)` call, since Chart.js reads the container size at constructi
 `padding + count * (perRow * groupSize + gap)`, clamped to `[min, max]` — beyond `max` the body
 switches to `card__body--scroll` (`overflow-y: auto`) instead of growing forever. Dept
 (`groupSize: 1`) and `renderInstructorChart` (`groupSize: 1`, see next) call this on every
-render so both stay readable at any category count; days/format/dekret have a fixed known
-category count and don't need it.
+render so both stay readable at any category count; days/format have a fixed known category
+count and don't need it.
 
 **Instructor load is one stacked bar per instructor, not two side-by-side ones.** It used to
 draw "всего закреплено" and "проголосовало" as two separate bars per instructor and was still
@@ -215,35 +233,36 @@ shows the turnout proportion directly, at half the vertical cost. `byInstructor`
 `stats.js` carry `notVotedRows` (`rows.filter(r => !r.voted)`) alongside `rows`/`votedRows` for
 this dataset's drill-down.
 
-**Not-voted breakdown:** `computeStats` also returns `notVoted` — `{ count, pct, rows, dekret:
-{ count, pct, rows }, other: { count, pct, rows } }`, splitting everyone who didn't vote into
-the decree (ДО) group vs everyone else. `renderNotVotedChart`/`#card-not-voted` renders it the
-same way as the other small donut cards. The `other` group is *labeled* "ЧКЭ" in the chart/table
-(`renderNotVotedChart`'s `labels` array) — that's a display label only, the stats key stays
-`other` since nothing else about that group is ЧКЭ-specific.
-
-**Card order groups by topic, not just by chart type.** The 6 small cards read as two rows:
-general overview first (По отделам, Голосование по дням, Способ голосования), then everything
-ДО-related together (Декретный отпуск, Явка сотрудников в ДО, Не проголосовали) — and the first
-wide card continues that ДО thread (ДО: способ голосования) before the remaining general wide
-cards (Дни × способ, Явка по отделам, Нагрузка по инструкторам). If you add a ДО-specific stat,
-slot it into that second small-card row or right after the ДО wide card, not wherever is
-convenient — the grouping is the point of the current order, re-derive it rather than appending.
+**No more ДО-specific charts or KPI tiles — that information now lives entirely behind the
+scope filter.** The dashboard used to carry four decree-specific visualizations (a "Декретный
+отпуск" donut, a "Явка сотрудников в ДО" donut, a "ДО: способ голосования" donut, and a
+"Не проголосовали" donut splitting ДО vs "ЧКЭ") plus two decree-specific KPI tiles ("В
+декретном отпуске", "Явка среди ДО"). All of that was removed: `computeStats` no longer
+computes `dekret`/`dekretTurnout`/`dekretFormat`, and `notVoted` was simplified down to a
+plain `{ count, pct, rows }` (used only by KPI card 4 now — it no longer carries a ДО/`other`
+split). To see decree-specific numbers now, select "ДО" in the Категория KPI tile — every
+remaining chart and KPI recomputes against that scoped row set instead of needing its own
+dedicated ДО chart. **Don't add a new decree-specific chart/KPI back** — extend the scope
+filter's reach instead (e.g. a new stat in `computeStats` any chart can read, scoped for free
+via `getFilteredRows()`/`getScopedRows()`).
 
 **Bento grid balance:** the `.card--1`…`.card--4` hero-palette classes cycle in DOM order
-across *all* 10 chart cards (6 small + 4 wide) in their current (topic-grouped) order, not
+across *all* chart cards (currently 3 small + 3 wide = 6) in their current order, not
 per-section — so adding, removing, or reordering a card shifts every color after it; re-derive
-the sequence rather than picking a color ad hoc. The card count is deliberately 6 small (two
-full 3-column rows) + 4 wide: an odd small-card count leaves a lone card alone in its row with
-dead space beside it (that happened when `#card-not-voted` was first added as a 7th small
-card) — if a new stat card unbalances the count again, either add a second one to get back to a
-multiple of 3, or promote one to `.card--wide` with a `.card__panel--split` layout (see next)
-rather than leaving a gap.
+the sequence rather than picking a color ad hoc. Small-card count should stay a multiple of
+the grid's column count at the widest breakpoint (3, via `.chart-grid`'s `repeat(auto-fit,
+minmax(340px, 1fr))`) so a full row never leaves a lone card next to dead space — if a new stat
+card unbalances the count, either add a second one to get back to a multiple of 3, or promote
+it to `.card--wide` with a `.card__panel--split` layout (see next) instead. Wide cards
+(`.card--wide { grid-column: 1 / -1; }`) always take a full row each regardless of count, so
+their number alone never causes a balance problem.
 
-**`.card__panel--split`:** a wide card built around a single donut (`#card-dekret-format` is
-the current example) doesn't need the chart to stack above a mostly-empty-width table — this
-modifier lays the panel out as a row (fixed-width chart, table filling the rest, vertically
-centered), falling back to the normal stacked column under 640px. Only donuts in wide cards
+**`.card__panel--split`:** for a wide card built around a single donut — none of the current
+wide cards are (they're all bar charts, which already fill the width on their own), so this
+modifier is currently unused CSS, kept for the next one — the chart doesn't need to stack above
+a mostly-empty-width table. This modifier lays the panel out as a row (fixed-width chart, table
+filling the rest, vertically centered), falling back to the normal stacked column under 640px.
+Only donuts in wide cards
 should use it; bar charts already fill wide cards' width on their own.
 
 **Chart cards are bento tiles too:** every `.card` in `index.html` carries a `.card--1`…

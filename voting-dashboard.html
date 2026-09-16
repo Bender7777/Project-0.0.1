@@ -287,12 +287,6 @@ body {
   color: var(--text-secondary);
 }
 
-.filter-bar__group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .segmented {
   display: inline-flex;
   padding: 3px;
@@ -579,6 +573,18 @@ body {
 .kpi--3 .kpi__sub strong { color: var(--kpi-3-text); }
 .kpi--4 .kpi__sub strong { color: var(--kpi-4-text); }
 
+/* Card 2 is a pure Все/ЧКЭ/ДО filter control, not a clickable metric —
+   opt it out of the KPI tiles' pointer cursor and give its segmented
+   control room to fill the card's width instead of a value/sub pair. */
+.kpi--scope { cursor: default; }
+.kpi__segmented {
+  margin-top: 14px;
+  display: flex;
+  position: relative;
+  z-index: 1;
+}
+.kpi__segmented .segmented__btn { flex: 1; text-align: center; }
+
 .chart-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
@@ -862,31 +868,21 @@ body {
   <section id="dashboard" class="dashboard" hidden>
 
     <div class="filter-bar" id="filter-bar" hidden>
-      <div class="filter-bar__group" id="dept-filter-group">
-        <span class="filter-bar__label">Отдел</span>
-        <div class="dropdown" id="dept-dropdown">
-          <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
-            <span id="dept-dropdown-label">Все отделы</span>
-            <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
-            <div class="dropdown__list" id="dept-dropdown-list"></div>
-            <div class="dropdown__footer">
-              <div class="dropdown__quick-actions">
-                <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
-                <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
-              </div>
-              <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
+      <span class="filter-bar__label">Отдел</span>
+      <div class="dropdown" id="dept-dropdown">
+        <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <span id="dept-dropdown-label">Все отделы</span>
+          <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
+          <div class="dropdown__list" id="dept-dropdown-list"></div>
+          <div class="dropdown__footer">
+            <div class="dropdown__quick-actions">
+              <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
+              <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
             </div>
+            <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
           </div>
-        </div>
-      </div>
-      <div class="filter-bar__group">
-        <span class="filter-bar__label">Категория</span>
-        <div class="segmented" id="scope-segmented" role="tablist" aria-label="Категория сотрудников">
-          <button type="button" class="segmented__btn is-active" data-scope="all" role="tab" aria-selected="true">Все</button>
-          <button type="button" class="segmented__btn" data-scope="chke" role="tab" aria-selected="false">ЧКЭ</button>
-          <button type="button" class="segmented__btn" data-scope="do" role="tab" aria-selected="false">ДО</button>
         </div>
       </div>
     </div>
@@ -932,62 +928,6 @@ body {
             <canvas id="chart-format" role="img" aria-label="Способ голосования"></canvas>
           </div>
           <div class="card__table" id="table-format"></div>
-        </div>
-      </article>
-
-      <article class="card card--chart card--4" id="card-dekret">
-        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 14.3l2 2 4-4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <div class="card__head">
-          <h3>Декретный отпуск</h3>
-          <p class="card__desc">Доля сотрудников в ДО и без ДО</p>
-        </div>
-        <div class="card__panel">
-          <div class="card__body card__body--donut">
-            <canvas id="chart-dekret" role="img" aria-label="Доля ДО и без ДО"></canvas>
-          </div>
-          <div class="card__table" id="table-dekret"></div>
-        </div>
-      </article>
-
-      <article class="card card--chart card--1" id="card-dekret-turnout">
-        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12.3l2.4 2.4 4.6-5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <div class="card__head">
-          <h3>Явка сотрудников в ДО</h3>
-          <p class="card__desc">Сколько из находящихся в декрете проголосовало</p>
-        </div>
-        <div class="card__panel">
-          <div class="card__body card__body--donut">
-            <canvas id="chart-dekret-turnout" role="img" aria-label="Явка сотрудников в декрете"></canvas>
-          </div>
-          <div class="card__table" id="table-dekret-turnout"></div>
-        </div>
-      </article>
-
-      <article class="card card--chart card--2" id="card-not-voted">
-        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M9.3 9.3l5.4 5.4M14.7 9.3l-5.4 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-        <div class="card__head">
-          <h3>Не проголосовали</h3>
-          <p class="card__desc">Всего не пришедших к голосованию — ДО и ЧКЭ</p>
-        </div>
-        <div class="card__panel">
-          <div class="card__body card__body--donut">
-            <canvas id="chart-not-voted" role="img" aria-label="Не проголосовавшие: ДО и ЧКЭ"></canvas>
-          </div>
-          <div class="card__table" id="table-not-voted"></div>
-        </div>
-      </article>
-
-      <article class="card card--chart card--wide card--3" id="card-dekret-format">
-        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 4a8 8 0 0 1 6.9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-        <div class="card__head">
-          <h3>ДО: способ голосования</h3>
-          <p class="card__desc">ДЭГ и очно среди проголосовавших из декрета</p>
-        </div>
-        <div class="card__panel card__panel--split">
-          <div class="card__body card__body--donut">
-            <canvas id="chart-dekret-format" role="img" aria-label="Способ голосования сотрудников в декрете"></canvas>
-          </div>
-          <div class="card__table" id="table-dekret-format"></div>
         </div>
       </article>
 
@@ -1340,19 +1280,7 @@ function computeStats(rows) {
     .map(([name, groupedRows]) => ({ name, count: groupedRows.length, pct: pct(groupedRows.length, total), rows: groupedRows }))
     .sort((a, b) => b.count - a.count);
 
-  // 2. Dekret vs without.
-  const dekretRows = rows.filter((r) => r.dekret);
-  const nonDekretRows = rows.filter((r) => !r.dekret);
-  const dekret = {
-    count: dekretRows.length,
-    pct: pct(dekretRows.length, total),
-    withoutCount: nonDekretRows.length,
-    withoutPct: pct(nonDekretRows.length, total),
-    rows: dekretRows,
-    withoutRows: nonDekretRows,
-  };
-
-  // 3. Voted by day.
+  // 2. Voted by day.
   const dayBuckets = new Map();
   for (const r of rows) {
     const k = dateKey(r.date);
@@ -1378,33 +1306,7 @@ function computeStats(rows) {
   const notVotedRows = rows.filter((r) => !r.voted);
   const turnout = { count: votedRows.length, pct: pct(votedRows.length, total), rows: votedRows };
 
-  // Who didn't vote: split into decree (ДО) vs everyone else.
-  const notVotedDekretRows = notVotedRows.filter((r) => r.dekret);
-  const notVotedOtherRows = notVotedRows.filter((r) => !r.dekret);
-  const notVoted = {
-    count: notVotedRows.length,
-    pct: pct(notVotedRows.length, total),
-    rows: notVotedRows,
-    dekret: { count: notVotedDekretRows.length, pct: pct(notVotedDekretRows.length, notVotedRows.length), rows: notVotedDekretRows },
-    other: { count: notVotedOtherRows.length, pct: pct(notVotedOtherRows.length, notVotedRows.length), rows: notVotedOtherRows },
-  };
-
-  // 4. Dekret turnout: how many of the dekret group voted.
-  const dekretVotedRows = dekretRows.filter((r) => r.voted);
-  const dekretNotVotedRows = dekretRows.filter((r) => !r.voted);
-  const dekretTurnout = {
-    count: dekretVotedRows.length,
-    pct: pct(dekretVotedRows.length, dekretRows.length),
-    baseCount: dekretRows.length,
-    rows: dekretVotedRows,
-    notVotedRows: dekretNotVotedRows,
-  };
-
-  // 5. Dekret voters by format (ДЭГ / ОЧНО).
-  const dekretFormatGroups = groupRows(dekretVotedRows, (r) => r.format || 'Не указано');
-  const dekretFormat = [...dekretFormatGroups.entries()]
-    .map(([name, groupedRows]) => ({ name, count: groupedRows.length, pct: pct(groupedRows.length, dekretVotedRows.length), rows: groupedRows }))
-    .sort((a, b) => b.count - a.count);
+  const notVoted = { count: notVotedRows.length, pct: pct(notVotedRows.length, total), rows: notVotedRows };
 
   // Overall format among all voters.
   const formatGroups = groupRows(votedRows, (r) => r.format || 'Не указано');
@@ -1447,12 +1349,9 @@ function computeStats(rows) {
     total,
     allRows: rows,
     byDept,
-    dekret,
     byDay,
     turnout,
     notVoted,
-    dekretTurnout,
-    dekretFormat,
     format,
     deptTurnout,
     dayFormat,
@@ -1673,20 +1572,25 @@ const barInlineLabelsPlugin = {
 };
 
 const KPI_ICONS = [
-  // users
+  // users (card 1 — Всего сотрудников)
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 4.3c1.6.4 2.8 1.8 2.8 3.5 0 1.7-1.2 3.1-2.8 3.5M18.5 14.2c2 .5 3.5 2.3 3.5 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
-  // check circle
+  // funnel (card 2 — Категория filter control)
+  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5h16l-6.2 7.4V19l-3.6 2v-8.6L4 5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+  // check circle (card 3 — Проголосовали)
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12.3l2.4 2.4 4.6-5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  // calendar / leave
-  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 14.3l2 2 4-4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  // pulse / turnout
-  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 13h3.2l2-4.5 3 9 2.4-6.5 1.6 2h5.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  // x circle (card 4 — Не проголосовали)
+  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M9.3 9.3l5.4 5.4M14.7 9.3l-5.4 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
 ];
 
+// Card 2 ("Категория") is a pure Все/ЧКЭ/ДО filter control, not a metric —
+// it carries no value/sub of its own and isn't a drilldown button. Its
+// buttons call the global `setScope()` from app.js, same cross-file
+// pattern as `openDrilldown`/`filterByDepartment`.
 function renderKPIs(stats) {
   const el = document.getElementById('kpi-grid');
-  const cards = [
+  const statCards = [
     {
+      index: 0,
       label: 'Всего сотрудников',
       value: stats.total.toLocaleString('ru-RU'),
       sub: `${stats.byDept.length} отдел(ов)`,
@@ -1694,6 +1598,7 @@ function renderKPIs(stats) {
       rows: stats.allRows,
     },
     {
+      index: 2,
       label: 'Проголосовали',
       value: stats.turnout.count.toLocaleString('ru-RU'),
       sub: `<strong>${fmtPct(stats.turnout.pct)}</strong> от общего числа`,
@@ -1701,33 +1606,46 @@ function renderKPIs(stats) {
       rows: stats.turnout.rows,
     },
     {
-      label: 'В декретном отпуске (ДО)',
-      value: stats.dekret.count.toLocaleString('ru-RU'),
-      sub: `<strong>${fmtPct(stats.dekret.pct)}</strong> от общего числа`,
-      title: 'В декретном отпуске (ДО)',
-      rows: stats.dekret.rows,
-    },
-    {
-      label: 'Явка среди ДО',
-      value: stats.dekretTurnout.count.toLocaleString('ru-RU'),
-      sub: `<strong>${fmtPct(stats.dekretTurnout.pct)}</strong> из ${stats.dekretTurnout.baseCount} чел. в ДО`,
-      title: 'Явка среди ДО',
-      rows: stats.dekretTurnout.rows,
+      index: 3,
+      label: 'Не проголосовали',
+      value: stats.notVoted.count.toLocaleString('ru-RU'),
+      sub: `<strong>${fmtPct(stats.notVoted.pct)}</strong> от общего числа`,
+      title: 'Не проголосовали',
+      rows: stats.notVoted.rows,
     },
   ];
-  el.innerHTML = cards
-    .map(
-      (c, i) => `
-    <button type="button" class="kpi kpi--${i + 1}" data-kpi-index="${i}">
-      <span class="kpi__icon">${KPI_ICONS[i]}</span>
+
+  const statCardHtml = (c) => `
+    <button type="button" class="kpi kpi--${c.index + 1}" data-kpi-index="${c.index}">
+      <span class="kpi__icon">${KPI_ICONS[c.index]}</span>
       <p class="kpi__label">${c.label}</p>
       <p class="kpi__value">${c.value}</p>
       <p class="kpi__sub">${c.sub}</p>
-    </button>`
-    )
-    .join('');
-  el.querySelectorAll('.kpi').forEach((node, i) => {
-    node.addEventListener('click', () => openDrilldown(cards[i].title, cards[i].rows));
+    </button>`;
+
+  const scopeCardHtml = `
+    <div class="kpi kpi--2 kpi--scope">
+      <span class="kpi__icon">${KPI_ICONS[1]}</span>
+      <p class="kpi__label">Категория</p>
+      <div class="kpi__segmented segmented" id="scope-segmented" role="tablist" aria-label="Категория сотрудников">
+        <button type="button" class="segmented__btn" data-scope="all" role="tab">Все</button>
+        <button type="button" class="segmented__btn" data-scope="chke" role="tab">ЧКЭ</button>
+        <button type="button" class="segmented__btn" data-scope="do" role="tab">ДО</button>
+      </div>
+    </div>`;
+
+  el.innerHTML = [statCardHtml(statCards[0]), scopeCardHtml, statCardHtml(statCards[1]), statCardHtml(statCards[2])].join('');
+
+  el.querySelectorAll('.kpi[data-kpi-index]').forEach((node) => {
+    const c = statCards.find((sc) => sc.index === Number(node.dataset.kpiIndex));
+    node.addEventListener('click', () => openDrilldown(c.title, c.rows));
+  });
+
+  el.querySelectorAll('#scope-segmented .segmented__btn').forEach((btn) => {
+    const active = btn.dataset.scope === scopeFilter;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-selected', String(active));
+    btn.addEventListener('click', () => setScope(btn.dataset.scope));
   });
 }
 
@@ -1751,16 +1669,40 @@ function swatch(color) {
 
 // --- Individual charts -----------------------------------------------------
 
+// Full-width highlight band behind the bar of every currently-included
+// department, drawn before the bars so the bar sits on top of it — the
+// visual cue for "selected" that survives the chart always showing every
+// department (see renderDeptChart).
+const deptRowHighlightPlugin = {
+  id: 'deptRowHighlight',
+  beforeDatasetsDraw(chart) {
+    if (!excludedDepts.size) return;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta || !meta.data.length) return;
+    const ctx = chart.ctx;
+    const area = chart.chartArea;
+    ctx.save();
+    ctx.fillStyle = currentThemeMode() === 'dark' ? 'rgba(57,135,229,0.22)' : 'rgba(0,57,166,0.10)';
+    meta.data.forEach((bar, i) => {
+      if (excludedDepts.has(chart.data.labels[i])) return;
+      const h = bar.height || 30;
+      ctx.fillRect(area.left, bar.y - h / 2, area.width, h);
+    });
+    ctx.restore();
+  },
+};
+
 function renderDeptChart(stats) {
   const p = currentPalette();
   destroyChart('dept');
   const labels = stats.byDept.map((d) => d.name);
-  const colors = stats.byDept.map((_, i) => categoricalColor(i));
+  const filterActive = excludedDepts.size > 0;
+  const colors = stats.byDept.map((d, i) => (filterActive && excludedDepts.has(d.name) ? p.muted : categoricalColor(i)));
   const inlineLabels = stats.byDept.map((d) => `${d.name} — ${d.count}`);
   sizeCategoryChartBody('chart-dept', stats.byDept.length, { perRow: 32, gap: 10, padding: 24, min: 180, max: 460 });
   chartRegistry.dept = new Chart(document.getElementById('chart-dept'), {
     type: 'bar',
-    plugins: [volumeShadowPlugin, barInlineLabelsPlugin],
+    plugins: [volumeShadowPlugin, deptRowHighlightPlugin, barInlineLabelsPlugin],
     data: {
       labels,
       datasets: [
@@ -1776,6 +1718,10 @@ function renderDeptChart(stats) {
     },
     options: Object.assign(baseChartOptions(p), {
       indexAxis: 'y',
+      // 'y'/intersect:false makes the whole row clickable/hoverable, not
+      // just the rendered bar length — needed since short bars (low
+      // headcount departments) would otherwise be almost unclickable.
+      interaction: { mode: 'y', intersect: false },
       scales: {
         x: gridScale(p, { beginAtZero: true, ticks: { precision: 0 } }),
         y: { grid: { display: false }, border: { display: false }, ticks: { display: false } },
@@ -1785,7 +1731,10 @@ function renderDeptChart(stats) {
       }),
       // Unlike every other chart, a click here drives the department filter
       // (same excludedDepts state as the dropdown above the dashboard)
-      // instead of opening the drill-down modal.
+      // instead of opening the drill-down modal — and this chart always
+      // keeps every department visible (it's rendered from scope-only
+      // stats, not the department-filtered ones), highlighting the
+      // included row(s) instead of shrinking down to just the selection.
       onHover: (evt, elements, chart) => {
         chart.canvas.style.cursor = elements.length ? 'pointer' : 'default';
       },
@@ -1840,26 +1789,6 @@ function donutChart(canvasId, p, labels, data, colors, opts) {
         : {}),
     },
   });
-}
-
-function renderDekretChart(stats) {
-  const p = currentPalette();
-  destroyChart('dekret');
-  const labels = ['В декрете (ДО)', 'Без ДО'];
-  const data = [stats.dekret.count, stats.dekret.withoutCount];
-  const colors = [categoricalColor(0), categoricalColor(1)];
-  chartRegistry.dekret = donutChart('chart-dekret', p, labels, data, colors, {
-    rowsByIndex: [stats.dekret.rows, stats.dekret.withoutRows],
-    titlePrefix: 'Декретный отпуск',
-  });
-  renderTable(
-    'table-dekret',
-    [{ label: '' }, { label: 'Категория' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
-    [
-      [swatch(colors[0]), labels[0], data[0], fmtPct(stats.dekret.pct)],
-      [swatch(colors[1]), labels[1], data[1], fmtPct(stats.dekret.withoutPct)],
-    ]
-  );
 }
 
 function renderDaysChart(stats) {
@@ -1919,68 +1848,6 @@ function renderFormatChart(stats) {
     'table-format',
     [{ label: '' }, { label: 'Способ' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
     stats.format.map((f, i) => [swatch(colors[i]), f.name, f.count, fmtPct(f.pct)])
-  );
-}
-
-function renderNotVotedChart(stats) {
-  const p = currentPalette();
-  destroyChart('notVoted');
-  const nv = stats.notVoted;
-  const labels = ['ДО', 'ЧКЭ'];
-  const data = [nv.dekret.count, nv.other.count];
-  const colors = [categoricalColor(0), p.muted];
-  chartRegistry.notVoted = donutChart('chart-not-voted', p, labels, data, colors, {
-    rowsByIndex: [nv.dekret.rows, nv.other.rows],
-    titlePrefix: 'Не проголосовали',
-  });
-  renderTable(
-    'table-not-voted',
-    [{ label: '' }, { label: 'Категория' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
-    [
-      [swatch(colors[0]), labels[0], nv.dekret.count, fmtPct(nv.dekret.pct)],
-      [swatch(colors[1]), labels[1], nv.other.count, fmtPct(nv.other.pct)],
-    ]
-  );
-}
-
-function renderDekretTurnoutChart(stats) {
-  const p = currentPalette();
-  destroyChart('dekretTurnout');
-  const notVoted = stats.dekretTurnout.baseCount - stats.dekretTurnout.count;
-  const labels = ['Проголосовали', 'Не проголосовали'];
-  const data = [stats.dekretTurnout.count, notVoted];
-  const colors = [p.good, p.muted];
-  chartRegistry.dekretTurnout = donutChart('chart-dekret-turnout', p, labels, data, colors, {
-    rowsByIndex: [stats.dekretTurnout.rows, stats.dekretTurnout.notVotedRows],
-    titlePrefix: 'Явка сотрудников в ДО',
-  });
-  renderTable(
-    'table-dekret-turnout',
-    [{ label: '' }, { label: '' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
-    [
-      [swatch(colors[0]), labels[0], data[0], fmtPct(stats.dekretTurnout.pct)],
-      [swatch(colors[1]), labels[1], data[1], fmtPct(pct(notVoted, stats.dekretTurnout.baseCount))],
-    ]
-  );
-}
-
-function renderDekretFormatChart(stats) {
-  const p = currentPalette();
-  destroyChart('dekretFormat');
-  const labels = stats.dekretFormat.map((f) => f.name);
-  const colors = labels.map((_, i) => categoricalColor(i));
-  chartRegistry.dekretFormat = donutChart(
-    'chart-dekret-format',
-    p,
-    labels,
-    stats.dekretFormat.map((f) => f.count),
-    colors,
-    { rowsByIndex: stats.dekretFormat.map((f) => f.rows), titlePrefix: 'ДО: способ голосования' }
-  );
-  renderTable(
-    'table-dekret-format',
-    [{ label: '' }, { label: 'Способ' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
-    stats.dekretFormat.map((f, i) => [swatch(colors[i]), f.name, f.count, fmtPct(f.pct)])
   );
 }
 
@@ -2122,15 +1989,14 @@ function renderInstructorChart(stats) {
   });
 }
 
-function renderAllCharts(stats) {
+// `deptStats` is optional and, when given, is scope-only (no department
+// filter applied) so "По отделам" can always show every department — see
+// renderDeptChart. Falls back to `stats` for direct/manual calls.
+function renderAllCharts(stats, deptStats) {
   renderKPIs(stats);
-  renderDeptChart(stats);
+  renderDeptChart(deptStats || stats);
   renderDaysChart(stats);
   renderFormatChart(stats);
-  renderDekretChart(stats);
-  renderDekretTurnoutChart(stats);
-  renderNotVotedChart(stats);
-  renderDekretFormatChart(stats);
   renderDayFormatChart(stats);
   renderDeptTurnoutChart(stats);
   renderInstructorChart(stats);
@@ -2142,6 +2008,7 @@ const STORAGE_KEY = 'voting-dashboard:last-dataset:v1';
 const THEME_KEY = 'voting-dashboard:theme';
 
 let currentStats = null;
+let currentDeptStats = null;
 let currentRows = [];
 let excludedDepts = new Set();
 let scopeFilter = 'all'; // 'all' | 'chke' | 'do'
@@ -2156,8 +2023,6 @@ const els = {
   fileMeta: document.getElementById('file-meta'),
   toast: document.getElementById('toast'),
   filterBar: document.getElementById('filter-bar'),
-  deptFilterGroup: document.getElementById('dept-filter-group'),
-  scopeSegmented: document.getElementById('scope-segmented'),
   deptDropdown: document.getElementById('dept-dropdown'),
   deptTrigger: document.getElementById('dept-dropdown-trigger'),
   deptLabel: document.getElementById('dept-dropdown-label'),
@@ -2220,18 +2085,13 @@ function getFilteredRows() {
   return scoped.filter((r) => !excludedDepts.has(r.dept));
 }
 
-function syncScopeVisuals() {
-  els.scopeSegmented.querySelectorAll('.segmented__btn').forEach((btn) => {
-    const active = btn.dataset.scope === scopeFilter;
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-selected', String(active));
-  });
-}
-
+// The Все/ЧКЭ/ДО buttons live inside the "Категория" KPI tile
+// (renderKPIs in charts.js), rebuilt on every refreshDashboard() — so
+// there's no persistent DOM to keep in sync here, renderKPIs reads
+// `scopeFilter` fresh each time it runs.
 function setScope(scope) {
   if (scope === scopeFilter) return;
   scopeFilter = scope;
-  syncScopeVisuals();
   refreshDashboard();
 }
 
@@ -2326,11 +2186,11 @@ function renderDeptFilter() {
   allDeptNames = depts.map(([dept]) => dept);
 
   if (depts.length < 2) {
-    els.deptFilterGroup.hidden = true;
+    els.filterBar.hidden = true;
     closeDeptDropdown();
     return;
   }
-  els.deptFilterGroup.hidden = false;
+  els.filterBar.hidden = false;
 
   const includedCount = depts.length - excludedDepts.size;
   if (excludedDepts.size === 0) {
@@ -2352,7 +2212,9 @@ function renderDeptFilter() {
 function refreshDashboard(meta) {
   const filtered = getFilteredRows();
   const stats = computeStats(filtered);
+  const deptStats = computeStats(getScopedRows());
   currentStats = stats;
+  currentDeptStats = deptStats;
   els.emptyState.hidden = true;
   els.dashboard.hidden = false;
   els.clearBtn.hidden = false;
@@ -2365,9 +2227,8 @@ function refreshDashboard(meta) {
   els.subtitle.textContent = `${stats.total} записей${filterNote} • обновлено ${new Date().toLocaleString('ru-RU')}`;
   if (meta) els.fileMeta.textContent = meta;
 
-  els.filterBar.hidden = false;
   renderDeptFilter();
-  renderAllCharts(stats);
+  renderAllCharts(stats, deptStats);
 }
 
 async function handleFile(file) {
@@ -2377,7 +2238,6 @@ async function handleFile(file) {
     currentRows = rows;
     excludedDepts = new Set();
     scopeFilter = 'all';
-    syncScopeVisuals();
     refreshDashboard(`Файл: ${file.name} • ${rows.length} строк`);
     localStorage.setItem(
       STORAGE_KEY,
@@ -2399,7 +2259,6 @@ function restoreFromStorage() {
     currentRows = deserializeRows(rows);
     excludedDepts = new Set();
     scopeFilter = 'all';
-    syncScopeVisuals();
     refreshDashboard(`Файл: ${fileName} • сохранено ${new Date(savedAt).toLocaleString('ru-RU')}`);
   } catch (err) {
     console.warn('Не удалось восстановить сохранённые данные', err);
@@ -2409,10 +2268,10 @@ function restoreFromStorage() {
 function clearData() {
   localStorage.removeItem(STORAGE_KEY);
   currentStats = null;
+  currentDeptStats = null;
   currentRows = [];
   excludedDepts = new Set();
   scopeFilter = 'all';
-  syncScopeVisuals();
   els.dashboard.hidden = true;
   els.emptyState.hidden = false;
   els.clearBtn.hidden = true;
@@ -2484,7 +2343,7 @@ function applyTheme(mode) {
   } else {
     document.documentElement.removeAttribute('data-theme');
   }
-  if (currentStats) renderAllCharts(currentStats);
+  if (currentStats) renderAllCharts(currentStats, currentDeptStats);
 }
 
 function toggleTheme() {
@@ -2515,10 +2374,6 @@ els.deptReset.addEventListener('click', () => {
   syncDeptOptionVisuals();
 });
 els.deptOk.addEventListener('click', applyDeptDropdown);
-els.scopeSegmented.addEventListener('click', (e) => {
-  const btn = e.target.closest('.segmented__btn');
-  if (btn) setScope(btn.dataset.scope);
-});
 document.addEventListener('click', (e) => {
   if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
 });

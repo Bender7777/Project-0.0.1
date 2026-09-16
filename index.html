@@ -54,31 +54,21 @@
   <section id="dashboard" class="dashboard" hidden>
 
     <div class="filter-bar" id="filter-bar" hidden>
-      <div class="filter-bar__group" id="dept-filter-group">
-        <span class="filter-bar__label">Отдел</span>
-        <div class="dropdown" id="dept-dropdown">
-          <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
-            <span id="dept-dropdown-label">Все отделы</span>
-            <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
-            <div class="dropdown__list" id="dept-dropdown-list"></div>
-            <div class="dropdown__footer">
-              <div class="dropdown__quick-actions">
-                <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
-                <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
-              </div>
-              <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
+      <span class="filter-bar__label">Отдел</span>
+      <div class="dropdown" id="dept-dropdown">
+        <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <span id="dept-dropdown-label">Все отделы</span>
+          <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
+          <div class="dropdown__list" id="dept-dropdown-list"></div>
+          <div class="dropdown__footer">
+            <div class="dropdown__quick-actions">
+              <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
+              <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
             </div>
+            <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
           </div>
-        </div>
-      </div>
-      <div class="filter-bar__group">
-        <span class="filter-bar__label">Категория</span>
-        <div class="segmented" id="scope-segmented" role="tablist" aria-label="Категория сотрудников">
-          <button type="button" class="segmented__btn is-active" data-scope="all" role="tab" aria-selected="true">Все</button>
-          <button type="button" class="segmented__btn" data-scope="chke" role="tab" aria-selected="false">ЧКЭ</button>
-          <button type="button" class="segmented__btn" data-scope="do" role="tab" aria-selected="false">ДО</button>
         </div>
       </div>
     </div>
@@ -124,62 +114,6 @@
             <canvas id="chart-format" role="img" aria-label="Способ голосования"></canvas>
           </div>
           <div class="card__table" id="table-format"></div>
-        </div>
-      </article>
-
-      <article class="card card--chart card--4" id="card-dekret">
-        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 14.3l2 2 4-4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <div class="card__head">
-          <h3>Декретный отпуск</h3>
-          <p class="card__desc">Доля сотрудников в ДО и без ДО</p>
-        </div>
-        <div class="card__panel">
-          <div class="card__body card__body--donut">
-            <canvas id="chart-dekret" role="img" aria-label="Доля ДО и без ДО"></canvas>
-          </div>
-          <div class="card__table" id="table-dekret"></div>
-        </div>
-      </article>
-
-      <article class="card card--chart card--1" id="card-dekret-turnout">
-        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12.3l2.4 2.4 4.6-5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-        <div class="card__head">
-          <h3>Явка сотрудников в ДО</h3>
-          <p class="card__desc">Сколько из находящихся в декрете проголосовало</p>
-        </div>
-        <div class="card__panel">
-          <div class="card__body card__body--donut">
-            <canvas id="chart-dekret-turnout" role="img" aria-label="Явка сотрудников в декрете"></canvas>
-          </div>
-          <div class="card__table" id="table-dekret-turnout"></div>
-        </div>
-      </article>
-
-      <article class="card card--chart card--2" id="card-not-voted">
-        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M9.3 9.3l5.4 5.4M14.7 9.3l-5.4 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-        <div class="card__head">
-          <h3>Не проголосовали</h3>
-          <p class="card__desc">Всего не пришедших к голосованию — ДО и ЧКЭ</p>
-        </div>
-        <div class="card__panel">
-          <div class="card__body card__body--donut">
-            <canvas id="chart-not-voted" role="img" aria-label="Не проголосовавшие: ДО и ЧКЭ"></canvas>
-          </div>
-          <div class="card__table" id="table-not-voted"></div>
-        </div>
-      </article>
-
-      <article class="card card--chart card--wide card--3" id="card-dekret-format">
-        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 4a8 8 0 0 1 6.9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-        <div class="card__head">
-          <h3>ДО: способ голосования</h3>
-          <p class="card__desc">ДЭГ и очно среди проголосовавших из декрета</p>
-        </div>
-        <div class="card__panel card__panel--split">
-          <div class="card__body card__body--donut">
-            <canvas id="chart-dekret-format" role="img" aria-label="Способ голосования сотрудников в декрете"></canvas>
-          </div>
-          <div class="card__table" id="table-dekret-format"></div>
         </div>
       </article>
 
