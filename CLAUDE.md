@@ -198,6 +198,17 @@ they grow from the center instead of only sweeping around. Both bar and donut op
 animation for just the hover/active state — without it, hover color transitions would inherit
 the 700ms bounce and feel sluggish.
 
+**Bars get a hover "pop" too, not just a color swap.** Donuts already animate on hover for
+free via their own native `hoverOffset`/`animateScale` options; bars have no built-in
+equivalent, so every bar dataset uses `borderRadius: hoverGrowRadius(base)` instead of a flat
+`borderRadius: N` — it returns `base` normally and `base + 6` while `ctx.active`, growing the
+corner rounding on hover. This only animates smoothly because `baseChartOptions` registers
+`animations: { borderRadius: { properties: ['borderRadius'], type: 'number' } }` — Chart.js
+only animates its built-in `'numbers'`/`'colors'` property groups by default, so without this
+the radius would just snap instead of easing in over the same `transitions.active` duration
+the color swap already uses. **When adding a new bar dataset, use `hoverGrowRadius()` instead
+of a static `borderRadius`**, or it'll be the one flat-feeling chart next to the others.
+
 **No hover tooltips.** `baseChartOptions` and `donutChart` both set `plugins.tooltip = { enabled: false }`
 — removed on request. Don't re-add a per-chart `tooltip.callbacks` override; if a chart needs
 its values visible without hovering, that's what the companion `renderTable`/`card__table` is

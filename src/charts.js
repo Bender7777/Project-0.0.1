@@ -28,12 +28,29 @@ function baseChartOptions(p) {
     responsive: true,
     maintainAspectRatio: false,
     animation: marksAnimation(),
+    // Registers `borderRadius` as an animatable numeric property (Chart.js
+    // only animates the built-in 'colors'/'numbers' groups otherwise) so
+    // `hoverGrowRadius()` below can make bars visibly "pop" on hover, the
+    // same way donuts already do via their own animateScale/hoverOffset —
+    // without this, the radius would just snap instead of easing in.
+    animations: { borderRadius: { properties: ['borderRadius'], type: 'number' } },
     transitions: { active: { animation: { duration: 200, easing: 'easeOutQuart' } } },
     plugins: {
       legend: { display: false },
       tooltip: { enabled: false },
     },
   };
+}
+
+// A bar's own hover "pop": rounder corners while active, animated via the
+// `animations.borderRadius` group + `transitions.active` above. Donuts get
+// their hover motion for free from `hoverOffset`/`animateScale` (native
+// Chart.js doughnut options); bars have no built-in equivalent, so this is
+// the bar-chart counterpart — keep using it (not a flat `borderRadius: N`)
+// on every bar dataset so hover isn't just a color swap.
+function hoverGrowRadius(base, boost) {
+  const grown = base + (boost ?? 6);
+  return (ctx) => (ctx.active ? grown : base);
 }
 
 // Horizontal (and grouped-horizontal) bar charts need a per-category row
@@ -348,7 +365,7 @@ function renderDeptChart(stats) {
           data: stats.byDept.map((d) => d.count),
           backgroundColor: glossyColorByIndex(colors, { horizontal: true }),
           hoverBackgroundColor: glossyColorByIndex(colors, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: 8,
+          borderRadius: hoverGrowRadius(8),
           maxBarThickness: 34,
         },
       ],
@@ -444,7 +461,7 @@ function renderDaysChart(stats) {
           data: stats.byDay.map((d) => d.voted),
           backgroundColor: glossyColorByIndex(colors),
           hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: 8,
+          borderRadius: hoverGrowRadius(8),
           maxBarThickness: 56,
         },
       ],
@@ -505,7 +522,7 @@ function renderDayFormatChart(stats) {
           data: stats.dayFormat.map((d) => d.deg),
           backgroundColor: glossyColor(c1),
           hoverBackgroundColor: glossyColor(c1, { lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: 8,
+          borderRadius: hoverGrowRadius(8),
           maxBarThickness: 40,
         },
         {
@@ -513,7 +530,7 @@ function renderDayFormatChart(stats) {
           data: stats.dayFormat.map((d) => d.ochno),
           backgroundColor: glossyColor(c2),
           hoverBackgroundColor: glossyColor(c2, { lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: 8,
+          borderRadius: hoverGrowRadius(8),
           maxBarThickness: 40,
         },
       ],
@@ -554,7 +571,7 @@ function renderDeptTurnoutChart(stats) {
           data: stats.deptTurnout.map((d) => Number(d.pct.toFixed(1))),
           backgroundColor: glossyColor(p.good),
           hoverBackgroundColor: glossyColor(p.good, { lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: 8,
+          borderRadius: hoverGrowRadius(8),
           maxBarThickness: 40,
         },
       ],
@@ -591,7 +608,7 @@ function renderInstructorChart(stats) {
           data: stats.byInstructor.map((d) => d.voted),
           backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }),
           hoverBackgroundColor: glossyColor(categoricalColor(0), { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: 8,
+          borderRadius: hoverGrowRadius(8),
           maxBarThickness: 30,
         },
         {
@@ -599,7 +616,7 @@ function renderInstructorChart(stats) {
           data: stats.byInstructor.map((d) => d.count - d.voted),
           backgroundColor: glossyColor(p.muted, { horizontal: true }),
           hoverBackgroundColor: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: 8,
+          borderRadius: hoverGrowRadius(8),
           maxBarThickness: 30,
         },
       ],
