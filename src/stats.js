@@ -130,12 +130,22 @@ function computeStats(rows) {
   const byInstructor = [...instrGroups.entries()]
     .map(([name, instrRows]) => {
       const instrVotedRows = instrRows.filter((r) => r.voted);
-      return { name, count: instrRows.length, voted: instrVotedRows.length, pct: pct(instrVotedRows.length, instrRows.length), rows: instrRows, votedRows: instrVotedRows };
+      const instrNotVotedRows = instrRows.filter((r) => !r.voted);
+      return {
+        name,
+        count: instrRows.length,
+        voted: instrVotedRows.length,
+        pct: pct(instrVotedRows.length, instrRows.length),
+        rows: instrRows,
+        votedRows: instrVotedRows,
+        notVotedRows: instrNotVotedRows,
+      };
     })
     .sort((a, b) => b.count - a.count);
 
   return {
     total,
+    allRows: rows,
     byDept,
     dekret,
     byDay,

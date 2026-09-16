@@ -195,34 +195,45 @@ function renderKPIs(stats) {
       label: 'Всего сотрудников',
       value: stats.total.toLocaleString('ru-RU'),
       sub: `${stats.byDept.length} отдел(ов)`,
+      title: 'Все сотрудники',
+      rows: stats.allRows,
     },
     {
       label: 'Проголосовали',
       value: stats.turnout.count.toLocaleString('ru-RU'),
       sub: `<strong>${fmtPct(stats.turnout.pct)}</strong> от общего числа`,
+      title: 'Проголосовали',
+      rows: stats.turnout.rows,
     },
     {
       label: 'В декретном отпуске (ДО)',
       value: stats.dekret.count.toLocaleString('ru-RU'),
       sub: `<strong>${fmtPct(stats.dekret.pct)}</strong> от общего числа`,
+      title: 'В декретном отпуске (ДО)',
+      rows: stats.dekret.rows,
     },
     {
       label: 'Явка среди ДО',
       value: stats.dekretTurnout.count.toLocaleString('ru-RU'),
       sub: `<strong>${fmtPct(stats.dekretTurnout.pct)}</strong> из ${stats.dekretTurnout.baseCount} чел. в ДО`,
+      title: 'Явка среди ДО',
+      rows: stats.dekretTurnout.rows,
     },
   ];
   el.innerHTML = cards
     .map(
       (c, i) => `
-    <div class="kpi kpi--${i + 1}">
+    <button type="button" class="kpi kpi--${i + 1}" data-kpi-index="${i}">
       <span class="kpi__icon">${KPI_ICONS[i]}</span>
       <p class="kpi__label">${c.label}</p>
       <p class="kpi__value">${c.value}</p>
       <p class="kpi__sub">${c.sub}</p>
-    </div>`
+    </button>`
     )
     .join('');
+  el.querySelectorAll('.kpi').forEach((node, i) => {
+    node.addEventListener('click', () => openDrilldown(cards[i].title, cards[i].rows));
+  });
 }
 
 function renderTable(elId, headers, rows) {
@@ -250,35 +261,14 @@ function renderDeptChart(stats) {
   destroyChart('dept');
   const labels = stats.byDept.map((d) => d.name);
   const colors = stats.byDept.map((_, i) => categoricalColor(i));
-  sizeCategoryChartBody('chart-dept', stats.byDept.length, { perRow: 30, gap: 10, padding: 50, min: 220, max: 480 });
-  chartRegistry.dept = new Chart(document.getElementById('chart-dept'), {
-    type: 'bar',
-    plugins: [volumeShadowPlugin],
-    data: {
-      labels,
-      datasets: [
-        {
-          label: 'Сотрудников',
-          data: stats.byDept.map((d) => d.count),
-          backgroundColor: glossyColorByIndex(colors, { horizontal: true }),
-          hoverBackgroundColor: glossyColorByIndex(colors, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: 8,
-          maxBarThickness: 34,
-        },
-      ],
-    },
-    options: Object.assign(baseChartOptions(p), {
-      indexAxis: 'y',
-      scales: {
-        x: gridScale(p, { beginAtZero: true, ticks: { precision: 0 } }),
-        y: { grid: { display: false }, border: { color: p.baseline }, ticks: { color: p.textPrimary, font: { size: 11.5 } } },
-      },
-      ...drilldownHandlers((el) => {
-        const d = stats.byDept[el.index];
-        return { title: `Отдел: ${d.name}`, rows: d.rows };
-      }),
-    }),
-  });
+  chartRegistry.dept = donutChart(
+    'chart-dept',
+    p,
+    labels,
+    stats.byDept.map((d) => d.count),
+    colors,
+    { rowsByIndex: stats.byDept.map((d) => d.rows), titlePrefix: 'Отдел' }
+  );
 
   renderTable(
     'table-dept',
@@ -412,7 +402,7 @@ function renderNotVotedChart(stats) {
   const p = currentPalette();
   destroyChart('notVoted');
   const nv = stats.notVoted;
-  const labels = ['ДО', 'Остальные'];
+  const labels = ['ДО', 'ЧКЭ'];
   const data = [nv.dekret.count, nv.other.count];
   const colors = [categoricalColor(0), p.muted];
   chartRegistry.notVoted = donutChart('chart-not-voted', p, labels, data, colors, {
@@ -558,7 +548,10 @@ function renderInstructorChart(stats) {
   const p = currentPalette();
   destroyChart('instructor');
   const labels = stats.byInstructor.map((d) => d.name);
-  sizeCategoryChartBody('chart-instructor', stats.byInstructor.length, { perRow: 24, groupSize: 2, gap: 18, padding: 60, min: 260, max: 620 });
+  // One stacked bar per instructor (voted + not voted = total assigned)
+  // instead of two side-by-side bars — half the vertical space for the
+  // same information, and the proportion reads at a glance.
+  sizeCategoryChartBody('chart-instructor', stats.byInstructor.length, { perRow: 34, gap: 16, padding: 60, min: 240, max: 540 });
   chartRegistry.instructor = new Chart(document.getElementById('chart-instructor'), {
     type: 'bar',
     plugins: [volumeShadowPlugin],
@@ -566,28 +559,28 @@ function renderInstructorChart(stats) {
       labels,
       datasets: [
         {
-          label: 'Всего закреплено',
-          data: stats.byInstructor.map((d) => d.count),
-          backgroundColor: glossyColor(p.muted, { horizontal: true }),
-          hoverBackgroundColor: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: 8,
-          maxBarThickness: 34,
-        },
-        {
           label: 'Проголосовало',
           data: stats.byInstructor.map((d) => d.voted),
           backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }),
           hoverBackgroundColor: glossyColor(categoricalColor(0), { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
           borderRadius: 8,
-          maxBarThickness: 34,
+          maxBarThickness: 30,
+        },
+        {
+          label: 'Не проголосовало',
+          data: stats.byInstructor.map((d) => d.count - d.voted),
+          backgroundColor: glossyColor(p.muted, { horizontal: true }),
+          hoverBackgroundColor: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 30,
         },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
       indexAxis: 'y',
       scales: {
-        x: gridScale(p, { beginAtZero: true, ticks: { precision: 0 } }),
-        y: { grid: { display: false }, border: { color: p.baseline }, ticks: { color: p.textPrimary, font: { size: 11.5 } } },
+        x: gridScale(p, { beginAtZero: true, stacked: true, ticks: { precision: 0 } }),
+        y: { grid: { display: false }, border: { color: p.baseline }, ticks: { color: p.textPrimary, font: { size: 11.5 } }, stacked: true },
       },
       plugins: Object.assign(baseChartOptions(p).plugins, {
         legend: {
@@ -598,8 +591,8 @@ function renderInstructorChart(stats) {
       }),
       ...drilldownHandlers((el) => {
         const d = stats.byInstructor[el.index];
-        const isAll = el.datasetIndex === 0;
-        return { title: `${d.name} — ${isAll ? 'всего закреплено' : 'проголосовало'}`, rows: isAll ? d.rows : d.votedRows };
+        const isVoted = el.datasetIndex === 0;
+        return { title: `${d.name} — ${isVoted ? 'проголосовало' : 'не проголосовало'}`, rows: isVoted ? d.votedRows : d.notVotedRows };
       }),
     }),
   });
@@ -608,11 +601,11 @@ function renderInstructorChart(stats) {
 function renderAllCharts(stats) {
   renderKPIs(stats);
   renderDeptChart(stats);
-  renderDekretChart(stats);
   renderDaysChart(stats);
   renderFormatChart(stats);
-  renderNotVotedChart(stats);
+  renderDekretChart(stats);
   renderDekretTurnoutChart(stats);
+  renderNotVotedChart(stats);
   renderDekretFormatChart(stats);
   renderDayFormatChart(stats);
   renderDeptTurnoutChart(stats);

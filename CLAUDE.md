@@ -105,7 +105,14 @@ independent of light/dark mode, each with a glass icon badge (`renderKPIs`'s `KP
 (`.kpi-grid` in `style.css`: card 1 spans both rows on the left, cards 2–4 fill the right)
 that collapses to a single column under 720px — `renderKPIs` always emits exactly 4 cards in
 this order, so adding/removing a KPI tile means updating both the JS array and the CSS
-grid-area rules together.
+grid-area rules together. Each tile is a real `<button>` (not a styled `<div>`) with a
+`rows`/`title` drill-down wired the same way as chart marks — `renderKPIs` attaches a click
+listener per card straight to the global `openDrilldown` after building the grid, rather than
+going through `drilldownHandlers()` (that helper is Chart.js-element-shaped; KPI tiles are
+plain DOM). The "Всего сотрудников" tile's rows come from `stats.allRows` — `computeStats`
+returns the untouched input row array under that key specifically so this tile has something
+to show (every other KPI already had a rows-bearing stat object — `turnout`, `dekret`,
+`dekretTurnout` — to point at).
 
 **Volume on the marks themselves:** bars and donut arcs in `charts.js` aren't flat fills —
 `glossyColor`/`glossyColorByIndex` (built on `obliqueGradient`, `lighten`/`darken`) turn each
@@ -139,29 +146,56 @@ the 700ms bounce and feel sluggish.
 its values visible without hovering, that's what the companion `renderTable`/`card__table` is
 for (every chart already has one).
 
-**Category count drives chart height, not a fixed box.** `sizeCategoryChartBody(canvasId,
-count, opts)` sets the `.card__body`'s height in JS (before the `new Chart(...)` call, since
-Chart.js reads the container size at construction) as `padding + count * (perRow * groupSize +
-gap)`, clamped to `[min, max]` — beyond `max` the body switches to `card__body--scroll`
-(`overflow-y: auto`) instead of growing forever. `renderDeptChart` and `renderInstructorChart`
-(the two horizontal bar charts whose category count is data-dependent — instructor doubles
-`groupSize` to 2 since each instructor draws two side-by-side bars) call this on every render,
-so the chart stays readable whether the department filter leaves 2 departments or 20. The other
-charts have a fixed, known category count (days, format, dekret) and don't need it.
+**По отделам is a donut, not a bar chart.** It was a horizontal bar sized by
+`sizeCategoryChartBody` (see below) so it would stay readable at any department count, but a
+tall bar chart at the top of the dashboard was itself the complaint ("too big") — a donut is a
+fixed ~220px regardless of how many departments there are, so `renderDeptChart` now calls
+`donutChart(...)` exactly like the other small cards, with the full department breakdown still
+available in its `card__table`. Don't re-introduce per-department height scaling here; that's
+what made the card tall in the first place.
+
+**Category count still drives chart height for the instructor chart.**
+`sizeCategoryChartBody(canvasId, count, opts)` sets the `.card__body`'s height in JS (before
+the `new Chart(...)` call, since Chart.js reads the container size at construction) as
+`padding + count * (perRow * groupSize + gap)`, clamped to `[min, max]` — beyond `max` the body
+switches to `card__body--scroll` (`overflow-y: auto`) instead of growing forever.
+`renderInstructorChart` calls this on every render (`groupSize: 1`, see next) so it stays
+readable at any instructor count. It's the only chart that still needs this; days/format/dekret
+have a fixed known category count.
+
+**Instructor load is one stacked bar per instructor, not two side-by-side ones.** It used to
+draw "всего закреплено" and "проголосовало" as two separate bars per instructor and was still
+reported unreadable/cramped even after the height fix — the real problem was two bars per row,
+not row height. `renderInstructorChart` now stacks "Проголосовало" + "Не проголосовало"
+(`scales.x.stacked`/`scales.y.stacked: true`) so each instructor is a single bar whose split
+shows the turnout proportion directly, at half the vertical cost. `byInstructor` entries in
+`stats.js` carry `notVotedRows` (`rows.filter(r => !r.voted)`) alongside `rows`/`votedRows` for
+this dataset's drill-down.
 
 **Not-voted breakdown:** `computeStats` also returns `notVoted` — `{ count, pct, rows, dekret:
 { count, pct, rows }, other: { count, pct, rows } }`, splitting everyone who didn't vote into
 the decree (ДО) group vs everyone else. `renderNotVotedChart`/`#card-not-voted` renders it the
-same way as the other small donut cards.
+same way as the other small donut cards. The `other` group is *labeled* "ЧКЭ" in the chart/table
+(`renderNotVotedChart`'s `labels` array) — that's a display label only, the stats key stays
+`other` since nothing else about that group is ЧКЭ-specific.
+
+**Card order groups by topic, not just by chart type.** The 6 small cards read as two rows:
+general overview first (По отделам, Голосование по дням, Способ голосования), then everything
+ДО-related together (Декретный отпуск, Явка сотрудников в ДО, Не проголосовали) — and the first
+wide card continues that ДО thread (ДО: способ голосования) before the remaining general wide
+cards (Дни × способ, Явка по отделам, Нагрузка по инструкторам). If you add a ДО-specific stat,
+slot it into that second small-card row or right after the ДО wide card, not wherever is
+convenient — the grouping is the point of the current order, re-derive it rather than appending.
 
 **Bento grid balance:** the `.card--1`…`.card--4` hero-palette classes cycle in DOM order
-across *all* 10 chart cards (6 small + 4 wide), not per-section — so adding or removing a card
-shifts every color after it; re-derive the sequence rather than picking a color ad hoc. The
-card count is deliberately 6 small (two full 3-column rows) + 4 wide: an odd small-card count
-leaves a lone card alone in its row with dead space beside it (that happened when `#card-not-
-voted` was first added as a 7th small card) — if a new stat card unbalances the count again,
-either add a second one to get back to a multiple of 3, or promote one to `.card--wide` with a
-`.card__panel--split` layout (see next) rather than leaving a gap.
+across *all* 10 chart cards (6 small + 4 wide) in their current (topic-grouped) order, not
+per-section — so adding, removing, or reordering a card shifts every color after it; re-derive
+the sequence rather than picking a color ad hoc. The card count is deliberately 6 small (two
+full 3-column rows) + 4 wide: an odd small-card count leaves a lone card alone in its row with
+dead space beside it (that happened when `#card-not-voted` was first added as a 7th small
+card) — if a new stat card unbalances the count again, either add a second one to get back to a
+multiple of 3, or promote one to `.card--wide` with a `.card__panel--split` layout (see next)
+rather than leaving a gap.
 
 **`.card__panel--split`:** a wide card built around a single donut (`#card-dekret-format` is
 the current example) doesn't need the chart to stack above a mostly-empty-width table — this
