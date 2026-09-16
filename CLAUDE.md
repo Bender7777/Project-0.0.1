@@ -93,6 +93,19 @@ that collapses to a single column under 720px — `renderKPIs` always emits exac
 this order, so adding/removing a KPI tile means updating both the JS array and the CSS
 grid-area rules together.
 
+**Chart cards are bento tiles too:** every `.card` in `index.html` carries a `.card--1`…
+`.card--4` class that cycles through the same 4 hero-palette tokens as the KPI cards (same
+gradient/shadow/icon-badge treatment), plus a static inline `.card__icon` SVG per card
+(hand-written in the HTML, unlike the KPI icons which are JS-generated). Chart.js canvases and
+`renderTable`'s HTML tables always render inside a nested `.card__panel` — a neutral
+`var(--surface-1)`/`var(--text-primary)` surface — never directly on the colored `.card`
+background: this is required, not cosmetic, because Chart.js reads colors from
+`currentPalette()` (theme-aware light/dark, not card-aware) and `.stat-table` cells have no
+explicit color of their own, so without the panel's color reset both would inherit the card's
+light/dark KPI text color and could go invisible (e.g. white-on-white) depending on which
+`.card--N` variant a chart lands on. Keep new chart cards inside `.card__panel` for this
+reason.
+
 **Service worker cache list:** `sw.js` precaches an explicit `APP_SHELL` file list. Any new
 file added under `src/`, `vendor/`, or `icons/` that the app needs offline must be added to
 that list, and `CACHE_NAME` bumped so returning clients pick up the change.
