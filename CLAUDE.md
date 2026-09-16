@@ -146,22 +146,35 @@ the 700ms bounce and feel sluggish.
 its values visible without hovering, that's what the companion `renderTable`/`card__table` is
 for (every chart already has one).
 
-**По отделам is a donut, not a bar chart.** It was a horizontal bar sized by
-`sizeCategoryChartBody` (see below) so it would stay readable at any department count, but a
-tall bar chart at the top of the dashboard was itself the complaint ("too big") — a donut is a
-fixed ~220px regardless of how many departments there are, so `renderDeptChart` now calls
-`donutChart(...)` exactly like the other small cards, with the full department breakdown still
-available in its `card__table`. Don't re-introduce per-department height scaling here; that's
-what made the card tall in the first place.
+**По отделам draws its labels inside the bars, not in a separate table.** It went through a
+donut phase (fixed ~220px regardless of department count) and back — a pie reads department
+share fine but the user wanted the bar chart back, just without the height problem. The fix
+wasn't the chart type, it was `card__table`: `renderDeptChart` has no companion table at all
+now, so there's nothing to add height on top of the chart. Instead, `barInlineLabelsPlugin`
+(a `afterDatasetsDraw` plugin, registered alongside `volumeShadowPlugin`) draws each bar's own
+`"Отдел — N"` label *inside* the bar in white, measuring the text against the bar's rendered
+length and falling back to drawing it just past the bar's end in the normal text color when the
+bar's too short to hold it — so the y-axis ticks are turned off (`ticks: { display: false }`)
+without losing the department names. `sizeCategoryChartBody` still sizes the body by department
+count (smaller constants than before, since there's no table to budget height against), so the
+card is short with 3 departments and still readable with 20.
+
+**`#card-dept { align-self: start; }`** — CSS Grid's default `align-items: stretch` fills every
+item in a row to match its tallest row-mate, which defeated the height fix above: the *content*
+got shorter but the grid still stretched the card to match "Голосование по дням"/"Способ
+голосования" next to it, so it looked exactly as tall as before. `align-self: start` opts this
+one card out of that stretch so it actually sizes to its own (now short) content, leaving open
+grid space below it in that row. If a future redesign shortens another small card's content,
+it needs the same treatment or it'll silently stay stretched.
 
 **Category count still drives chart height for the instructor chart.**
 `sizeCategoryChartBody(canvasId, count, opts)` sets the `.card__body`'s height in JS (before
 the `new Chart(...)` call, since Chart.js reads the container size at construction) as
 `padding + count * (perRow * groupSize + gap)`, clamped to `[min, max]` — beyond `max` the body
-switches to `card__body--scroll` (`overflow-y: auto`) instead of growing forever.
-`renderInstructorChart` calls this on every render (`groupSize: 1`, see next) so it stays
-readable at any instructor count. It's the only chart that still needs this; days/format/dekret
-have a fixed known category count.
+switches to `card__body--scroll` (`overflow-y: auto`) instead of growing forever. Dept
+(`groupSize: 1`) and `renderInstructorChart` (`groupSize: 1`, see next) call this on every
+render so both stay readable at any category count; days/format/dekret have a fixed known
+category count and don't need it.
 
 **Instructor load is one stacked bar per instructor, not two side-by-side ones.** It used to
 draw "всего закреплено" and "проголосовало" as two separate bars per instructor and was still

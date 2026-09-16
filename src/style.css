@@ -566,6 +566,13 @@ body {
 .card--4:hover { box-shadow: var(--kpi-4-shadow), var(--shadow-lg); }
 .card--wide { grid-column: 1 / -1; }
 
+/* Grid rows stretch every item to the row's tallest sibling by default —
+   fine for cards meant to line up, but this card is short on purpose (its
+   department list lives inside the bars, not in a separate table below),
+   so let it size to its own content instead of stretching to match its
+   row-mates. */
+#card-dept { align-self: start; }
+
 .card--2 { background: var(--kpi-2-bg); color: var(--kpi-2-text); box-shadow: var(--kpi-2-shadow); }
 .card--3 { background: var(--kpi-3-bg); color: var(--kpi-3-text); box-shadow: var(--kpi-3-shadow); }
 .card--4 { background: var(--kpi-4-bg); color: var(--kpi-4-text); box-shadow: var(--kpi-4-shadow); }

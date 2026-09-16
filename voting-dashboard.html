@@ -578,6 +578,13 @@ body {
 .card--4:hover { box-shadow: var(--kpi-4-shadow), var(--shadow-lg); }
 .card--wide { grid-column: 1 / -1; }
 
+/* Grid rows stretch every item to the row's tallest sibling by default —
+   fine for cards meant to line up, but this card is short on purpose (its
+   department list lives inside the bars, not in a separate table below),
+   so let it size to its own content instead of stretching to match its
+   row-mates. */
+#card-dept { align-self: start; }
+
 .card--2 { background: var(--kpi-2-bg); color: var(--kpi-2-text); box-shadow: var(--kpi-2-shadow); }
 .card--3 { background: var(--kpi-3-bg); color: var(--kpi-3-text); box-shadow: var(--kpi-3-shadow); }
 .card--4 { background: var(--kpi-4-bg); color: var(--kpi-4-text); box-shadow: var(--kpi-4-shadow); }
@@ -847,13 +854,12 @@ body {
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 4.3c1.6.4 2.8 1.8 2.8 3.5 0 1.7-1.2 3.1-2.8 3.5M18.5 14.2c2 .5 3.5 2.3 3.5 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
         <div class="card__head">
           <h3>По отделам</h3>
-          <p class="card__desc">Количество и доля сотрудников в каждом отделе</p>
+          <p class="card__desc">Количество сотрудников в каждом отделе</p>
         </div>
         <div class="card__panel">
-          <div class="card__body card__body--donut">
+          <div class="card__body">
             <canvas id="chart-dept" role="img" aria-label="Распределение по отделам"></canvas>
           </div>
-          <div class="card__table" id="table-dept"></div>
         </div>
       </article>
 
@@ -1591,6 +1597,37 @@ const donutGlossPlugin = {
   },
 };
 
+// Draws each horizontal bar's own label (e.g. "Отдел — N") inside the bar
+// itself, so a category axis with long text doesn't need its own column —
+// the chart reads correctly even with its y-axis ticks turned off. Falls
+// back to placing the label just past the bar's end, in the normal text
+// color, when the bar is too short to hold the text in white.
+const barInlineLabelsPlugin = {
+  id: 'barInlineLabels',
+  afterDatasetsDraw(chart, args, pluginOpts) {
+    const { labels, textColor } = pluginOpts || {};
+    if (!labels) return;
+    const meta = chart.getDatasetMeta(0);
+    if (!meta || !meta.data) return;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.font = '600 12px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.textBaseline = 'middle';
+    const pad = 10;
+    meta.data.forEach((bar, i) => {
+      const text = labels[i];
+      if (text == null) return;
+      const start = Math.min(bar.x, bar.base);
+      const end = Math.max(bar.x, bar.base);
+      const fitsInside = end - start - pad * 2 >= ctx.measureText(text).width;
+      ctx.textAlign = 'left';
+      ctx.fillStyle = fitsInside ? 'rgba(255,255,255,0.95)' : textColor || '#0b0b0b';
+      ctx.fillText(text, (fitsInside ? start : end) + pad, bar.y);
+    });
+    ctx.restore();
+  },
+};
+
 const KPI_ICONS = [
   // users
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 4.3c1.6.4 2.8 1.8 2.8 3.5 0 1.7-1.2 3.1-2.8 3.5M18.5 14.2c2 .5 3.5 2.3 3.5 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
@@ -1675,20 +1712,39 @@ function renderDeptChart(stats) {
   destroyChart('dept');
   const labels = stats.byDept.map((d) => d.name);
   const colors = stats.byDept.map((_, i) => categoricalColor(i));
-  chartRegistry.dept = donutChart(
-    'chart-dept',
-    p,
-    labels,
-    stats.byDept.map((d) => d.count),
-    colors,
-    { rowsByIndex: stats.byDept.map((d) => d.rows), titlePrefix: 'Отдел' }
-  );
-
-  renderTable(
-    'table-dept',
-    [{ label: '' }, { label: 'Отдел' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
-    stats.byDept.map((d, i) => [swatch(colors[i]), d.name, d.count, fmtPct(d.pct)])
-  );
+  const inlineLabels = stats.byDept.map((d) => `${d.name} — ${d.count}`);
+  sizeCategoryChartBody('chart-dept', stats.byDept.length, { perRow: 32, gap: 10, padding: 24, min: 180, max: 460 });
+  chartRegistry.dept = new Chart(document.getElementById('chart-dept'), {
+    type: 'bar',
+    plugins: [volumeShadowPlugin, barInlineLabelsPlugin],
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Сотрудников',
+          data: stats.byDept.map((d) => d.count),
+          backgroundColor: glossyColorByIndex(colors, { horizontal: true }),
+          hoverBackgroundColor: glossyColorByIndex(colors, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 34,
+        },
+      ],
+    },
+    options: Object.assign(baseChartOptions(p), {
+      indexAxis: 'y',
+      scales: {
+        x: gridScale(p, { beginAtZero: true, ticks: { precision: 0 } }),
+        y: { grid: { display: false }, border: { display: false }, ticks: { display: false } },
+      },
+      plugins: Object.assign(baseChartOptions(p).plugins, {
+        barInlineLabels: { labels: inlineLabels, textColor: p.textPrimary },
+      }),
+      ...drilldownHandlers((el) => {
+        const d = stats.byDept[el.index];
+        return { title: `Отдел: ${d.name}`, rows: d.rows };
+      }),
+    }),
+  });
 }
 
 function donutChart(canvasId, p, labels, data, colors, opts) {
