@@ -31,17 +31,21 @@ function baseChartOptions(p) {
     transitions: { active: { animation: { duration: 200, easing: 'easeOutQuart' } } },
     plugins: {
       legend: { display: false },
-      tooltip: {
-        backgroundColor: p.textPrimary,
-        titleColor: p.surface,
-        bodyColor: p.surface,
-        padding: 10,
-        cornerRadius: 8,
-        displayColors: true,
-        boxPadding: 4,
-      },
+      tooltip: { enabled: false },
     },
   };
+}
+
+// Horizontal (and grouped-horizontal) bar charts need a per-category row
+// height, not a fixed box — squeeze 15 departments into a 240px box and
+// every bar becomes an unreadable sliver. Height grows with the category
+// count up to `max`, then the body scrolls instead of growing forever.
+function sizeCategoryChartBody(canvasId, count, opts) {
+  const { perRow, groupSize = 1, gap = 10, padding = 60, min = 220, max = 520 } = opts;
+  const body = document.getElementById(canvasId).parentElement;
+  const raw = padding + count * (perRow * groupSize + gap);
+  body.style.height = `${Math.max(min, Math.min(max, raw))}px`;
+  body.classList.toggle('card__body--scroll', raw > max);
 }
 
 function gridScale(p, extra) {
@@ -246,6 +250,7 @@ function renderDeptChart(stats) {
   destroyChart('dept');
   const labels = stats.byDept.map((d) => d.name);
   const colors = stats.byDept.map((_, i) => categoricalColor(i));
+  sizeCategoryChartBody('chart-dept', stats.byDept.length, { perRow: 30, gap: 10, padding: 50, min: 220, max: 480 });
   chartRegistry.dept = new Chart(document.getElementById('chart-dept'), {
     type: 'bar',
     plugins: [volumeShadowPlugin],
@@ -268,16 +273,6 @@ function renderDeptChart(stats) {
         x: gridScale(p, { beginAtZero: true, ticks: { precision: 0 } }),
         y: { grid: { display: false }, border: { color: p.baseline }, ticks: { color: p.textPrimary, font: { size: 11.5 } } },
       },
-      plugins: Object.assign(baseChartOptions(p).plugins, {
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const d = stats.byDept[ctx.dataIndex];
-              return ` ${d.count} чел. (${fmtPct(d.pct)})`;
-            },
-          },
-        },
-      }),
       ...drilldownHandlers((el) => {
         const d = stats.byDept[el.index];
         return { title: `Отдел: ${d.name}`, rows: d.rows };
@@ -321,19 +316,7 @@ function donutChart(canvasId, p, labels, data, colors, opts) {
           position: 'bottom',
           labels: { color: p.textSecondary, boxWidth: 10, boxHeight: 10, padding: 12, font: { size: 11.5 } },
         },
-        tooltip: {
-          backgroundColor: p.textPrimary,
-          titleColor: p.surface,
-          bodyColor: p.surface,
-          padding: 10,
-          cornerRadius: 8,
-          callbacks: {
-            label: (ctx) => {
-              const total = data.reduce((a, b) => a + b, 0);
-              return ` ${ctx.label}: ${ctx.raw} (${fmtPct(pct(ctx.raw, total))})`;
-            },
-          },
-        },
+        tooltip: { enabled: false },
       },
       ...(rowsByIndex
         ? drilldownHandlers((el) => ({
@@ -391,16 +374,6 @@ function renderDaysChart(stats) {
         x: { grid: { display: false }, border: { color: p.baseline }, ticks: { color: p.textPrimary } },
         y: gridScale(p, { beginAtZero: true, ticks: { precision: 0 } }),
       },
-      plugins: Object.assign(baseChartOptions(p).plugins, {
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const d = stats.byDay[ctx.dataIndex];
-              return ` ${d.voted} чел. (${fmtPct(d.votedPctOfAll)} от всех, ${fmtPct(d.votedPctOfDay)} от назначенных на день)`;
-            },
-          },
-        },
-      }),
       ...drilldownHandlers((el) => {
         const d = stats.byDay[el.index];
         return { title: `Проголосовали ${d.label}`, rows: d.votedRows };
@@ -432,6 +405,27 @@ function renderFormatChart(stats) {
     'table-format',
     [{ label: '' }, { label: 'Способ' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
     stats.format.map((f, i) => [swatch(colors[i]), f.name, f.count, fmtPct(f.pct)])
+  );
+}
+
+function renderNotVotedChart(stats) {
+  const p = currentPalette();
+  destroyChart('notVoted');
+  const nv = stats.notVoted;
+  const labels = ['ДО', 'Остальные'];
+  const data = [nv.dekret.count, nv.other.count];
+  const colors = [categoricalColor(0), p.muted];
+  chartRegistry.notVoted = donutChart('chart-not-voted', p, labels, data, colors, {
+    rowsByIndex: [nv.dekret.rows, nv.other.rows],
+    titlePrefix: 'Не проголосовали',
+  });
+  renderTable(
+    'table-not-voted',
+    [{ label: '' }, { label: 'Категория' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
+    [
+      [swatch(colors[0]), labels[0], nv.dekret.count, fmtPct(nv.dekret.pct)],
+      [swatch(colors[1]), labels[1], nv.other.count, fmtPct(nv.other.pct)],
+    ]
   );
 }
 
@@ -552,16 +546,6 @@ function renderDeptTurnoutChart(stats) {
         x: { grid: { display: false }, border: { color: p.baseline }, ticks: { color: p.textPrimary } },
         y: gridScale(p, { beginAtZero: true, suggestedMax: 100, ticks: { callback: (v) => v + '%' } }),
       },
-      plugins: Object.assign(baseChartOptions(p).plugins, {
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const d = stats.deptTurnout[ctx.dataIndex];
-              return ` ${d.voted} из ${d.total} (${fmtPct(d.pct)})`;
-            },
-          },
-        },
-      }),
       ...drilldownHandlers((el) => {
         const d = stats.deptTurnout[el.index];
         return { title: `Явка — ${d.name}`, rows: d.votedRows };
@@ -574,6 +558,7 @@ function renderInstructorChart(stats) {
   const p = currentPalette();
   destroyChart('instructor');
   const labels = stats.byInstructor.map((d) => d.name);
+  sizeCategoryChartBody('chart-instructor', stats.byInstructor.length, { perRow: 24, groupSize: 2, gap: 18, padding: 60, min: 260, max: 620 });
   chartRegistry.instructor = new Chart(document.getElementById('chart-instructor'), {
     type: 'bar',
     plugins: [volumeShadowPlugin],
@@ -626,6 +611,7 @@ function renderAllCharts(stats) {
   renderDekretChart(stats);
   renderDaysChart(stats);
   renderFormatChart(stats);
+  renderNotVotedChart(stats);
   renderDekretTurnoutChart(stats);
   renderDekretFormatChart(stats);
   renderDayFormatChart(stats);

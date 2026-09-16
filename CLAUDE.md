@@ -134,6 +134,41 @@ they grow from the center instead of only sweeping around. Both bar and donut op
 animation for just the hover/active state — without it, hover color transitions would inherit
 the 700ms bounce and feel sluggish.
 
+**No hover tooltips.** `baseChartOptions` and `donutChart` both set `plugins.tooltip = { enabled: false }`
+— removed on request. Don't re-add a per-chart `tooltip.callbacks` override; if a chart needs
+its values visible without hovering, that's what the companion `renderTable`/`card__table` is
+for (every chart already has one).
+
+**Category count drives chart height, not a fixed box.** `sizeCategoryChartBody(canvasId,
+count, opts)` sets the `.card__body`'s height in JS (before the `new Chart(...)` call, since
+Chart.js reads the container size at construction) as `padding + count * (perRow * groupSize +
+gap)`, clamped to `[min, max]` — beyond `max` the body switches to `card__body--scroll`
+(`overflow-y: auto`) instead of growing forever. `renderDeptChart` and `renderInstructorChart`
+(the two horizontal bar charts whose category count is data-dependent — instructor doubles
+`groupSize` to 2 since each instructor draws two side-by-side bars) call this on every render,
+so the chart stays readable whether the department filter leaves 2 departments or 20. The other
+charts have a fixed, known category count (days, format, dekret) and don't need it.
+
+**Not-voted breakdown:** `computeStats` also returns `notVoted` — `{ count, pct, rows, dekret:
+{ count, pct, rows }, other: { count, pct, rows } }`, splitting everyone who didn't vote into
+the decree (ДО) group vs everyone else. `renderNotVotedChart`/`#card-not-voted` renders it the
+same way as the other small donut cards.
+
+**Bento grid balance:** the `.card--1`…`.card--4` hero-palette classes cycle in DOM order
+across *all* 10 chart cards (6 small + 4 wide), not per-section — so adding or removing a card
+shifts every color after it; re-derive the sequence rather than picking a color ad hoc. The
+card count is deliberately 6 small (two full 3-column rows) + 4 wide: an odd small-card count
+leaves a lone card alone in its row with dead space beside it (that happened when `#card-not-
+voted` was first added as a 7th small card) — if a new stat card unbalances the count again,
+either add a second one to get back to a multiple of 3, or promote one to `.card--wide` with a
+`.card__panel--split` layout (see next) rather than leaving a gap.
+
+**`.card__panel--split`:** a wide card built around a single donut (`#card-dekret-format` is
+the current example) doesn't need the chart to stack above a mostly-empty-width table — this
+modifier lays the panel out as a row (fixed-width chart, table filling the rest, vertically
+centered), falling back to the normal stacked column under 640px. Only donuts in wide cards
+should use it; bar charts already fill wide cards' width on their own.
+
 **Chart cards are bento tiles too:** every `.card` in `index.html` carries a `.card--1`…
 `.card--4` class that cycles through the same 4 hero-palette tokens as the KPI cards (same
 gradient/shadow/icon-badge treatment), plus a static inline `.card__icon` SVG per card

@@ -132,7 +132,21 @@
         </div>
       </article>
 
-      <article class="card card--chart card--1" id="card-dekret-turnout">
+      <article class="card card--chart card--1" id="card-not-voted">
+        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M9.3 9.3l5.4 5.4M14.7 9.3l-5.4 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <div class="card__head">
+          <h3>Не проголосовали</h3>
+          <p class="card__desc">Всего не пришедших к голосованию — ДО и остальные</p>
+        </div>
+        <div class="card__panel">
+          <div class="card__body card__body--donut">
+            <canvas id="chart-not-voted" role="img" aria-label="Не проголосовавшие: ДО и остальные"></canvas>
+          </div>
+          <div class="card__table" id="table-not-voted"></div>
+        </div>
+      </article>
+
+      <article class="card card--chart card--2" id="card-dekret-turnout">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12.3l2.4 2.4 4.6-5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         <div class="card__head">
           <h3>Явка сотрудников в ДО</h3>
@@ -146,13 +160,13 @@
         </div>
       </article>
 
-      <article class="card card--chart card--2" id="card-dekret-format">
+      <article class="card card--chart card--wide card--3" id="card-dekret-format">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 4a8 8 0 0 1 6.9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
         <div class="card__head">
           <h3>ДО: способ голосования</h3>
           <p class="card__desc">ДЭГ и очно среди проголосовавших из декрета</p>
         </div>
-        <div class="card__panel">
+        <div class="card__panel card__panel--split">
           <div class="card__body card__body--donut">
             <canvas id="chart-dekret-format" role="img" aria-label="Способ голосования сотрудников в декрете"></canvas>
           </div>
@@ -160,7 +174,7 @@
         </div>
       </article>
 
-      <article class="card card--chart card--wide card--3" id="card-day-format">
+      <article class="card card--chart card--wide card--4" id="card-day-format">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="3.4" height="9" rx="1" fill="currentColor"/><rect x="10.3" y="5.5" width="3.4" height="13.5" rx="1" fill="currentColor"/><rect x="16.6" y="13" width="3.4" height="6" rx="1" fill="currentColor"/></svg></span>
         <div class="card__head">
           <h3>Дни × способ голосования</h3>
@@ -173,7 +187,7 @@
         </div>
       </article>
 
-      <article class="card card--chart card--wide card--4" id="card-dept-turnout">
+      <article class="card card--chart card--wide card--1" id="card-dept-turnout">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="7" r="2.3" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="17" r="2.3" stroke="currentColor" stroke-width="1.8"/><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
         <div class="card__head">
           <h3>Явка по отделам</h3>
@@ -186,7 +200,7 @@
         </div>
       </article>
 
-      <article class="card card--chart card--wide card--1" id="card-instructor">
+      <article class="card card--chart card--wide card--2" id="card-instructor">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.7"/><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M2.8 19c0-2.8 2.3-5 5.2-5s5.2 2.2 5.2 5M10.8 14.3c.8-.3 1.7-.5 2.7-.5 2.9 0 5.2 2.2 5.2 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
         <div class="card__head">
           <h3>Нагрузка по инструкторам</h3>

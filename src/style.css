@@ -610,8 +610,23 @@ body {
 
 .card__body { position: relative; height: 240px; margin-top: 0; }
 .card__body--donut { height: 220px; }
+.card__body--scroll { overflow-y: auto; overflow-x: hidden; }
 
-.card__table { margin-top: 12px; }
+.card__table { margin-top: 12px; max-height: 260px; overflow-y: auto; }
+
+/* A wide card built around a donut has room to put the chart and its table
+   side by side instead of stacking them with a lot of empty space below. */
+.card__panel--split {
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+.card__panel--split .card__body { flex: none; width: 240px; }
+.card__panel--split .card__table { flex: 1; margin-top: 0; align-self: center; }
+@media (max-width: 640px) {
+  .card__panel--split { flex-direction: column; align-items: stretch; }
+  .card__panel--split .card__body { width: 100%; }
+}
 
 .stat-table {
   width: 100%;
@@ -629,6 +644,12 @@ body {
   font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+}
+.stat-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-1);
+  z-index: 1;
 }
 .stat-table td.num, .stat-table th.num {
   text-align: right;
@@ -720,12 +741,6 @@ body {
   overflow: auto;
   padding: 0 20px;
   flex: 1;
-}
-.drilldown-table thead th {
-  position: sticky;
-  top: 0;
-  background: var(--surface-1);
-  z-index: 1;
 }
 
 .modal__foot {

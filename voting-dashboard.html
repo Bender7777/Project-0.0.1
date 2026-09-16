@@ -622,8 +622,23 @@ body {
 
 .card__body { position: relative; height: 240px; margin-top: 0; }
 .card__body--donut { height: 220px; }
+.card__body--scroll { overflow-y: auto; overflow-x: hidden; }
 
-.card__table { margin-top: 12px; }
+.card__table { margin-top: 12px; max-height: 260px; overflow-y: auto; }
+
+/* A wide card built around a donut has room to put the chart and its table
+   side by side instead of stacking them with a lot of empty space below. */
+.card__panel--split {
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+.card__panel--split .card__body { flex: none; width: 240px; }
+.card__panel--split .card__table { flex: 1; margin-top: 0; align-self: center; }
+@media (max-width: 640px) {
+  .card__panel--split { flex-direction: column; align-items: stretch; }
+  .card__panel--split .card__body { width: 100%; }
+}
 
 .stat-table {
   width: 100%;
@@ -641,6 +656,12 @@ body {
   font-size: 11.5px;
   text-transform: uppercase;
   letter-spacing: 0.02em;
+}
+.stat-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-1);
+  z-index: 1;
 }
 .stat-table td.num, .stat-table th.num {
   text-align: right;
@@ -732,12 +753,6 @@ body {
   overflow: auto;
   padding: 0 20px;
   flex: 1;
-}
-.drilldown-table thead th {
-  position: sticky;
-  top: 0;
-  background: var(--surface-1);
-  z-index: 1;
 }
 
 .modal__foot {
@@ -879,7 +894,21 @@ body {
         </div>
       </article>
 
-      <article class="card card--chart card--1" id="card-dekret-turnout">
+      <article class="card card--chart card--1" id="card-not-voted">
+        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M9.3 9.3l5.4 5.4M14.7 9.3l-5.4 5.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <div class="card__head">
+          <h3>Не проголосовали</h3>
+          <p class="card__desc">Всего не пришедших к голосованию — ДО и остальные</p>
+        </div>
+        <div class="card__panel">
+          <div class="card__body card__body--donut">
+            <canvas id="chart-not-voted" role="img" aria-label="Не проголосовавшие: ДО и остальные"></canvas>
+          </div>
+          <div class="card__table" id="table-not-voted"></div>
+        </div>
+      </article>
+
+      <article class="card card--chart card--2" id="card-dekret-turnout">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12.3l2.4 2.4 4.6-5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
         <div class="card__head">
           <h3>Явка сотрудников в ДО</h3>
@@ -893,13 +922,13 @@ body {
         </div>
       </article>
 
-      <article class="card card--chart card--2" id="card-dekret-format">
+      <article class="card card--chart card--wide card--3" id="card-dekret-format">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 4a8 8 0 0 1 6.9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
         <div class="card__head">
           <h3>ДО: способ голосования</h3>
           <p class="card__desc">ДЭГ и очно среди проголосовавших из декрета</p>
         </div>
-        <div class="card__panel">
+        <div class="card__panel card__panel--split">
           <div class="card__body card__body--donut">
             <canvas id="chart-dekret-format" role="img" aria-label="Способ голосования сотрудников в декрете"></canvas>
           </div>
@@ -907,7 +936,7 @@ body {
         </div>
       </article>
 
-      <article class="card card--chart card--wide card--3" id="card-day-format">
+      <article class="card card--chart card--wide card--4" id="card-day-format">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="3.4" height="9" rx="1" fill="currentColor"/><rect x="10.3" y="5.5" width="3.4" height="13.5" rx="1" fill="currentColor"/><rect x="16.6" y="13" width="3.4" height="6" rx="1" fill="currentColor"/></svg></span>
         <div class="card__head">
           <h3>Дни × способ голосования</h3>
@@ -920,7 +949,7 @@ body {
         </div>
       </article>
 
-      <article class="card card--chart card--wide card--4" id="card-dept-turnout">
+      <article class="card card--chart card--wide card--1" id="card-dept-turnout">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="7" r="2.3" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="17" r="2.3" stroke="currentColor" stroke-width="1.8"/><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
         <div class="card__head">
           <h3>Явка по отделам</h3>
@@ -933,7 +962,7 @@ body {
         </div>
       </article>
 
-      <article class="card card--chart card--wide card--1" id="card-instructor">
+      <article class="card card--chart card--wide card--2" id="card-instructor">
         <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.7"/><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M2.8 19c0-2.8 2.3-5 5.2-5s5.2 2.2 5.2 5M10.8 14.3c.8-.3 1.7-.5 2.7-.5 2.9 0 5.2 2.2 5.2 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
         <div class="card__head">
           <h3>Нагрузка по инструкторам</h3>
@@ -1291,7 +1320,19 @@ function computeStats(rows) {
 
   // Overall turnout.
   const votedRows = rows.filter((r) => r.voted);
+  const notVotedRows = rows.filter((r) => !r.voted);
   const turnout = { count: votedRows.length, pct: pct(votedRows.length, total), rows: votedRows };
+
+  // Who didn't vote: split into decree (ДО) vs everyone else.
+  const notVotedDekretRows = notVotedRows.filter((r) => r.dekret);
+  const notVotedOtherRows = notVotedRows.filter((r) => !r.dekret);
+  const notVoted = {
+    count: notVotedRows.length,
+    pct: pct(notVotedRows.length, total),
+    rows: notVotedRows,
+    dekret: { count: notVotedDekretRows.length, pct: pct(notVotedDekretRows.length, notVotedRows.length), rows: notVotedDekretRows },
+    other: { count: notVotedOtherRows.length, pct: pct(notVotedOtherRows.length, notVotedRows.length), rows: notVotedOtherRows },
+  };
 
   // 4. Dekret turnout: how many of the dekret group voted.
   const dekretVotedRows = dekretRows.filter((r) => r.voted);
@@ -1344,6 +1385,7 @@ function computeStats(rows) {
     dekret,
     byDay,
     turnout,
+    notVoted,
     dekretTurnout,
     dekretFormat,
     format,
@@ -1388,17 +1430,21 @@ function baseChartOptions(p) {
     transitions: { active: { animation: { duration: 200, easing: 'easeOutQuart' } } },
     plugins: {
       legend: { display: false },
-      tooltip: {
-        backgroundColor: p.textPrimary,
-        titleColor: p.surface,
-        bodyColor: p.surface,
-        padding: 10,
-        cornerRadius: 8,
-        displayColors: true,
-        boxPadding: 4,
-      },
+      tooltip: { enabled: false },
     },
   };
+}
+
+// Horizontal (and grouped-horizontal) bar charts need a per-category row
+// height, not a fixed box — squeeze 15 departments into a 240px box and
+// every bar becomes an unreadable sliver. Height grows with the category
+// count up to `max`, then the body scrolls instead of growing forever.
+function sizeCategoryChartBody(canvasId, count, opts) {
+  const { perRow, groupSize = 1, gap = 10, padding = 60, min = 220, max = 520 } = opts;
+  const body = document.getElementById(canvasId).parentElement;
+  const raw = padding + count * (perRow * groupSize + gap);
+  body.style.height = `${Math.max(min, Math.min(max, raw))}px`;
+  body.classList.toggle('card__body--scroll', raw > max);
 }
 
 function gridScale(p, extra) {
@@ -1603,6 +1649,7 @@ function renderDeptChart(stats) {
   destroyChart('dept');
   const labels = stats.byDept.map((d) => d.name);
   const colors = stats.byDept.map((_, i) => categoricalColor(i));
+  sizeCategoryChartBody('chart-dept', stats.byDept.length, { perRow: 30, gap: 10, padding: 50, min: 220, max: 480 });
   chartRegistry.dept = new Chart(document.getElementById('chart-dept'), {
     type: 'bar',
     plugins: [volumeShadowPlugin],
@@ -1625,16 +1672,6 @@ function renderDeptChart(stats) {
         x: gridScale(p, { beginAtZero: true, ticks: { precision: 0 } }),
         y: { grid: { display: false }, border: { color: p.baseline }, ticks: { color: p.textPrimary, font: { size: 11.5 } } },
       },
-      plugins: Object.assign(baseChartOptions(p).plugins, {
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const d = stats.byDept[ctx.dataIndex];
-              return ` ${d.count} чел. (${fmtPct(d.pct)})`;
-            },
-          },
-        },
-      }),
       ...drilldownHandlers((el) => {
         const d = stats.byDept[el.index];
         return { title: `Отдел: ${d.name}`, rows: d.rows };
@@ -1678,19 +1715,7 @@ function donutChart(canvasId, p, labels, data, colors, opts) {
           position: 'bottom',
           labels: { color: p.textSecondary, boxWidth: 10, boxHeight: 10, padding: 12, font: { size: 11.5 } },
         },
-        tooltip: {
-          backgroundColor: p.textPrimary,
-          titleColor: p.surface,
-          bodyColor: p.surface,
-          padding: 10,
-          cornerRadius: 8,
-          callbacks: {
-            label: (ctx) => {
-              const total = data.reduce((a, b) => a + b, 0);
-              return ` ${ctx.label}: ${ctx.raw} (${fmtPct(pct(ctx.raw, total))})`;
-            },
-          },
-        },
+        tooltip: { enabled: false },
       },
       ...(rowsByIndex
         ? drilldownHandlers((el) => ({
@@ -1748,16 +1773,6 @@ function renderDaysChart(stats) {
         x: { grid: { display: false }, border: { color: p.baseline }, ticks: { color: p.textPrimary } },
         y: gridScale(p, { beginAtZero: true, ticks: { precision: 0 } }),
       },
-      plugins: Object.assign(baseChartOptions(p).plugins, {
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const d = stats.byDay[ctx.dataIndex];
-              return ` ${d.voted} чел. (${fmtPct(d.votedPctOfAll)} от всех, ${fmtPct(d.votedPctOfDay)} от назначенных на день)`;
-            },
-          },
-        },
-      }),
       ...drilldownHandlers((el) => {
         const d = stats.byDay[el.index];
         return { title: `Проголосовали ${d.label}`, rows: d.votedRows };
@@ -1789,6 +1804,27 @@ function renderFormatChart(stats) {
     'table-format',
     [{ label: '' }, { label: 'Способ' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
     stats.format.map((f, i) => [swatch(colors[i]), f.name, f.count, fmtPct(f.pct)])
+  );
+}
+
+function renderNotVotedChart(stats) {
+  const p = currentPalette();
+  destroyChart('notVoted');
+  const nv = stats.notVoted;
+  const labels = ['ДО', 'Остальные'];
+  const data = [nv.dekret.count, nv.other.count];
+  const colors = [categoricalColor(0), p.muted];
+  chartRegistry.notVoted = donutChart('chart-not-voted', p, labels, data, colors, {
+    rowsByIndex: [nv.dekret.rows, nv.other.rows],
+    titlePrefix: 'Не проголосовали',
+  });
+  renderTable(
+    'table-not-voted',
+    [{ label: '' }, { label: 'Категория' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
+    [
+      [swatch(colors[0]), labels[0], nv.dekret.count, fmtPct(nv.dekret.pct)],
+      [swatch(colors[1]), labels[1], nv.other.count, fmtPct(nv.other.pct)],
+    ]
   );
 }
 
@@ -1909,16 +1945,6 @@ function renderDeptTurnoutChart(stats) {
         x: { grid: { display: false }, border: { color: p.baseline }, ticks: { color: p.textPrimary } },
         y: gridScale(p, { beginAtZero: true, suggestedMax: 100, ticks: { callback: (v) => v + '%' } }),
       },
-      plugins: Object.assign(baseChartOptions(p).plugins, {
-        tooltip: {
-          callbacks: {
-            label: (ctx) => {
-              const d = stats.deptTurnout[ctx.dataIndex];
-              return ` ${d.voted} из ${d.total} (${fmtPct(d.pct)})`;
-            },
-          },
-        },
-      }),
       ...drilldownHandlers((el) => {
         const d = stats.deptTurnout[el.index];
         return { title: `Явка — ${d.name}`, rows: d.votedRows };
@@ -1931,6 +1957,7 @@ function renderInstructorChart(stats) {
   const p = currentPalette();
   destroyChart('instructor');
   const labels = stats.byInstructor.map((d) => d.name);
+  sizeCategoryChartBody('chart-instructor', stats.byInstructor.length, { perRow: 24, groupSize: 2, gap: 18, padding: 60, min: 260, max: 620 });
   chartRegistry.instructor = new Chart(document.getElementById('chart-instructor'), {
     type: 'bar',
     plugins: [volumeShadowPlugin],
@@ -1983,6 +2010,7 @@ function renderAllCharts(stats) {
   renderDekretChart(stats);
   renderDaysChart(stats);
   renderFormatChart(stats);
+  renderNotVotedChart(stats);
   renderDekretTurnoutChart(stats);
   renderDekretFormatChart(stats);
   renderDayFormatChart(stats);

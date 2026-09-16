@@ -75,7 +75,19 @@ function computeStats(rows) {
 
   // Overall turnout.
   const votedRows = rows.filter((r) => r.voted);
+  const notVotedRows = rows.filter((r) => !r.voted);
   const turnout = { count: votedRows.length, pct: pct(votedRows.length, total), rows: votedRows };
+
+  // Who didn't vote: split into decree (ДО) vs everyone else.
+  const notVotedDekretRows = notVotedRows.filter((r) => r.dekret);
+  const notVotedOtherRows = notVotedRows.filter((r) => !r.dekret);
+  const notVoted = {
+    count: notVotedRows.length,
+    pct: pct(notVotedRows.length, total),
+    rows: notVotedRows,
+    dekret: { count: notVotedDekretRows.length, pct: pct(notVotedDekretRows.length, notVotedRows.length), rows: notVotedDekretRows },
+    other: { count: notVotedOtherRows.length, pct: pct(notVotedOtherRows.length, notVotedRows.length), rows: notVotedOtherRows },
+  };
 
   // 4. Dekret turnout: how many of the dekret group voted.
   const dekretVotedRows = dekretRows.filter((r) => r.voted);
@@ -128,6 +140,7 @@ function computeStats(rows) {
     dekret,
     byDay,
     turnout,
+    notVoted,
     dekretTurnout,
     dekretFormat,
     format,
