@@ -21,6 +21,30 @@ function marksAnimation() {
   };
 }
 
+// Number-only hover tooltip: no title (category/day label), no dataset-name
+// prefix, no color swatch — just the raw value in a small themed bubble.
+// The companion `renderTable`/`card__table` next to every chart already
+// carries the full label+percent breakdown, so the on-hover bubble doesn't
+// need to repeat it, only confirm the exact number a mark represents.
+function numberOnlyTooltip(p) {
+  return {
+    enabled: true,
+    displayColors: false,
+    backgroundColor: p.textPrimary,
+    titleColor: p.surface,
+    bodyColor: p.surface,
+    borderWidth: 0,
+    cornerRadius: 8,
+    padding: 8,
+    caretSize: 6,
+    bodyFont: { size: 13, weight: '700' },
+    callbacks: {
+      title: () => '',
+      label: (ctx) => ctx.formattedValue,
+    },
+  };
+}
+
 function baseChartOptions(p) {
   Chart.defaults.font.family = 'system-ui, -apple-system, "Segoe UI", sans-serif';
   Chart.defaults.color = p.textSecondary;
@@ -45,7 +69,7 @@ function baseChartOptions(p) {
     },
     plugins: {
       legend: { display: false },
-      tooltip: { enabled: false },
+      tooltip: numberOnlyTooltip(p),
     },
   };
 }
@@ -519,7 +543,7 @@ function donutChart(canvasId, p, labels, data, colors, opts) {
           position: 'bottom',
           labels: { color: p.textSecondary, boxWidth: 10, boxHeight: 10, padding: 12, font: { size: 11.5 } },
         },
-        tooltip: { enabled: false },
+        tooltip: numberOnlyTooltip(p),
       },
       ...(rowsByIndex
         ? drilldownHandlers((el) => ({

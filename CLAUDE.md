@@ -240,10 +240,20 @@ hoverBorderRadius()`, and add `barHoverBouncePlugin` to that chart's `plugins: [
 either leaves a visible ghost of the old un-lifted bar behind, or gives that one chart no bounce
 at all.
 
-**No hover tooltips.** `baseChartOptions` and `donutChart` both set `plugins.tooltip = { enabled: false }`
-— removed on request. Don't re-add a per-chart `tooltip.callbacks` override; if a chart needs
-its values visible without hovering, that's what the companion `renderTable`/`card__table` is
-for (every chart already has one).
+**Hover tooltips show only the bare number, nothing else.** Tooltips were disabled entirely at
+one point (`plugins.tooltip = { enabled: false }` everywhere, on request), then brought back
+but deliberately stripped down rather than restored to Chart.js's default — the default tooltip
+repeats the category/day label (already on the axis) and the dataset name (already in the
+legend or the companion table), which is exactly the clutter that got them turned off in the
+first place. `numberOnlyTooltip(p)` (shared by `baseChartOptions` and `donutChart`, so every
+chart gets it uniformly) overrides `callbacks.title` to return `''` and `callbacks.label` to
+return only `ctx.formattedValue`, with `displayColors: false` (no color swatch) and a small
+themed bubble (`backgroundColor: p.textPrimary`, `bodyColor: p.surface` — inverted so it reads
+in both themes). The companion `renderTable`/`card__table` next to every chart still carries
+the full label+percent breakdown; the tooltip's only job is confirming the exact number under
+the cursor. **Don't add back a `label` callback that prepends the dataset name or a `title`
+callback that shows the category** — that regresses to the clutter this was built to avoid;
+if a chart needs more context than a bare number, that belongs in its table, not the tooltip.
 
 **По отделам draws its labels inside the bars, not in a separate table.** It went through a
 donut phase (fixed ~220px regardless of department count) and back — a pie reads department
