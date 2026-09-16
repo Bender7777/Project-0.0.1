@@ -82,10 +82,13 @@ function getFilteredRows() {
 // The Все/ЧКЭ/ДО buttons live inside the "Категория" KPI tile
 // (renderKPIs in charts.js), rebuilt on every refreshDashboard() — so
 // there's no persistent DOM to keep in sync here, renderKPIs reads
-// `scopeFilter` fresh each time it runs.
+// `scopeFilter` fresh each time it runs. Switching category also resets
+// the department filter — a department selected under one category may
+// not exist (or mean the same thing) under another, so starting over
+// avoids a confusing "0 сотрудников" state.
 function setScope(scope) {
-  if (scope === scopeFilter) return;
   scopeFilter = scope;
+  excludedDepts = new Set();
   refreshDashboard();
 }
 

@@ -74,17 +74,26 @@ filter-agnostic — they just operate on whatever row array they're given.
 
 **Category scope filter (Все/ЧКЭ/ДО):** three buttons live inside the "Категория" KPI tile
 (`renderKPIs` in `charts.js` — card 2, `.kpi--scope`, not a stat card, see KPI hero tiles below)
-rather than in the filter bar; each calls the global `setScope()` in `app.js`. `getScopedRows()`
+rather than in the filter bar; each calls the global `setScope()` in `app.js`. `.segmented`'s
+own styling is a glass chip (`rgba(255,255,255,0.4)` + `backdrop-filter: blur` + the same soft
+inset highlight as `.kpi__icon`'s badge) rather than a flat `--surface-1` box — it only ever
+sits on top of a colored KPI card now, so it needs to read as floating chrome on that gradient,
+not a plain white strip. If `.segmented` ever gets reused somewhere with a neutral background,
+revisit this — the glass look assumes a colorful backdrop. `getScopedRows()`
 narrows `currentRows` by `r.dekret` *before* the department filter applies, and
 `getFilteredRows()` layers `excludedDepts` on top of it — the two filters combine, same as the
 subtitle's filter note (`(ДО, отфильтровано из N)`). `scopeFilter` ('all'|'chke'|'do') is
 separate app state alongside `excludedDepts`, reset to `'all'` in
 `handleFile`/`restoreFromStorage`/`clearData` exactly where `excludedDepts` is reset. Since the
 buttons live inside `#kpi-grid`, which `renderKPIs` rebuilds (`innerHTML`) on every render,
-there's no persistent DOM to keep in sync — `setScope()` just flips `scopeFilter` and calls
-`refreshDashboard()`; the next `renderKPIs` reads `scopeFilter` fresh and sets `is-active` on
-the matching button itself. Don't reintroduce a `syncScopeVisuals()`-style helper for this — it
-would go stale the instant `renderKPIs` rebuilds the grid.
+there's no persistent DOM to keep in sync — `setScope()` just flips `scopeFilter`, clears
+`excludedDepts`, and calls `refreshDashboard()`; the next `renderKPIs` reads `scopeFilter`
+fresh and sets `is-active` on the matching button itself. Don't reintroduce a
+`syncScopeVisuals()`-style helper for this — it would go stale the instant `renderKPIs`
+rebuilds the grid. Clearing `excludedDepts` on every scope change (even re-clicking the
+already-active button) is deliberate: a department selected under one category may have a
+different (or zero) headcount under another, so switching category always starts the
+department filter over rather than risk a confusing "0 сотрудников" state.
 
 **"По отделам" always shows every department, even while filtered.** `refreshDashboard`
 computes two stats objects — one from `getFilteredRows()` (scope + department, drives every
