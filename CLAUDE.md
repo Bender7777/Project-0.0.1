@@ -93,6 +93,19 @@ that collapses to a single column under 720px — `renderKPIs` always emits exac
 this order, so adding/removing a KPI tile means updating both the JS array and the CSS
 grid-area rules together.
 
+**Volume on the marks themselves:** bars and donut arcs in `charts.js` aren't flat fills —
+`glossyColor`/`glossyColorByIndex` (built on `obliqueGradient`, `lighten`/`darken`) turn each
+base hex into a light-to-dark canvas gradient along the bar/arc direction, and every chart
+registers the `volumeShadowPlugin` (`beforeDatasetsDraw`/`afterDatasetsDraw`) to drop a
+theme-aware shadow under just the data marks (not the grid/legend). The gradient is 100%
+Chart.js's scriptable-option pattern — the callback returns `hex` until `chart.chartArea`
+exists, then swaps in the gradient once layout is known — so **when adding a new chart, set
+`backgroundColor` via one of these helpers (and add `plugins: [volumeShadowPlugin]` to the
+chart config) instead of a flat color/array**, or it'll look flat next to the others. Only the
+lightness changes, never the hue, so this doesn't affect categorical identity or CVD
+separation — swap `categoricalColor()`/`p.*` inputs, not the gradient math, if a color needs
+to change.
+
 **Chart cards are bento tiles too:** every `.card` in `index.html` carries a `.card--1`…
 `.card--4` class that cycles through the same 4 hero-palette tokens as the KPI cards (same
 gradient/shadow/icon-badge treatment), plus a static inline `.card__icon` SVG per card

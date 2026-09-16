@@ -43,6 +43,80 @@ function gridScale(p, extra) {
   );
 }
 
+// --- Volume helpers: gradient fills + drop shadow so bars/donuts read as
+// glossy 3D marks, matching the bento card chrome. Same base hue in/out —
+// only lightness changes, so categorical identity and CVD separation hold.
+
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
+  const n = parseInt(full, 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function mixHex(hex, target, amount) {
+  const a = hexToRgb(hex);
+  const b = hexToRgb(target);
+  const mix = (x, y) => Math.round(x + (y - x) * amount);
+  return `rgb(${mix(a.r, b.r)}, ${mix(a.g, b.g)}, ${mix(a.b, b.b)})`;
+}
+
+function lighten(hex, amount) {
+  return mixHex(hex, '#ffffff', amount);
+}
+
+function darken(hex, amount) {
+  return mixHex(hex, '#000000', amount);
+}
+
+function obliqueGradient(ctx, area, hex, opts) {
+  if (!area) return hex;
+  const { horizontal = false, lightAmt = 0.32, darkAmt = 0.22 } = opts || {};
+  const grad = horizontal
+    ? ctx.createLinearGradient(area.left, 0, area.right, 0)
+    : ctx.createLinearGradient(0, area.top, 0, area.bottom);
+  grad.addColorStop(0, lighten(hex, lightAmt));
+  grad.addColorStop(0.55, hex);
+  grad.addColorStop(1, darken(hex, darkAmt));
+  return grad;
+}
+
+function glossyColor(hex, opts) {
+  return (ctx) => {
+    const { chart } = ctx;
+    if (!chart.chartArea) return hex;
+    return obliqueGradient(chart.ctx, chart.chartArea, hex, opts);
+  };
+}
+
+function glossyColorByIndex(colors, opts) {
+  return (ctx) => {
+    const { chart, dataIndex } = ctx;
+    const hex = colors[dataIndex];
+    if (!chart.chartArea || hex == null) return hex;
+    return obliqueGradient(chart.ctx, chart.chartArea, hex, opts);
+  };
+}
+
+function shadowColorForMode() {
+  return currentThemeMode() === 'dark' ? 'rgba(0,0,0,0.55)' : 'rgba(15,15,15,0.28)';
+}
+
+const volumeShadowPlugin = {
+  id: 'volumeShadow',
+  beforeDatasetsDraw(chart) {
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.shadowColor = shadowColorForMode();
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 5;
+  },
+  afterDatasetsDraw(chart) {
+    chart.ctx.restore();
+  },
+};
+
 const KPI_ICONS = [
   // users
   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 4.3c1.6.4 2.8 1.8 2.8 3.5 0 1.7-1.2 3.1-2.8 3.5M18.5 14.2c2 .5 3.5 2.3 3.5 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
@@ -118,14 +192,15 @@ function renderDeptChart(stats) {
   const colors = stats.byDept.map((_, i) => categoricalColor(i));
   chartRegistry.dept = new Chart(document.getElementById('chart-dept'), {
     type: 'bar',
+    plugins: [volumeShadowPlugin],
     data: {
       labels,
       datasets: [
         {
           label: 'Сотрудников',
           data: stats.byDept.map((d) => d.count),
-          backgroundColor: colors,
-          borderRadius: 4,
+          backgroundColor: glossyColorByIndex(colors, { horizontal: true }),
+          borderRadius: 6,
           maxBarThickness: 34,
         },
       ],
@@ -159,7 +234,19 @@ function renderDeptChart(stats) {
 function donutChart(canvasId, p, labels, data, colors, centerLabel) {
   return new Chart(document.getElementById(canvasId), {
     type: 'doughnut',
-    data: { labels, datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: p.surface, hoverOffset: 4 }] },
+    plugins: [volumeShadowPlugin],
+    data: {
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: glossyColorByIndex(colors, { lightAmt: 0.35, darkAmt: 0.18 }),
+          borderWidth: 2,
+          borderColor: p.surface,
+          hoverOffset: 6,
+        },
+      ],
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -212,14 +299,15 @@ function renderDaysChart(stats) {
   const colors = labels.map((_, i) => categoricalColor(i));
   chartRegistry.days = new Chart(document.getElementById('chart-days'), {
     type: 'bar',
+    plugins: [volumeShadowPlugin],
     data: {
       labels,
       datasets: [
         {
           label: 'Проголосовало',
           data: stats.byDay.map((d) => d.voted),
-          backgroundColor: colors,
-          borderRadius: 6,
+          backgroundColor: glossyColorByIndex(colors),
+          borderRadius: 8,
           maxBarThickness: 56,
         },
       ],
@@ -313,11 +401,12 @@ function renderDayFormatChart(stats) {
   const c2 = categoricalColor(1);
   chartRegistry.dayFormat = new Chart(document.getElementById('chart-day-format'), {
     type: 'bar',
+    plugins: [volumeShadowPlugin],
     data: {
       labels,
       datasets: [
-        { label: 'ДЭГ', data: stats.dayFormat.map((d) => d.deg), backgroundColor: c1, borderRadius: 4, maxBarThickness: 40 },
-        { label: 'ОЧНО', data: stats.dayFormat.map((d) => d.ochno), backgroundColor: c2, borderRadius: 4, maxBarThickness: 40 },
+        { label: 'ДЭГ', data: stats.dayFormat.map((d) => d.deg), backgroundColor: glossyColor(c1), borderRadius: 6, maxBarThickness: 40 },
+        { label: 'ОЧНО', data: stats.dayFormat.map((d) => d.ochno), backgroundColor: glossyColor(c2), borderRadius: 6, maxBarThickness: 40 },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
@@ -342,14 +431,15 @@ function renderDeptTurnoutChart(stats) {
   const labels = stats.deptTurnout.map((d) => d.name);
   chartRegistry.deptTurnout = new Chart(document.getElementById('chart-dept-turnout'), {
     type: 'bar',
+    plugins: [volumeShadowPlugin],
     data: {
       labels,
       datasets: [
         {
           label: 'Явка, %',
           data: stats.deptTurnout.map((d) => Number(d.pct.toFixed(1))),
-          backgroundColor: p.good,
-          borderRadius: 4,
+          backgroundColor: glossyColor(p.good),
+          borderRadius: 6,
           maxBarThickness: 40,
         },
       ],
@@ -379,11 +469,12 @@ function renderInstructorChart(stats) {
   const labels = stats.byInstructor.map((d) => d.name);
   chartRegistry.instructor = new Chart(document.getElementById('chart-instructor'), {
     type: 'bar',
+    plugins: [volumeShadowPlugin],
     data: {
       labels,
       datasets: [
-        { label: 'Всего закреплено', data: stats.byInstructor.map((d) => d.count), backgroundColor: p.muted, borderRadius: 4, maxBarThickness: 34 },
-        { label: 'Проголосовало', data: stats.byInstructor.map((d) => d.voted), backgroundColor: categoricalColor(0), borderRadius: 4, maxBarThickness: 34 },
+        { label: 'Всего закреплено', data: stats.byInstructor.map((d) => d.count), backgroundColor: glossyColor(p.muted, { horizontal: true }), borderRadius: 6, maxBarThickness: 34 },
+        { label: 'Проголосовало', data: stats.byInstructor.map((d) => d.voted), backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }), borderRadius: 6, maxBarThickness: 34 },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
