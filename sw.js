@@ -1,4 +1,4 @@
-const CACHE_NAME = 'voting-dashboard-v3';
+const CACHE_NAME = 'voting-dashboard-v4';
 const APP_SHELL = [
   './',
   './index.html',

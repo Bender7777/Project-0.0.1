@@ -84,6 +84,15 @@ tokens — `--shadow`/`--shadow-lg` (ambient + contact shadow, plus an inset top
 and the dropdown; adjust those tokens rather than styling each component's shadow/gradient
 individually.
 
+**KPI hero tiles:** the 4 KPI cards use a fixed, non-themed palette (`--kpi-1-bg`…`--kpi-4-bg`
++ matching `-text`/`-sub`/`-icon`/`-shadow` tokens in `:root`) — cream, orange, gold, green —
+independent of light/dark mode, each with a glass icon badge (`renderKPIs`'s `KPI_ICONS` in
+`charts.js` picks the SVG per card by index). The grid is an explicit asymmetric layout
+(`.kpi-grid` in `style.css`: card 1 spans both rows on the left, cards 2–4 fill the right)
+that collapses to a single column under 720px — `renderKPIs` always emits exactly 4 cards in
+this order, so adding/removing a KPI tile means updating both the JS array and the CSS
+grid-area rules together.
+
 **Service worker cache list:** `sw.js` precaches an explicit `APP_SHELL` file list. Any new
 file added under `src/`, `vendor/`, or `icons/` that the app needs offline must be added to
 that list, and `CACHE_NAME` bumped so returning clients pick up the change.

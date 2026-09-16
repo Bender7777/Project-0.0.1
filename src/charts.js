@@ -43,9 +43,19 @@ function gridScale(p, extra) {
   );
 }
 
+const KPI_ICONS = [
+  // users
+  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 4.3c1.6.4 2.8 1.8 2.8 3.5 0 1.7-1.2 3.1-2.8 3.5M18.5 14.2c2 .5 3.5 2.3 3.5 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  // check circle
+  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M8.5 12.3l2.4 2.4 4.6-5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  // calendar / leave
+  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="5.5" width="16" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M4 10h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 14.3l2 2 4-4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  // pulse / turnout
+  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 13h3.2l2-4.5 3 9 2.4-6.5 1.6 2h5.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+];
+
 function renderKPIs(stats) {
   const el = document.getElementById('kpi-grid');
-  const p = currentPalette();
   const cards = [
     {
       label: 'Всего сотрудников',
@@ -70,8 +80,9 @@ function renderKPIs(stats) {
   ];
   el.innerHTML = cards
     .map(
-      (c) => `
-    <div class="kpi">
+      (c, i) => `
+    <div class="kpi kpi--${i + 1}">
+      <span class="kpi__icon">${KPI_ICONS[i]}</span>
       <p class="kpi__label">${c.label}</p>
       <p class="kpi__value">${c.value}</p>
       <p class="kpi__sub">${c.sub}</p>
