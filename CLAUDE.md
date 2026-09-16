@@ -72,6 +72,36 @@ selected. Panel open/close state lives in `dropdown.is-open` + the panel's `hidd
 toggled by the trigger, an outside-click listener, and Escape. `computeStats`/`charts.js` are
 filter-agnostic — they just operate on whatever row array they're given.
 
+**Category scope filter (Все/ЧКЭ/ДО):** a `.segmented` control (`#scope-segmented`, next to the
+department dropdown inside `.filter-bar`) narrows `currentRows` by `r.dekret` *before* the
+department filter applies — `getScopedRows()` returns that scope-only slice (used to build the
+department checkbox list/counts so they reflect the active scope), and `getFilteredRows()` layers
+`excludedDepts` on top of it. The two filters combine, same as the subtitle's filter note (`(ДО,
+отфильтровано из N)`). `scopeFilter` ('all'|'chke'|'do') is separate app state alongside
+`excludedDepts`, reset to `'all'` in `handleFile`/`restoreFromStorage`/`clearData` exactly where
+`excludedDepts` is reset. `setScope()` re-renders via the same `refreshDashboard()` every other
+filter change goes through — `renderDeptFilter`/`renderAllCharts` don't know a scope filter
+exists, they just see a different row array.
+
+Because `.filter-bar` now holds two independently-relevant controls (department dropdown — only
+meaningful with ≥2 departments; scope switcher — always meaningful once data is loaded), the
+group and the bar have separate visibility: `els.filterBar.hidden` is only ever tied to whether
+data is loaded (set in `refreshDashboard`/`clearData`), while `#dept-filter-group`'s own `hidden`
+is what `renderDeptFilter` toggles on the `depts.length < 2` check that used to hide the whole bar.
+
+**Department-bar click filters the dashboard, it doesn't drill down.** Unlike every other
+chart mark, clicking a bar in "По отделам" doesn't open the row modal — `renderDeptChart`
+sets its own `onHover`/`onClick` (not `drilldownHandlers()`) and calls `filterByDepartment(name)`
+in `app.js`, which drives the *same* `excludedDepts` state as the dropdown above it: clicking a
+department selects only that one, and clicking the currently-sole-selected department again
+toggles back to "all departments" (`excludedDepts.size === allDeptNames.length - 1 &&
+!excludedDepts.has(name)`). The click handler defers the actual filter/refresh with
+`setTimeout(fn, 0)` — calling `refreshDashboard()` (which destroys and recreates this exact
+chart via `destroyChart('dept')` → `new Chart(...)`) synchronously from inside Chart.js's own
+click dispatch for that same canvas throws `Cannot read properties of undefined (reading
+'handleEvent')` once Chart.js's internal event handling continues after the callback returns;
+deferring one tick lets Chart.js finish before the canvas it's still processing gets torn down.
+
 The panel itself is Excel-style: opening it snapshots `excludedDepts` into a separate
 `pendingExcludedDepts`, and every control inside (checkbox rows, "Выбрать все", "Сбросить")
 only mutates that pending copy via `syncDeptOptionVisuals()`/direct classList toggles — nothing

@@ -54,21 +54,31 @@
   <section id="dashboard" class="dashboard" hidden>
 
     <div class="filter-bar" id="filter-bar" hidden>
-      <span class="filter-bar__label">Отдел</span>
-      <div class="dropdown" id="dept-dropdown">
-        <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
-          <span id="dept-dropdown-label">Все отделы</span>
-          <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
-          <div class="dropdown__list" id="dept-dropdown-list"></div>
-          <div class="dropdown__footer">
-            <div class="dropdown__quick-actions">
-              <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
-              <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+      <div class="filter-bar__group" id="dept-filter-group">
+        <span class="filter-bar__label">Отдел</span>
+        <div class="dropdown" id="dept-dropdown">
+          <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+            <span id="dept-dropdown-label">Все отделы</span>
+            <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
+            <div class="dropdown__list" id="dept-dropdown-list"></div>
+            <div class="dropdown__footer">
+              <div class="dropdown__quick-actions">
+                <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
+                <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+              </div>
+              <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
             </div>
-            <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
           </div>
+        </div>
+      </div>
+      <div class="filter-bar__group">
+        <span class="filter-bar__label">Категория</span>
+        <div class="segmented" id="scope-segmented" role="tablist" aria-label="Категория сотрудников">
+          <button type="button" class="segmented__btn is-active" data-scope="all" role="tab" aria-selected="true">Все</button>
+          <button type="button" class="segmented__btn" data-scope="chke" role="tab" aria-selected="false">ЧКЭ</button>
+          <button type="button" class="segmented__btn" data-scope="do" role="tab" aria-selected="false">ДО</button>
         </div>
       </div>
     </div>

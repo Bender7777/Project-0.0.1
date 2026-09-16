@@ -276,6 +276,41 @@ body {
   color: var(--text-secondary);
 }
 
+.filter-bar__group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--shadow);
+}
+.segmented__btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.segmented__btn:hover { color: var(--text-primary); }
+.segmented__btn:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
+.segmented__btn.is-active {
+  background: var(--gradient-blue);
+  color: #fff;
+  box-shadow: var(--shadow-blue);
+}
+
 .dropdown {
   position: relative;
 }

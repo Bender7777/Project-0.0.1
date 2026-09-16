@@ -4,6 +4,7 @@ const THEME_KEY = 'voting-dashboard:theme';
 let currentStats = null;
 let currentRows = [];
 let excludedDepts = new Set();
+let scopeFilter = 'all'; // 'all' | 'chke' | 'do'
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -15,6 +16,8 @@ const els = {
   fileMeta: document.getElementById('file-meta'),
   toast: document.getElementById('toast'),
   filterBar: document.getElementById('filter-bar'),
+  deptFilterGroup: document.getElementById('dept-filter-group'),
+  scopeSegmented: document.getElementById('scope-segmented'),
   deptDropdown: document.getElementById('dept-dropdown'),
   deptTrigger: document.getElementById('dept-dropdown-trigger'),
   deptLabel: document.getElementById('dept-dropdown-label'),
@@ -63,9 +66,42 @@ function deserializeRows(rows) {
 let allDeptNames = [];
 let pendingExcludedDepts = new Set();
 
+// Scope ("Все"/"ЧКЭ"/"ДО") narrows currentRows before the department filter
+// applies on top of it — the two combine, same as the CLAUDE.md data flow.
+function getScopedRows() {
+  if (scopeFilter === 'chke') return currentRows.filter((r) => !r.dekret);
+  if (scopeFilter === 'do') return currentRows.filter((r) => r.dekret);
+  return currentRows;
+}
+
 function getFilteredRows() {
-  if (!excludedDepts.size) return currentRows;
-  return currentRows.filter((r) => !excludedDepts.has(r.dept));
+  const scoped = getScopedRows();
+  if (!excludedDepts.size) return scoped;
+  return scoped.filter((r) => !excludedDepts.has(r.dept));
+}
+
+function syncScopeVisuals() {
+  els.scopeSegmented.querySelectorAll('.segmented__btn').forEach((btn) => {
+    const active = btn.dataset.scope === scopeFilter;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-selected', String(active));
+  });
+}
+
+function setScope(scope) {
+  if (scope === scopeFilter) return;
+  scopeFilter = scope;
+  syncScopeVisuals();
+  refreshDashboard();
+}
+
+// Clicking a department bar in "По отделам" drives the same `excludedDepts`
+// state as the dropdown filter above it — clicking the sole selected
+// department again toggles back to showing every department.
+function filterByDepartment(name) {
+  const onlyThis = excludedDepts.size === allDeptNames.length - 1 && !excludedDepts.has(name);
+  excludedDepts = onlyThis ? new Set() : new Set(allDeptNames.filter((d) => d !== name));
+  refreshDashboard();
 }
 
 function updateDeptOkState() {
@@ -143,21 +179,22 @@ function deptOptionRow({ dept, count, checked }) {
 }
 
 function renderDeptFilter() {
+  const scoped = getScopedRows();
   const deptMap = new Map();
-  for (const r of currentRows) deptMap.set(r.dept, (deptMap.get(r.dept) || 0) + 1);
+  for (const r of scoped) deptMap.set(r.dept, (deptMap.get(r.dept) || 0) + 1);
   const depts = [...deptMap.entries()].sort((a, b) => b[1] - a[1]);
   allDeptNames = depts.map(([dept]) => dept);
 
   if (depts.length < 2) {
-    els.filterBar.hidden = true;
+    els.deptFilterGroup.hidden = true;
     closeDeptDropdown();
     return;
   }
-  els.filterBar.hidden = false;
+  els.deptFilterGroup.hidden = false;
 
   const includedCount = depts.length - excludedDepts.size;
   if (excludedDepts.size === 0) {
-    els.deptLabel.textContent = `Все отделы (${currentRows.length})`;
+    els.deptLabel.textContent = `Все отделы (${scoped.length})`;
   } else if (includedCount === 1) {
     els.deptLabel.textContent = depts.find(([d]) => !excludedDepts.has(d))[0];
   } else {
@@ -180,10 +217,15 @@ function refreshDashboard(meta) {
   els.dashboard.hidden = false;
   els.clearBtn.hidden = false;
 
-  const filterNote = excludedDepts.size ? ` (отфильтровано из ${currentRows.length})` : '';
+  const noteParts = [];
+  if (scopeFilter === 'chke') noteParts.push('ЧКЭ');
+  else if (scopeFilter === 'do') noteParts.push('ДО');
+  if (excludedDepts.size) noteParts.push(`отфильтровано из ${currentRows.length}`);
+  const filterNote = noteParts.length ? ` (${noteParts.join(', ')})` : '';
   els.subtitle.textContent = `${stats.total} записей${filterNote} • обновлено ${new Date().toLocaleString('ru-RU')}`;
   if (meta) els.fileMeta.textContent = meta;
 
+  els.filterBar.hidden = false;
   renderDeptFilter();
   renderAllCharts(stats);
 }
@@ -194,6 +236,8 @@ async function handleFile(file) {
     const { rows, warnings } = parseWorkbook(buffer);
     currentRows = rows;
     excludedDepts = new Set();
+    scopeFilter = 'all';
+    syncScopeVisuals();
     refreshDashboard(`Файл: ${file.name} • ${rows.length} строк`);
     localStorage.setItem(
       STORAGE_KEY,
@@ -214,6 +258,8 @@ function restoreFromStorage() {
     const { rows, fileName, savedAt } = JSON.parse(raw);
     currentRows = deserializeRows(rows);
     excludedDepts = new Set();
+    scopeFilter = 'all';
+    syncScopeVisuals();
     refreshDashboard(`Файл: ${fileName} • сохранено ${new Date(savedAt).toLocaleString('ru-RU')}`);
   } catch (err) {
     console.warn('Не удалось восстановить сохранённые данные', err);
@@ -225,6 +271,8 @@ function clearData() {
   currentStats = null;
   currentRows = [];
   excludedDepts = new Set();
+  scopeFilter = 'all';
+  syncScopeVisuals();
   els.dashboard.hidden = true;
   els.emptyState.hidden = false;
   els.clearBtn.hidden = true;
@@ -327,6 +375,10 @@ els.deptReset.addEventListener('click', () => {
   syncDeptOptionVisuals();
 });
 els.deptOk.addEventListener('click', applyDeptDropdown);
+els.scopeSegmented.addEventListener('click', (e) => {
+  const btn = e.target.closest('.segmented__btn');
+  if (btn) setScope(btn.dataset.scope);
+});
 document.addEventListener('click', (e) => {
   if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
 });

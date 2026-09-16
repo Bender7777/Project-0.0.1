@@ -6,7 +6,6 @@
 <title>Голосование — дашборд</title>
 <meta name="description" content="Дашборд статистики голосования: загрузка Excel-файла и аналитика по отделам, декрету, дням и способу голосования.">
 <meta name="theme-color" content="#0039a6">
-<link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjogItCU0LDRiNCx0L7RgNC0INCz0L7Qu9C+0YHQvtCy0LDQvdC40Y8iLCAic2hvcnRfbmFtZSI6ICLQk9C+0LvQvtGB0L7QstCw0L3QuNC1IiwgImRlc2NyaXB0aW9uIjogItCX0LDQs9GA0YPQt9C60LAgRXhjZWwt0YTQsNC50LvQsCDQuCDRgdGC0LDRgtC40YHRgtC40LrQsCDQs9C+0LvQvtGB0L7QstCw0L3QuNGPINC/0L4g0L7RgtC00LXQu9Cw0LwsINC00LXQutGA0LXRgtGDLCDQtNC90Y/QvCDQuCDRgdC/0L7RgdC+0LHRgyDQs9C+0LvQvtGB0L7QstCw0L3QuNGPLiIsICJzdGFydF91cmwiOiAiLiIsICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLCAiYmFja2dyb3VuZF9jb2xvciI6ICIjZjlmOWY3IiwgInRoZW1lX2NvbG9yIjogIiMwMDM5YTYiLCAibGFuZyI6ICJydSIsICJpY29ucyI6IFt7InNyYyI6ICJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQU1BQUFBREFDQUlBQUFEZHZ2dFFBQUFDUTBsRVFWUjRuTzNjc1UzRFVCUkFVWUxZQVpHQmtqS3BHQ01WQlNOUXBNb1lWR2t6VUlMWWdpNEQrSDZ3ak03cC9mU0txOWRZOW1xM3VUN0FWSTl6TDhDeUNZaEVRQ1FDSWhFUWlZQklCRVFpSUJJQmtRaUlSRUFrQWlJUkVJbUFTQVJFSWlBU0FaRUlpRVJBSkFJaUVSQ0pnRWdFUkNJZ0VnR1JDSWhFUUNRQ0loRVFpWUJJQkVRaUlCSUJrUWlJUkVBa0FpSVJFSW1BU0FSRUlpQVNBWkVJaUVSQUpBSWlFUkNKZ0VnRVJDSWdFZ0dSQ0loRVFDUUNJbm1hZXdHbU9GL1dZd2Z1dDdkcEQ3cEFKQUlpRVJDSmdFZ0VSQ0lnRWdHUkNJaEVRQ1FDSWhFUWlZQklCRVFpSUJJQmtRaUlSRUFrQWlJUkVJbUFTQVJFSWlBU0FaRUlpRVJBSkFJaUVSQ0pnRWdXLzNPRjkrUEwySUVmYjE5akIvNXZMaENKZ0VnRVJDSWdFZ0dSQ0loRVFDUUNJaEVRaVlCSUJFUWlJQklCa1FpSVJFQWtBaUlSRUltQVNBUkVJaUFTQVpFcy9xdU1HYjBlbnNjTy9EeDlqeDM0QjF3Z0VnR1JDSWhFUUNRQ0loRVFpWUJJQkVRaUlCSUJrUWlJUkVBa0FpSVo4emIrZkZrUG1YTzMzOTdHRHVTWHVFQWtBaUlSRUltQVNBUkVJaUFTQVpFSWlFUkFKQUlpRVJDSmdFZ0VSQ0lnRWdHUkNJaEVRQ1FDSWhFUWlZQklCRVFpSUJJQmtRaUlSRUFrQWlJUkVJbUFTQVJFSWlBU0FaRUlpRVJBSkFJaUVSQ0pnRWdFUkNJZ0VnR1JDSWhFUUNRQ0loRVFpWUJJQkVRaUlCSUJrUWlJUkVBa0FpSVJFTWxxdDduT3ZRTUw1Z0tSQ0loRVFDUUNJaEVRaVlCSUJFUWlJQklCa1FpSVJFQWtBaUlSRUltQVNBUkVJaUFTQVpFSWlFUkFKQUlpRVJESkR6WnpFSHVjb1pDM0FBQUFBRWxGVGtTdVFtQ0MiLCAic2l6ZXMiOiAiMTkyeDE5MiIsICJ0eXBlIjogImltYWdlL3BuZyIsICJwdXJwb3NlIjogImFueSJ9LCB7InNyYyI6ICJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQWdBQUFBSUFDQUlBQUFCN0drT3RBQUFIZUVsRVFWUjRuTzNYb1UxREFSaUZVVXJlRG9RT1JHV3JHQU9GWUFRRWlqRlF0UjJvSld5QlFhSUlMei9oTzJlQzY3N2N6Zjd1ZkFWQXovWDBBQUJtQ0FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVEVU1qMEE0SHZIMDNaNndpb091OHYwaEM4ZUFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUU5ReVBZQjVUeSszMHhOVzhmejRQajBCL2pRUEFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvcGJwQWZDdjNEL2NURTlZeGR2cngvUUVmcDhIQUJBbEFBQlJBZ0FRSlFBQVVRSUFFQ1VBQUZFQ0FCQWxBQUJSQWdBUUpRQUFVUUlBRUNVQUFGRUNBQkFsQUFCUkFnQVFKUUFBVVFJQUVDVUFBRkVDQUJBbEFBQlJBZ0FRSlFBQVVRSUFFQ1VBQUZFQ0FCQWxBQUJSQWdBUUpRQUFVUUlBRUNVQUFGRUNBQkFsQUFCUkFnQVFKUUFBVVFJQUVDVUFBRkVDQUJBbEFBQlJ5L1NBSHpxZXR0TVRWbkhZWGFZbkFCVWVBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJHMzJkK2ZwRFFBTThBQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaVBnRVlXUkw3YXpnWXlBQUFBQUJKUlU1RXJrSmdnZz09IiwgInNpemVzIjogIjUxMng1MTIiLCAidHlwZSI6ICJpbWFnZS9wbmciLCAicHVycG9zZSI6ICJhbnkifSwgeyJzcmMiOiAiZGF0YTppbWFnZS9wbmc7YmFzZTY0LGlWQk9SdzBLR2dvQUFBQU5TVWhFVWdBQUFnQUFBQUlBQ0FJQUFBQjdHa090QUFBSGVFbEVRVlI0bk8zWHNVMUNBUlNHVVRGdkI2TURRUW1WWTFoWk9JS0ZsV05ZMFRJUUdMZHdCUkx6Y29uZk9mVXQvdTdMM2V5MzV6c0FldTZuQndBd1F3QUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnYXBrZUFERGdlSHFhbnJDS3crNXkvYkVQQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUdxWkhzQS85L2J4T0QxaEZlK3YzOU1UNEs5OEFBQlJBZ0FRSlFBQVVRSUFFQ1VBQUZFQ0FCQWxBQUJSQWdBUUpRQUFVUUlBRUNVQUFGRUNBQkFsQUFCUkFnQVFKUUFBVVFJQUVDVUFBRkVDQUJBbEFBQlJBZ0FRSlFBQVVRSUFFQ1VBQUZFQ0FCQWxBQUJSQWdBUUpRQUFVUUlBRUNVQUFGRUNBQkFsQUFCUkFnQVFKUUFBVVFJQUVDVUFBRkVDQUJBbEFBQlJBZ0FRSlFBQVVRSUFFQ1VBQUZFQ0FCQWxBQUJSQWdBUUpRQUFVUUlBRUNVQUFGRUNBQkMxVEE4QXJ2WDg4akE5WVJWZm56L1RFNko4QUFCUkFnQVFKUUFBVVFJQUVDVUFBRkVDQUJBbEFBQlJBZ0FRSlFBQVVRSUFFQ1VBQUZFQ0FCQWxBQUJSQWdBUUpRQUFVUUlBRUNVQUFGRUNBQkFsQUFCUkFnQVFKUUFBVVFJQUVDVUFBRkVDQUJBbEFBQlJBZ0FRSlFBQVVRSUFFQ1VBQUZFQ0FCQWxBQUJSQWdBUXRVd1B1RVhIMDlQMGhGVWNkcGZwQ2NBTjhRRUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkFsQUFBUkFrQVFKUUFBRVFKQUVDVUFBQkVDUUJBbEFBQVJBa0FRSlFBQUVRSkFFQ1VBQUJFQ1FCQWxBQUFSQWtBUUpRQUFFUUpBRUNVQUFCRUNRQkExR2EvUFU5dkFHQ0FEd0FnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lCQUFnU2dBQW9nUUFJRW9BQUtJRUFDQktBQUNpQkFBZ1NnQUFvZ1FBSUVvQUFLSUVBQ0JLQUFDaUJBQWdTZ0FBb2dRQUlFb0FBS0lFQUNCS0FBQ2lmZ0VDNHhMN0NXQmZwUUFBQUFCSlJVNUVya0pnZ2c9PSIsICJzaXplcyI6ICI1MTJ4NTEyIiwgInR5cGUiOiAiaW1hZ2UvcG5nIiwgInB1cnBvc2UiOiAibWFza2FibGUifV19">
 <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAACQ0lEQVR4nO3csU3DUBRAUYLYAZGBkjKpGCMVBSNQpMoYVGkzUILYgi4D+H6wjM7p/fSKq9dY9mq3uT7AVI9zL8CyCYhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCInmaewGmOF/WYwfut7dpD7pAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgW/3OF9+PL2IEfb19jB/5vLhCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEs/quMGb0enscO/Dx9jx34B1wgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIZ8zb+fFkPmXO3397GDuSXuEAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREMlqt7nOvQML5gKRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERDJDzZzEHucoZC3AAAAAElFTkSuQmCC">
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAACQ0lEQVR4nO3csU3DUBRAUYLYAZGBkjKpGCMVBSNQpMoYVGkzUILYgi4D+H6wjM7p/fSKq9dY9mq3uT7AVI9zL8CyCYhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCInmaewGmOF/WYwfut7dpD7pAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgW/3OF9+PL2IEfb19jB/5vLhCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEs/quMGb0enscO/Dx9jx34B1wgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIZ8zb+fFkPmXO3397GDuSXuEAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERCJgEgERCIgEgGRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREMlqt7nOvQML5gKRCIhEQCQCIhEQiYBIBEQiIBIBkQiIREAkAiIREImASAREIiASAZEIiERAJAIiERDJDzZzEHucoZC3AAAAAElFTkSuQmCC">
 <style>
@@ -286,6 +285,41 @@ body {
   font-size: 12.5px;
   font-weight: 600;
   color: var(--text-secondary);
+}
+
+.filter-bar__group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  box-shadow: var(--shadow);
+}
+.segmented__btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.segmented__btn:hover { color: var(--text-primary); }
+.segmented__btn:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
+.segmented__btn.is-active {
+  background: var(--gradient-blue);
+  color: #fff;
+  box-shadow: var(--shadow-blue);
 }
 
 .dropdown {
@@ -828,21 +862,31 @@ body {
   <section id="dashboard" class="dashboard" hidden>
 
     <div class="filter-bar" id="filter-bar" hidden>
-      <span class="filter-bar__label">Отдел</span>
-      <div class="dropdown" id="dept-dropdown">
-        <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
-          <span id="dept-dropdown-label">Все отделы</span>
-          <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
-          <div class="dropdown__list" id="dept-dropdown-list"></div>
-          <div class="dropdown__footer">
-            <div class="dropdown__quick-actions">
-              <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
-              <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+      <div class="filter-bar__group" id="dept-filter-group">
+        <span class="filter-bar__label">Отдел</span>
+        <div class="dropdown" id="dept-dropdown">
+          <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+            <span id="dept-dropdown-label">Все отделы</span>
+            <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
+            <div class="dropdown__list" id="dept-dropdown-list"></div>
+            <div class="dropdown__footer">
+              <div class="dropdown__quick-actions">
+                <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
+                <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+              </div>
+              <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
             </div>
-            <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
           </div>
+        </div>
+      </div>
+      <div class="filter-bar__group">
+        <span class="filter-bar__label">Категория</span>
+        <div class="segmented" id="scope-segmented" role="tablist" aria-label="Категория сотрудников">
+          <button type="button" class="segmented__btn is-active" data-scope="all" role="tab" aria-selected="true">Все</button>
+          <button type="button" class="segmented__btn" data-scope="chke" role="tab" aria-selected="false">ЧКЭ</button>
+          <button type="button" class="segmented__btn" data-scope="do" role="tab" aria-selected="false">ДО</button>
         </div>
       </div>
     </div>
@@ -1739,10 +1783,20 @@ function renderDeptChart(stats) {
       plugins: Object.assign(baseChartOptions(p).plugins, {
         barInlineLabels: { labels: inlineLabels, textColor: p.textPrimary },
       }),
-      ...drilldownHandlers((el) => {
-        const d = stats.byDept[el.index];
-        return { title: `Отдел: ${d.name}`, rows: d.rows };
-      }),
+      // Unlike every other chart, a click here drives the department filter
+      // (same excludedDepts state as the dropdown above the dashboard)
+      // instead of opening the drill-down modal.
+      onHover: (evt, elements, chart) => {
+        chart.canvas.style.cursor = elements.length ? 'pointer' : 'default';
+      },
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const d = stats.byDept[elements[0].index];
+        // Deferred: filterByDepartment() destroys and recreates this very
+        // chart via refreshDashboard(), which must not happen synchronously
+        // inside Chart.js's own click dispatch for this canvas.
+        setTimeout(() => filterByDepartment(d.name), 0);
+      },
     }),
   });
 }
@@ -2090,6 +2144,7 @@ const THEME_KEY = 'voting-dashboard:theme';
 let currentStats = null;
 let currentRows = [];
 let excludedDepts = new Set();
+let scopeFilter = 'all'; // 'all' | 'chke' | 'do'
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -2101,6 +2156,8 @@ const els = {
   fileMeta: document.getElementById('file-meta'),
   toast: document.getElementById('toast'),
   filterBar: document.getElementById('filter-bar'),
+  deptFilterGroup: document.getElementById('dept-filter-group'),
+  scopeSegmented: document.getElementById('scope-segmented'),
   deptDropdown: document.getElementById('dept-dropdown'),
   deptTrigger: document.getElementById('dept-dropdown-trigger'),
   deptLabel: document.getElementById('dept-dropdown-label'),
@@ -2149,9 +2206,42 @@ function deserializeRows(rows) {
 let allDeptNames = [];
 let pendingExcludedDepts = new Set();
 
+// Scope ("Все"/"ЧКЭ"/"ДО") narrows currentRows before the department filter
+// applies on top of it — the two combine, same as the CLAUDE.md data flow.
+function getScopedRows() {
+  if (scopeFilter === 'chke') return currentRows.filter((r) => !r.dekret);
+  if (scopeFilter === 'do') return currentRows.filter((r) => r.dekret);
+  return currentRows;
+}
+
 function getFilteredRows() {
-  if (!excludedDepts.size) return currentRows;
-  return currentRows.filter((r) => !excludedDepts.has(r.dept));
+  const scoped = getScopedRows();
+  if (!excludedDepts.size) return scoped;
+  return scoped.filter((r) => !excludedDepts.has(r.dept));
+}
+
+function syncScopeVisuals() {
+  els.scopeSegmented.querySelectorAll('.segmented__btn').forEach((btn) => {
+    const active = btn.dataset.scope === scopeFilter;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-selected', String(active));
+  });
+}
+
+function setScope(scope) {
+  if (scope === scopeFilter) return;
+  scopeFilter = scope;
+  syncScopeVisuals();
+  refreshDashboard();
+}
+
+// Clicking a department bar in "По отделам" drives the same `excludedDepts`
+// state as the dropdown filter above it — clicking the sole selected
+// department again toggles back to showing every department.
+function filterByDepartment(name) {
+  const onlyThis = excludedDepts.size === allDeptNames.length - 1 && !excludedDepts.has(name);
+  excludedDepts = onlyThis ? new Set() : new Set(allDeptNames.filter((d) => d !== name));
+  refreshDashboard();
 }
 
 function updateDeptOkState() {
@@ -2229,21 +2319,22 @@ function deptOptionRow({ dept, count, checked }) {
 }
 
 function renderDeptFilter() {
+  const scoped = getScopedRows();
   const deptMap = new Map();
-  for (const r of currentRows) deptMap.set(r.dept, (deptMap.get(r.dept) || 0) + 1);
+  for (const r of scoped) deptMap.set(r.dept, (deptMap.get(r.dept) || 0) + 1);
   const depts = [...deptMap.entries()].sort((a, b) => b[1] - a[1]);
   allDeptNames = depts.map(([dept]) => dept);
 
   if (depts.length < 2) {
-    els.filterBar.hidden = true;
+    els.deptFilterGroup.hidden = true;
     closeDeptDropdown();
     return;
   }
-  els.filterBar.hidden = false;
+  els.deptFilterGroup.hidden = false;
 
   const includedCount = depts.length - excludedDepts.size;
   if (excludedDepts.size === 0) {
-    els.deptLabel.textContent = `Все отделы (${currentRows.length})`;
+    els.deptLabel.textContent = `Все отделы (${scoped.length})`;
   } else if (includedCount === 1) {
     els.deptLabel.textContent = depts.find(([d]) => !excludedDepts.has(d))[0];
   } else {
@@ -2266,10 +2357,15 @@ function refreshDashboard(meta) {
   els.dashboard.hidden = false;
   els.clearBtn.hidden = false;
 
-  const filterNote = excludedDepts.size ? ` (отфильтровано из ${currentRows.length})` : '';
+  const noteParts = [];
+  if (scopeFilter === 'chke') noteParts.push('ЧКЭ');
+  else if (scopeFilter === 'do') noteParts.push('ДО');
+  if (excludedDepts.size) noteParts.push(`отфильтровано из ${currentRows.length}`);
+  const filterNote = noteParts.length ? ` (${noteParts.join(', ')})` : '';
   els.subtitle.textContent = `${stats.total} записей${filterNote} • обновлено ${new Date().toLocaleString('ru-RU')}`;
   if (meta) els.fileMeta.textContent = meta;
 
+  els.filterBar.hidden = false;
   renderDeptFilter();
   renderAllCharts(stats);
 }
@@ -2280,6 +2376,8 @@ async function handleFile(file) {
     const { rows, warnings } = parseWorkbook(buffer);
     currentRows = rows;
     excludedDepts = new Set();
+    scopeFilter = 'all';
+    syncScopeVisuals();
     refreshDashboard(`Файл: ${file.name} • ${rows.length} строк`);
     localStorage.setItem(
       STORAGE_KEY,
@@ -2300,6 +2398,8 @@ function restoreFromStorage() {
     const { rows, fileName, savedAt } = JSON.parse(raw);
     currentRows = deserializeRows(rows);
     excludedDepts = new Set();
+    scopeFilter = 'all';
+    syncScopeVisuals();
     refreshDashboard(`Файл: ${fileName} • сохранено ${new Date(savedAt).toLocaleString('ru-RU')}`);
   } catch (err) {
     console.warn('Не удалось восстановить сохранённые данные', err);
@@ -2311,6 +2411,8 @@ function clearData() {
   currentStats = null;
   currentRows = [];
   excludedDepts = new Set();
+  scopeFilter = 'all';
+  syncScopeVisuals();
   els.dashboard.hidden = true;
   els.emptyState.hidden = false;
   els.clearBtn.hidden = true;
@@ -2413,6 +2515,10 @@ els.deptReset.addEventListener('click', () => {
   syncDeptOptionVisuals();
 });
 els.deptOk.addEventListener('click', applyDeptDropdown);
+els.scopeSegmented.addEventListener('click', (e) => {
+  const btn = e.target.closest('.segmented__btn');
+  if (btn) setScope(btn.dataset.scope);
+});
 document.addEventListener('click', (e) => {
   if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
 });

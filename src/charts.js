@@ -319,10 +319,20 @@ function renderDeptChart(stats) {
       plugins: Object.assign(baseChartOptions(p).plugins, {
         barInlineLabels: { labels: inlineLabels, textColor: p.textPrimary },
       }),
-      ...drilldownHandlers((el) => {
-        const d = stats.byDept[el.index];
-        return { title: `Отдел: ${d.name}`, rows: d.rows };
-      }),
+      // Unlike every other chart, a click here drives the department filter
+      // (same excludedDepts state as the dropdown above the dashboard)
+      // instead of opening the drill-down modal.
+      onHover: (evt, elements, chart) => {
+        chart.canvas.style.cursor = elements.length ? 'pointer' : 'default';
+      },
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const d = stats.byDept[elements[0].index];
+        // Deferred: filterByDepartment() destroys and recreates this very
+        // chart via refreshDashboard(), which must not happen synchronously
+        // inside Chart.js's own click dispatch for this canvas.
+        setTimeout(() => filterByDepartment(d.name), 0);
+      },
     }),
   });
 }
