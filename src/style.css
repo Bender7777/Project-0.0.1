@@ -773,6 +773,15 @@ body {
 .card__body { position: relative; height: 240px; margin-top: 0; }
 .card__body--donut { height: 220px; }
 .card__body--scroll { overflow-y: auto; overflow-x: hidden; }
+/* Chart.js sizes its canvas to fill its *immediate* parent — if that parent
+   were `.card__body` itself, capping `.card__body`'s height for scrolling
+   would just squeeze every bar thinner instead of actually scrolling
+   (nothing left to overflow). This inner div is what `sizeCategoryChartBody`
+   actually sizes: at/under the cap it's 100% (no scroll needed), over the
+   cap it gets the *uncapped* content height so bars render at full
+   thickness and `.card__body`'s fixed+`overflow-y:auto` reveals them via a
+   real scrollbar instead. */
+.card__body-inner { position: relative; height: 100%; }
 
 .card__table { margin-top: 12px; max-height: 260px; overflow-y: auto; }
 

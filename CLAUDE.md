@@ -295,23 +295,40 @@ one card out of that stretch so it actually sizes to its own (now short) content
 grid space below it in that row. If a future redesign shortens another small card's content,
 it needs the same treatment or it'll silently stay stretched.
 
-**Category count still drives chart height for the instructor chart.**
-`sizeCategoryChartBody(canvasId, count, opts)` sets the `.card__body`'s height in JS (before
-the `new Chart(...)` call, since Chart.js reads the container size at construction) as
-`padding + count * (perRow * groupSize + gap)`, clamped to `[min, max]` — beyond `max` the body
-switches to `card__body--scroll` (`overflow-y: auto`) instead of growing forever. Dept
-(`groupSize: 1`) and `renderInstructorChart` (`groupSize: 1`, see next) call this on every
-render so both stay readable at any category count; days/format have a fixed known category
+**Category count still drives chart height for the instructor chart — via a real scroll, not a
+squeeze.** `sizeCategoryChartBody(canvasId, count, opts)` computes `raw = padding + count *
+(perRow * groupSize + gap)`. Below `max` it just sets `.card__body`'s height to `raw` (clamped
+to `min`) and there's nothing to scroll. Past `max` is where it used to be broken: it capped
+`.card__body`'s own height at `max` and added `card__body--scroll` (`overflow-y: auto`), but
+the `<canvas>` sat *directly* inside `.card__body` — and Chart.js's `responsive:true` always
+resizes the canvas to fill its immediate parent, so the canvas (and therefore every bar) just
+got squeezed into that capped height instead of actually overflowing it. With enough
+categories the scroll never engaged at all; bars just kept getting thinner. The fix is
+`.card__body-inner` (`index.html`, wrapping the canvas, one level below `.card__body`): past
+`max`, `sizeCategoryChartBody` sizes *this* inner div to the full uncapped `raw` height (not
+`.card__body`, which stays capped) — Chart.js reads the inner div's size and draws every bar at
+its intended `perRow` thickness, and `.card__body`'s fixed height + `overflow-y: auto` then
+gives a genuine scrollbar over that taller content. **Any future `sizeCategoryChartBody` call
+needs its canvas wrapped the same way** (`.card__body > .card__body-inner > canvas`) or the
+squeeze bug comes back for that chart. Dept (`groupSize: 1`) and `renderInstructorChart`
+(`groupSize: 1`, see next) call this on every render; days/format have a fixed known category
 count and don't need it.
 
-**Instructor load is one stacked bar per instructor, not two side-by-side ones.** It used to
-draw "всего закреплено" and "проголосовало" as two separate bars per instructor and was still
-reported unreadable/cramped even after the height fix — the real problem was two bars per row,
-not row height. `renderInstructorChart` now stacks "Проголосовало" + "Не проголосовало"
-(`scales.x.stacked`/`scales.y.stacked: true`) so each instructor is a single bar whose split
-shows the turnout proportion directly, at half the vertical cost. `byInstructor` entries in
-`stats.js` carry `notVotedRows` (`rows.filter(r => !r.voted)`) alongside `rows`/`votedRows` for
-this dataset's drill-down.
+**Instructor load is one stacked bar per instructor, not two side-by-side ones — and its rows
+are wider than the dept chart's.** It used to draw "всего закреплено" and "проголосовало" as
+two separate bars per instructor and was still reported unreadable/cramped even after the
+height fix — the real problem was two bars per row, not row height. `renderInstructorChart`
+stacks "Проголосовало" + "Не проголосовало" (`scales.x.stacked`/`scales.y.stacked: true`) so
+each instructor is a single bar whose split shows the turnout proportion directly, at half the
+vertical cost. With "Все" selected (every instructor, not narrowed by category) this card
+tends to carry far more rows than any other chart, so it uses a taller `perRow`/`gap` (44/20,
+vs. dept's 32/10) specifically for extra legibility, and `stackedSegmentLabelsPlugin`
+(registered alongside `barHoverBouncePlugin`) draws each segment's own count centered inside
+it — the bottom legend only says which color is "Проголосовало" vs "Не проголосовало", not by
+how much, and bar-length alone is hard to compare across many thin rows. It silently skips
+drawing a segment's number when that segment is too narrow to hold it, rather than overlapping
+text. `byInstructor` entries in `stats.js` carry `notVotedRows` (`rows.filter(r => !r.voted)`)
+alongside `rows`/`votedRows` for this dataset's drill-down.
 
 **No more ДО-specific charts or KPI tiles — that information now lives entirely behind the
 scope filter.** The dashboard used to carry four decree-specific visualizations (a "Декретный

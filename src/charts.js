@@ -77,13 +77,21 @@ function baseChartOptions(p) {
 // Horizontal (and grouped-horizontal) bar charts need a per-category row
 // height, not a fixed box — squeeze 15 departments into a 240px box and
 // every bar becomes an unreadable sliver. Height grows with the category
-// count up to `max`, then the body scrolls instead of growing forever.
+// count up to `max`; past that, `.card__body` stays capped at `max` and
+// scrolls, while `.card__body-inner` (the canvas's actual parent, which is
+// what Chart.js sizes itself to) grows to the full uncapped height so bars
+// keep their intended thickness instead of getting squeezed to fit — see
+// `.card__body-inner`'s comment in style.css for why the extra wrapper
+// exists at all.
 function sizeCategoryChartBody(canvasId, count, opts) {
   const { perRow, groupSize = 1, gap = 10, padding = 60, min = 220, max = 520 } = opts;
-  const body = document.getElementById(canvasId).parentElement;
+  const inner = document.getElementById(canvasId).parentElement;
+  const body = inner.parentElement;
   const raw = padding + count * (perRow * groupSize + gap);
+  const overflowing = raw > max;
   body.style.height = `${Math.max(min, Math.min(max, raw))}px`;
-  body.classList.toggle('card__body--scroll', raw > max);
+  body.classList.toggle('card__body--scroll', overflowing);
+  inner.style.height = overflowing ? `${raw}px` : '100%';
 }
 
 function gridScale(p, extra) {
@@ -329,6 +337,42 @@ const barInlineLabelsPlugin = {
       const raw = bar.options && bar.options.borderRadius;
       const lift = raw == null ? 0 : Math.max(0, Math.min(1, (raw - BASE_RADIUS) / (HOVER_RADIUS - BASE_RADIUS)));
       ctx.fillText(text, (fitsInside ? start : end) + pad, bar.y - lift * BAR_LIFT_PX);
+    });
+    ctx.restore();
+  },
+};
+
+// Draws each stacked-bar segment's own value centered inside it (instructor
+// load: the "Проголосовало"/"Не проголосовало" split) — the legend below
+// only says which color is which, not by how much, and with many
+// instructors the bars are too thin to compare by eye alone. Silently
+// skips a segment too narrow to hold its number rather than cramming or
+// overlapping text; follows barHoverBouncePlugin's lift offset same as
+// barInlineLabelsPlugin above.
+const stackedSegmentLabelsPlugin = {
+  id: 'stackedSegmentLabels',
+  afterDatasetsDraw(chart) {
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.font = '700 12px system-ui, -apple-system, "Segoe UI", sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (!meta || meta.hidden || !meta.data) return;
+      meta.data.forEach((bar, i) => {
+        const value = dataset.data[i];
+        if (!value) return;
+        const text = String(value);
+        const start = Math.min(bar.x, bar.base);
+        const end = Math.max(bar.x, bar.base);
+        const width = end - start;
+        if (width - 12 < ctx.measureText(text).width) return;
+        const raw = bar.options && bar.options.borderRadius;
+        const lift = raw == null ? 0 : Math.max(0, Math.min(1, (raw - BASE_RADIUS) / (HOVER_RADIUS - BASE_RADIUS)));
+        ctx.fillStyle = 'rgba(255,255,255,0.95)';
+        ctx.fillText(text, start + width / 2, bar.y - lift * BAR_LIFT_PX);
+      });
     });
     ctx.restore();
   },
@@ -709,11 +753,16 @@ function renderInstructorChart(stats) {
   const labels = stats.byInstructor.map((d) => d.name);
   // One stacked bar per instructor (voted + not voted = total assigned)
   // instead of two side-by-side bars — half the vertical space for the
-  // same information, and the proportion reads at a glance.
-  sizeCategoryChartBody('chart-instructor', stats.byInstructor.length, { perRow: 34, gap: 16, padding: 60, min: 240, max: 540 });
+  // same information, and the proportion reads at a glance. Rows are
+  // noticeably taller than the dept chart's (perRow 44 vs 32) so
+  // stackedSegmentLabelsPlugin's per-segment numbers have room to sit
+  // comfortably inside a full-width bar — this card in particular tends to
+  // carry many rows (every instructor, unfiltered by category) so legible
+  // row height matters more here than card compactness.
+  sizeCategoryChartBody('chart-instructor', stats.byInstructor.length, { perRow: 44, gap: 20, padding: 60, min: 240, max: 540 });
   chartRegistry.instructor = new Chart(document.getElementById('chart-instructor'), {
     type: 'bar',
-    plugins: [volumeShadowPlugin, barHoverBouncePlugin],
+    plugins: [volumeShadowPlugin, barHoverBouncePlugin, stackedSegmentLabelsPlugin],
     data: {
       labels,
       datasets: [
@@ -724,7 +773,7 @@ function renderInstructorChart(stats) {
           hoverBackgroundColor: 'transparent',
           hoverFillFn: glossyColor(categoricalColor(0), { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
           borderRadius: hoverBorderRadius(),
-          maxBarThickness: 30,
+          maxBarThickness: 38,
         },
         {
           label: 'Не проголосовало',
@@ -733,7 +782,7 @@ function renderInstructorChart(stats) {
           hoverBackgroundColor: 'transparent',
           hoverFillFn: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
           borderRadius: hoverBorderRadius(),
-          maxBarThickness: 30,
+          maxBarThickness: 38,
         },
       ],
     },
