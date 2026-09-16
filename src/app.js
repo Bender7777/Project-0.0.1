@@ -1,0 +1,147 @@
+const STORAGE_KEY = 'voting-dashboard:last-dataset:v1';
+const THEME_KEY = 'voting-dashboard:theme';
+
+let currentStats = null;
+
+const els = {
+  fileInput: document.getElementById('file-input'),
+  clearBtn: document.getElementById('clear-btn'),
+  themeToggle: document.getElementById('theme-toggle'),
+  emptyState: document.getElementById('empty-state'),
+  dashboard: document.getElementById('dashboard'),
+  subtitle: document.getElementById('subtitle'),
+  fileMeta: document.getElementById('file-meta'),
+  toast: document.getElementById('toast'),
+};
+
+function showToast(message, isError) {
+  els.toast.textContent = message;
+  els.toast.hidden = false;
+  els.toast.style.background = isError ? 'var(--critical)' : 'var(--text-primary)';
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => {
+    els.toast.hidden = true;
+  }, 4000);
+}
+
+function serializeRows(rows) {
+  return rows.map((r) => ({ ...r, date: r.date ? r.date.toISOString() : null }));
+}
+
+function deserializeRows(rows) {
+  return rows.map((r) => ({ ...r, date: r.date ? new Date(r.date) : null }));
+}
+
+function renderStats(stats, meta) {
+  currentStats = stats;
+  els.emptyState.hidden = true;
+  els.dashboard.hidden = false;
+  els.clearBtn.hidden = false;
+  els.subtitle.textContent = `${stats.total} записей • обновлено ${new Date().toLocaleString('ru-RU')}`;
+  if (meta) els.fileMeta.textContent = meta;
+  renderAllCharts(stats);
+}
+
+async function handleFile(file) {
+  try {
+    const buffer = await file.arrayBuffer();
+    const { rows, warnings } = parseWorkbook(buffer);
+    const stats = computeStats(rows);
+    renderStats(stats, `Файл: ${file.name} • ${rows.length} строк`);
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ rows: serializeRows(rows), fileName: file.name, savedAt: Date.now() })
+    );
+    if (warnings.length) showToast(warnings.join(' '), true);
+    else showToast('Файл успешно обработан.');
+  } catch (err) {
+    console.error(err);
+    showToast(err.message || 'Не удалось обработать файл.', true);
+  }
+}
+
+function restoreFromStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const { rows, fileName, savedAt } = JSON.parse(raw);
+    const restored = deserializeRows(rows);
+    const stats = computeStats(restored);
+    renderStats(
+      stats,
+      `Файл: ${fileName} • сохранено ${new Date(savedAt).toLocaleString('ru-RU')}`
+    );
+  } catch (err) {
+    console.warn('Не удалось восстановить сохранённые данные', err);
+  }
+}
+
+function clearData() {
+  localStorage.removeItem(STORAGE_KEY);
+  currentStats = null;
+  els.dashboard.hidden = true;
+  els.emptyState.hidden = false;
+  els.clearBtn.hidden = true;
+  els.subtitle.textContent = 'Загрузите Excel-файл, чтобы увидеть статистику';
+  Object.keys(chartRegistry).forEach(destroyChart);
+}
+
+// --- Theme -------------------------------------------------------------
+
+function applyTheme(mode) {
+  if (mode === 'light' || mode === 'dark') {
+    document.documentElement.setAttribute('data-theme', mode);
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  if (currentStats) renderAllCharts(currentStats);
+}
+
+function toggleTheme() {
+  const current = currentThemeMode();
+  const next = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, next);
+  applyTheme(next);
+}
+
+// --- Wiring --------------------------------------------------------------
+
+els.fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) handleFile(file);
+  e.target.value = '';
+});
+
+els.clearBtn.addEventListener('click', clearData);
+els.themeToggle.addEventListener('click', toggleTheme);
+
+['dragover', 'dragenter'].forEach((evt) =>
+  els.emptyState.addEventListener(evt, (e) => {
+    e.preventDefault();
+    els.emptyState.classList.add('drag-over');
+  })
+);
+['dragleave', 'drop'].forEach((evt) =>
+  els.emptyState.addEventListener(evt, (e) => {
+    e.preventDefault();
+    els.emptyState.classList.remove('drag-over');
+  })
+);
+els.emptyState.addEventListener('drop', (e) => {
+  const file = e.dataTransfer.files[0];
+  if (file) handleFile(file);
+});
+
+document.addEventListener('dragover', (e) => e.preventDefault());
+document.addEventListener('drop', (e) => e.preventDefault());
+
+const savedTheme = localStorage.getItem(THEME_KEY);
+if (savedTheme) applyTheme(savedTheme);
+
+restoreFromStorage();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch((err) => console.warn('SW registration failed', err));
+  });
+}

@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Голосование — дашборд</title>
+<meta name="description" content="Дашборд статистики голосования: загрузка Excel-файла и аналитика по отделам, декрету, дням и способу голосования.">
+<meta name="theme-color" content="#2a78d6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<div class="viz-root">
+
+<header class="app-header">
+  <div class="app-header__title">
+    <span class="app-header__logo" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="12" width="4" height="9" rx="1" fill="currentColor"/><rect x="10" y="7" width="4" height="14" rx="1" fill="currentColor" opacity="0.75"/><rect x="17" y="3" width="4" height="18" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+    <div>
+      <h1>Дашборд голосования</h1>
+      <p class="app-header__subtitle" id="subtitle">Загрузите Excel-файл, чтобы увидеть статистику</p>
+    </div>
+  </div>
+  <div class="app-header__actions">
+    <label class="btn btn--primary" for="file-input">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4M12 4L7 9M12 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Загрузить Excel
+    </label>
+    <input id="file-input" type="file" accept=".xlsx,.xls,.csv" hidden>
+    <button class="btn btn--ghost" id="clear-btn" hidden>Очистить</button>
+    <button class="btn btn--icon" id="theme-toggle" title="Сменить тему" aria-label="Сменить тему">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="app">
+
+  <section id="empty-state" class="empty-state">
+    <div class="empty-state__icon" aria-hidden="true">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4V4Z" stroke="currentColor" stroke-width="1.5" opacity="0.35"/><path d="M8 15l3-3 2 2 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2>Нет данных</h2>
+    <p>Загрузите файл со списком сотрудников — колонки «Отдел», «Декрет», «Инструктор», «Факт выполнения», «ДАТА», «ДЭГ/ОЧНО».</p>
+    <label class="btn btn--primary" for="file-input">Выбрать файл</label>
+    <p class="empty-state__hint">Файл обрабатывается только в браузере и никуда не отправляется.</p>
+  </section>
+
+  <section id="dashboard" class="dashboard" hidden>
+
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div class="chart-grid">
+      <article class="card card--chart" id="card-dept">
+        <div class="card__head">
+          <h3>По отделам</h3>
+          <p class="card__desc">Количество и доля сотрудников в каждом отделе</p>
+        </div>
+        <div class="card__body">
+          <canvas id="chart-dept" role="img" aria-label="Распределение по отделам"></canvas>
+        </div>
+        <div class="card__table" id="table-dept"></div>
+      </article>
+
+      <article class="card card--chart" id="card-dekret">
+        <div class="card__head">
+          <h3>Декретный отпуск</h3>
+          <p class="card__desc">Доля сотрудников в ДО и без ДО</p>
+        </div>
+        <div class="card__body card__body--donut">
+          <canvas id="chart-dekret" role="img" aria-label="Доля ДО и без ДО"></canvas>
+        </div>
+        <div class="card__table" id="table-dekret"></div>
+      </article>
+
+      <article class="card card--chart" id="card-days">
+        <div class="card__head">
+          <h3>Голосование по дням</h3>
+          <p class="card__desc">Явка 18, 19 и 20 сентября</p>
+        </div>
+        <div class="card__body">
+          <canvas id="chart-days" role="img" aria-label="Голосование по дням"></canvas>
+        </div>
+        <div class="card__table" id="table-days"></div>
+      </article>
+
+      <article class="card card--chart" id="card-format">
+        <div class="card__head">
+          <h3>Способ голосования</h3>
+          <p class="card__desc">ДЭГ (дистанционно) и очно — все проголосовавшие</p>
+        </div>
+        <div class="card__body card__body--donut">
+          <canvas id="chart-format" role="img" aria-label="Способ голосования"></canvas>
+        </div>
+        <div class="card__table" id="table-format"></div>
+      </article>
+
+      <article class="card card--chart" id="card-dekret-turnout">
+        <div class="card__head">
+          <h3>Явка сотрудников в ДО</h3>
+          <p class="card__desc">Сколько из находящихся в декрете проголосовало</p>
+        </div>
+        <div class="card__body card__body--donut">
+          <canvas id="chart-dekret-turnout" role="img" aria-label="Явка сотрудников в декрете"></canvas>
+        </div>
+        <div class="card__table" id="table-dekret-turnout"></div>
+      </article>
+
+      <article class="card card--chart" id="card-dekret-format">
+        <div class="card__head">
+          <h3>ДО: способ голосования</h3>
+          <p class="card__desc">ДЭГ и очно среди проголосовавших из декрета</p>
+        </div>
+        <div class="card__body card__body--donut">
+          <canvas id="chart-dekret-format" role="img" aria-label="Способ голосования сотрудников в декрете"></canvas>
+        </div>
+        <div class="card__table" id="table-dekret-format"></div>
+      </article>
+
+      <article class="card card--chart card--wide" id="card-day-format">
+        <div class="card__head">
+          <h3>Дни × способ голосования</h3>
+          <p class="card__desc">ДЭГ и очно по дням</p>
+        </div>
+        <div class="card__body">
+          <canvas id="chart-day-format" role="img" aria-label="Способ голосования по дням"></canvas>
+        </div>
+      </article>
+
+      <article class="card card--chart card--wide" id="card-dept-turnout">
+        <div class="card__head">
+          <h3>Явка по отделам</h3>
+          <p class="card__desc">Доля проголосовавших в каждом отделе</p>
+        </div>
+        <div class="card__body">
+          <canvas id="chart-dept-turnout" role="img" aria-label="Явка по отделам"></canvas>
+        </div>
+      </article>
+
+      <article class="card card--chart card--wide" id="card-instructor">
+        <div class="card__head">
+          <h3>Нагрузка по инструкторам</h3>
+          <p class="card__desc">Количество закреплённых сотрудников и явка</p>
+        </div>
+        <div class="card__body">
+          <canvas id="chart-instructor" role="img" aria-label="Нагрузка по инструкторам"></canvas>
+        </div>
+      </article>
+    </div>
+
+    <footer class="app-footer">
+      <span id="file-meta"></span>
+    </footer>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</main>
+</div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="src/palette.js"></script>
+<script src="src/parser.js"></script>
+<script src="src/stats.js"></script>
+<script src="src/charts.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
