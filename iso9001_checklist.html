@@ -181,9 +181,6 @@ footer{text-align:center; color:var(--muted); font-size:11.5px; padding:20px; op
   <button class="btn" onclick="openDb('doc')">📄 База документов</button>
   <button class="btn" onclick="openDb('dept')">🏢 База подразделений</button>
   <button class="btn" onclick="exportExcel()">⬇ Экспорт в Excel</button>
-  <button class="btn" onclick="exportJSON()">⬇ Экспорт JSON (резервная копия)</button>
-  <button class="btn" onclick="document.getElementById('importFile').click()">⬆ Импорт JSON</button>
-  <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(event)">
   <button class="btn" onclick="document.getElementById('importExcelFile').click()">⬆ Загрузить Excel</button>
   <input type="file" id="importExcelFile" accept=".xlsx,.xls" style="display:none" onchange="importExcel(event)">
   <button class="btn danger" onclick="resetAll()">✕ Очистить всё</button>
@@ -624,47 +621,6 @@ function renderSummary(){
 function escapeHtml(s){
   if(s===undefined||s===null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function exportJSON(){
-  save();
-  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/octet-stream'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `iso9001_checklist_${(state.meta.number||'audit')}.json`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-}
-
-function importJSON(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev){
-    try{
-      const data = JSON.parse(ev.target.result);
-      if(!data.clauses) throw new Error('bad format');
-      state = data;
-      if(!state.meta) state.meta = {date:'',auditor:'',depts:[],number:''};
-      if(!Array.isArray(state.meta.depts)){
-        state.meta.depts = state.meta.dept ? [state.meta.dept] : [];
-      }
-      delete state.meta.dept;
-      if(!Array.isArray(state.docDB)) state.docDB = [...SEED_DOC_DB];
-      if(!Array.isArray(state.deptDB)) state.deptDB = [...SEED_DEPT_DB];
-      state.clauses.forEach(c=>c.items.forEach(i=>{
-        if(!Array.isArray(i.doc)) i.doc = i.doc ? [i.doc] : [];
-      }));
-      document.getElementById('metaDate').value = state.meta.date||'';
-      document.getElementById('metaAuditor').value = state.meta.auditor||'';
-      document.getElementById('metaNumber').value = state.meta.number||'';
-      renderDeptChips();
-      save(); render();
-    }catch(err){
-      alert('Ошибка импорта: файл повреждён или имеет неверный формат.');
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
 }
 
 // Импорт из Excel (.xlsx/.xls) — ожидает структуру столбцов из exportExcel():
