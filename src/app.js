@@ -21,6 +21,12 @@ const els = {
   deptPanel: document.getElementById('dept-dropdown-panel'),
   deptList: document.getElementById('dept-dropdown-list'),
   deptReset: document.getElementById('dept-dropdown-reset'),
+  drilldownOverlay: document.getElementById('drilldown-overlay'),
+  drilldownTitle: document.getElementById('drilldown-title'),
+  drilldownCount: document.getElementById('drilldown-count'),
+  drilldownTbody: document.getElementById('drilldown-tbody'),
+  drilldownClose: document.getElementById('drilldown-close'),
+  drilldownExport: document.getElementById('drilldown-export'),
 };
 
 const CHECK_ICON_SVG =
@@ -192,8 +198,62 @@ function clearData() {
   els.clearBtn.hidden = true;
   els.filterBar.hidden = true;
   closeDeptDropdown();
+  closeDrilldown();
   els.subtitle.textContent = 'Загрузите Excel-файл, чтобы увидеть статистику';
   Object.keys(chartRegistry).forEach(destroyChart);
+}
+
+// --- Drill-down modal ----------------------------------------------------
+
+let drilldownRows = [];
+let drilldownTitle = '';
+
+function formatDrilldownDate(row) {
+  return row.date ? row.date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' }) : '—';
+}
+
+function openDrilldown(title, rows) {
+  drilldownRows = rows || [];
+  drilldownTitle = title;
+  els.drilldownTitle.textContent = title;
+  els.drilldownCount.textContent = `${drilldownRows.length} чел.`;
+  els.drilldownTbody.innerHTML = '';
+  drilldownRows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    [i + 1, r.fio, r.dept, r.tabNum ?? '', r.instructor, formatDrilldownDate(r), r.voted ? 'Да' : '—', r.format || '—'].forEach((value) => {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+    els.drilldownTbody.appendChild(tr);
+  });
+  els.drilldownOverlay.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrilldown() {
+  els.drilldownOverlay.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function exportDrilldown() {
+  if (!drilldownRows.length) return;
+  const data = drilldownRows.map((r) => ({
+    'Отдел': r.dept,
+    'Фамилия, Имя, Отчество': r.fio,
+    'Таб.№': r.tabNum ?? '',
+    'SAP таб': r.sapNum ?? '',
+    'Декрет': r.dekret ? 'ДО' : '',
+    'Инструктор': r.instructor,
+    'Факт выполнения': r.voted ? 'Да' : '',
+    'ДАТА': formatDrilldownDate(r),
+    'ДЭГ/ОЧНО': r.format || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Список');
+  const safeName = drilldownTitle.replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '') || 'spisok';
+  XLSX.writeFile(wb, `${safeName}.xlsx`);
 }
 
 // --- Theme -------------------------------------------------------------
@@ -238,6 +298,13 @@ document.addEventListener('keydown', (e) => {
     closeDeptDropdown();
     els.deptTrigger.focus();
   }
+  if (e.key === 'Escape' && !els.drilldownOverlay.hidden) closeDrilldown();
+});
+
+els.drilldownClose.addEventListener('click', closeDrilldown);
+els.drilldownExport.addEventListener('click', exportDrilldown);
+els.drilldownOverlay.addEventListener('click', (e) => {
+  if (e.target === els.drilldownOverlay) closeDrilldown();
 });
 
 ['dragover', 'dragenter'].forEach((evt) =>

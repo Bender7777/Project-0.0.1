@@ -124,6 +124,24 @@ light/dark KPI text color and could go invisible (e.g. white-on-white) depending
 `.card--N` variant a chart lands on. Keep new chart cards inside `.card__panel` for this
 reason.
 
+**Row-level drill-down:** `computeStats` (in `stats.js`) doesn't just count rows into each
+group — every group entry also carries the matching row objects (`rows`, or a more specific
+name like `votedRows`/`degRows`/`ochnoRows` where a chart needs a particular subset, e.g.
+`byDay[i].votedRows` for the days-chart bars vs. `byDay[i].rows` for everyone assigned that
+day). Every chart in `charts.js` wires `drilldownHandlers()` into its `options` (bar charts
+directly; `donutChart()` takes a `{ rowsByIndex, titlePrefix }` opts object) so clicking a
+bar/arc calls the global `openDrilldown(title, rows)` from `app.js`, which renders those rows
+(via `textContent`, never `innerHTML`, since they're untrusted upload data) into the
+`#drilldown-overlay` modal and lets the user export just that slice with `exportDrilldown()`
+(builds a workbook with `XLSX.utils.json_to_sheet` matching the original import column names,
+then `XLSX.writeFile`). **When adding a new stat/chart, thread the row list through
+`computeStats` and pass it to `drilldownHandlers`/`donutChart`'s `rowsByIndex`** — don't
+recompute a filter from `currentRows` in the click handler, that duplicates the grouping
+logic and can drift from what the chart actually displays. Bars/arcs also get a
+`hoverBackgroundColor` (the same `glossyColor`/`glossyColorByIndex` gradient with a higher
+`lightAmt`) purely so hovering a clickable mark visibly lights up — keep that alongside the
+plain `backgroundColor` on any new dataset.
+
 **Service worker cache list:** `sw.js` precaches an explicit `APP_SHELL` file list. Any new
 file added under `src/`, `vendor/`, or `icons/` that the app needs offline must be added to
 that list, and `CACHE_NAME` bumped so returning clients pick up the change.

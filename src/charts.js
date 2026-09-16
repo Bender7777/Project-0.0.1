@@ -43,6 +43,22 @@ function gridScale(p, extra) {
   );
 }
 
+// Click-to-drill-down: resolve(element) returns {title, rows} for the
+// clicked mark (or a falsy value to ignore the click), and the pointer
+// turns into a hand while hovering any clickable mark.
+function drilldownHandlers(resolve) {
+  return {
+    onHover: (evt, elements, chart) => {
+      chart.canvas.style.cursor = elements.length ? 'pointer' : 'default';
+    },
+    onClick: (evt, elements) => {
+      if (!elements.length) return;
+      const result = resolve(elements[0]);
+      if (result) openDrilldown(result.title, result.rows);
+    },
+  };
+}
+
 // --- Volume helpers: gradient fills + drop shadow so bars/donuts read as
 // glossy 3D marks, matching the bento card chrome. Same base hue in/out —
 // only lightness changes, so categorical identity and CVD separation hold.
@@ -228,6 +244,7 @@ function renderDeptChart(stats) {
           label: 'Сотрудников',
           data: stats.byDept.map((d) => d.count),
           backgroundColor: glossyColorByIndex(colors, { horizontal: true }),
+          hoverBackgroundColor: glossyColorByIndex(colors, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
           borderRadius: 8,
           maxBarThickness: 34,
         },
@@ -249,6 +266,10 @@ function renderDeptChart(stats) {
           },
         },
       }),
+      ...drilldownHandlers((el) => {
+        const d = stats.byDept[el.index];
+        return { title: `Отдел: ${d.name}`, rows: d.rows };
+      }),
     }),
   });
 
@@ -259,7 +280,8 @@ function renderDeptChart(stats) {
   );
 }
 
-function donutChart(canvasId, p, labels, data, colors, centerLabel) {
+function donutChart(canvasId, p, labels, data, colors, opts) {
+  const { rowsByIndex, titlePrefix } = opts || {};
   return new Chart(document.getElementById(canvasId), {
     type: 'doughnut',
     plugins: [volumeShadowPlugin, donutGlossPlugin],
@@ -269,6 +291,7 @@ function donutChart(canvasId, p, labels, data, colors, centerLabel) {
         {
           data,
           backgroundColor: glossyColorByIndex(colors, { lightAmt: 0.5, darkAmt: 0.3 }),
+          hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.62, darkAmt: 0.22 }),
           borderWidth: 0,
           hoverOffset: 10,
           hoverBorderWidth: 0,
@@ -299,6 +322,12 @@ function donutChart(canvasId, p, labels, data, colors, centerLabel) {
           },
         },
       },
+      ...(rowsByIndex
+        ? drilldownHandlers((el) => ({
+            title: titlePrefix ? `${titlePrefix} — ${labels[el.index]}` : labels[el.index],
+            rows: rowsByIndex[el.index],
+          }))
+        : {}),
     },
   });
 }
@@ -309,7 +338,10 @@ function renderDekretChart(stats) {
   const labels = ['В декрете (ДО)', 'Без ДО'];
   const data = [stats.dekret.count, stats.dekret.withoutCount];
   const colors = [categoricalColor(0), categoricalColor(1)];
-  chartRegistry.dekret = donutChart('chart-dekret', p, labels, data, colors);
+  chartRegistry.dekret = donutChart('chart-dekret', p, labels, data, colors, {
+    rowsByIndex: [stats.dekret.rows, stats.dekret.withoutRows],
+    titlePrefix: 'Декретный отпуск',
+  });
   renderTable(
     'table-dekret',
     [{ label: '' }, { label: 'Категория' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
@@ -335,6 +367,7 @@ function renderDaysChart(stats) {
           label: 'Проголосовало',
           data: stats.byDay.map((d) => d.voted),
           backgroundColor: glossyColorByIndex(colors),
+          hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.62, darkAmt: 0.2 }),
           borderRadius: 8,
           maxBarThickness: 56,
         },
@@ -354,6 +387,10 @@ function renderDaysChart(stats) {
             },
           },
         },
+      }),
+      ...drilldownHandlers((el) => {
+        const d = stats.byDay[el.index];
+        return { title: `Проголосовали ${d.label}`, rows: d.votedRows };
       }),
     }),
   });
@@ -375,7 +412,8 @@ function renderFormatChart(stats) {
     p,
     labels,
     stats.format.map((f) => f.count),
-    colors
+    colors,
+    { rowsByIndex: stats.format.map((f) => f.rows), titlePrefix: 'Способ голосования' }
   );
   renderTable(
     'table-format',
@@ -391,7 +429,10 @@ function renderDekretTurnoutChart(stats) {
   const labels = ['Проголосовали', 'Не проголосовали'];
   const data = [stats.dekretTurnout.count, notVoted];
   const colors = [p.good, p.muted];
-  chartRegistry.dekretTurnout = donutChart('chart-dekret-turnout', p, labels, data, colors);
+  chartRegistry.dekretTurnout = donutChart('chart-dekret-turnout', p, labels, data, colors, {
+    rowsByIndex: [stats.dekretTurnout.rows, stats.dekretTurnout.notVotedRows],
+    titlePrefix: 'Явка сотрудников в ДО',
+  });
   renderTable(
     'table-dekret-turnout',
     [{ label: '' }, { label: '' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
@@ -412,7 +453,8 @@ function renderDekretFormatChart(stats) {
     p,
     labels,
     stats.dekretFormat.map((f) => f.count),
-    colors
+    colors,
+    { rowsByIndex: stats.dekretFormat.map((f) => f.rows), titlePrefix: 'ДО: способ голосования' }
   );
   renderTable(
     'table-dekret-format',
@@ -433,8 +475,22 @@ function renderDayFormatChart(stats) {
     data: {
       labels,
       datasets: [
-        { label: 'ДЭГ', data: stats.dayFormat.map((d) => d.deg), backgroundColor: glossyColor(c1), borderRadius: 8, maxBarThickness: 40 },
-        { label: 'ОЧНО', data: stats.dayFormat.map((d) => d.ochno), backgroundColor: glossyColor(c2), borderRadius: 8, maxBarThickness: 40 },
+        {
+          label: 'ДЭГ',
+          data: stats.dayFormat.map((d) => d.deg),
+          backgroundColor: glossyColor(c1),
+          hoverBackgroundColor: glossyColor(c1, { lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 40,
+        },
+        {
+          label: 'ОЧНО',
+          data: stats.dayFormat.map((d) => d.ochno),
+          backgroundColor: glossyColor(c2),
+          hoverBackgroundColor: glossyColor(c2, { lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 40,
+        },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
@@ -448,6 +504,11 @@ function renderDayFormatChart(stats) {
           position: 'bottom',
           labels: { color: p.textSecondary, boxWidth: 10, boxHeight: 10, font: { size: 11.5 } },
         },
+      }),
+      ...drilldownHandlers((el) => {
+        const d = stats.dayFormat[el.index];
+        const isDeg = el.datasetIndex === 0;
+        return { title: `${d.label} — ${isDeg ? 'ДЭГ' : 'ОЧНО'}`, rows: isDeg ? d.degRows : d.ochnoRows };
       }),
     }),
   });
@@ -467,6 +528,7 @@ function renderDeptTurnoutChart(stats) {
           label: 'Явка, %',
           data: stats.deptTurnout.map((d) => Number(d.pct.toFixed(1))),
           backgroundColor: glossyColor(p.good),
+          hoverBackgroundColor: glossyColor(p.good, { lightAmt: 0.62, darkAmt: 0.2 }),
           borderRadius: 8,
           maxBarThickness: 40,
         },
@@ -487,6 +549,10 @@ function renderDeptTurnoutChart(stats) {
           },
         },
       }),
+      ...drilldownHandlers((el) => {
+        const d = stats.deptTurnout[el.index];
+        return { title: `Явка — ${d.name}`, rows: d.votedRows };
+      }),
     }),
   });
 }
@@ -501,8 +567,22 @@ function renderInstructorChart(stats) {
     data: {
       labels,
       datasets: [
-        { label: 'Всего закреплено', data: stats.byInstructor.map((d) => d.count), backgroundColor: glossyColor(p.muted, { horizontal: true }), borderRadius: 8, maxBarThickness: 34 },
-        { label: 'Проголосовало', data: stats.byInstructor.map((d) => d.voted), backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }), borderRadius: 8, maxBarThickness: 34 },
+        {
+          label: 'Всего закреплено',
+          data: stats.byInstructor.map((d) => d.count),
+          backgroundColor: glossyColor(p.muted, { horizontal: true }),
+          hoverBackgroundColor: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 34,
+        },
+        {
+          label: 'Проголосовало',
+          data: stats.byInstructor.map((d) => d.voted),
+          backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }),
+          hoverBackgroundColor: glossyColor(categoricalColor(0), { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 34,
+        },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
@@ -517,6 +597,11 @@ function renderInstructorChart(stats) {
           position: 'bottom',
           labels: { color: p.textSecondary, boxWidth: 10, boxHeight: 10, font: { size: 11.5 } },
         },
+      }),
+      ...drilldownHandlers((el) => {
+        const d = stats.byInstructor[el.index];
+        const isAll = el.datasetIndex === 0;
+        return { title: `${d.name} — ${isAll ? 'всего закреплено' : 'проголосовало'}`, rows: isAll ? d.rows : d.votedRows };
       }),
     }),
   });

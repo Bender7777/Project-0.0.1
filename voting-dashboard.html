@@ -657,10 +657,83 @@ body {
   z-index: 50;
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(11, 11, 11, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: overlayIn 0.15s ease;
+}
+:root[data-theme="dark"] .modal-overlay,
+:root:where(:not([data-theme="light"])) .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  width: 100%;
+  max-width: 760px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: modalIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 14px;
+  flex: none;
+}
+.modal__head h3 { margin: 0; font-size: 16px; font-weight: 800; }
+.modal__count { margin: 4px 0 0; font-size: 12.5px; color: var(--text-secondary); }
+
+.modal__body {
+  overflow: auto;
+  padding: 0 20px;
+  flex: 1;
+}
+.drilldown-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-1);
+  z-index: 1;
+}
+
+.modal__foot {
+  flex: none;
+  padding: 14px 20px 20px;
+  margin-top: 4px;
+  border-top: 1px solid var(--grid);
+  display: flex;
+  justify-content: flex-end;
+}
+
 @media (max-width: 560px) {
   .app-header { padding: 12px 14px; }
   #app { padding: 14px; }
   .app-header h1 { font-size: 14.5px; }
+  .modal { max-height: 88vh; }
 }
 
 </style>
@@ -856,6 +929,43 @@ body {
   </section>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <div id="drilldown-overlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drilldown-title">
+      <div class="modal__head">
+        <div>
+          <h3 id="drilldown-title">Список сотрудников</h3>
+          <p class="modal__count" id="drilldown-count"></p>
+        </div>
+        <button type="button" class="btn btn--icon" id="drilldown-close" aria-label="Закрыть">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="modal__body">
+        <table class="stat-table drilldown-table">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>ФИО</th>
+              <th>Отдел</th>
+              <th>Таб.№</th>
+              <th>Инструктор</th>
+              <th>Дата</th>
+              <th>Факт</th>
+              <th>Способ</th>
+            </tr>
+          </thead>
+          <tbody id="drilldown-tbody"></tbody>
+        </table>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--primary" id="drilldown-export">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v12M12 16l-4-4M12 16l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Выгрузить в Excel
+        </button>
+      </div>
+    </div>
+  </div>
 </main>
 </div>
 
@@ -1081,6 +1191,8 @@ function parseWorkbook(arrayBuffer) {
 </script>
 <script>
 // Pure computation of all dashboard statistics from parsed rows.
+// Every group carries the matching row objects (not just counts) so the
+// dashboard can drill down into "who is behind this number" on click.
 
 function pct(part, whole) {
   if (!whole) return 0;
@@ -1101,11 +1213,12 @@ function dateKey(d) {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-function groupCount(rows, keyFn) {
+function groupRows(rows, keyFn) {
   const map = new Map();
   for (const r of rows) {
     const k = keyFn(r);
-    map.set(k, (map.get(k) || 0) + 1);
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(r);
   }
   return map;
 }
@@ -1114,9 +1227,9 @@ function computeStats(rows) {
   const total = rows.length;
 
   // 1. By department.
-  const deptMap = groupCount(rows, (r) => r.dept);
-  const byDept = [...deptMap.entries()]
-    .map(([name, count]) => ({ name, count, pct: pct(count, total) }))
+  const deptGroups = groupRows(rows, (r) => r.dept);
+  const byDept = [...deptGroups.entries()]
+    .map(([name, groupedRows]) => ({ name, count: groupedRows.length, pct: pct(groupedRows.length, total), rows: groupedRows }))
     .sort((a, b) => b.count - a.count);
 
   // 2. Dekret vs without.
@@ -1127,73 +1240,77 @@ function computeStats(rows) {
     pct: pct(dekretRows.length, total),
     withoutCount: nonDekretRows.length,
     withoutPct: pct(nonDekretRows.length, total),
+    rows: dekretRows,
+    withoutRows: nonDekretRows,
   };
 
   // 3. Voted by day.
   const dayBuckets = new Map();
   for (const r of rows) {
     const k = dateKey(r.date);
-    if (!dayBuckets.has(k)) dayBuckets.set(k, { date: r.date, total: 0, voted: 0 });
+    if (!dayBuckets.has(k)) dayBuckets.set(k, { date: r.date, rows: [], votedRows: [] });
     const b = dayBuckets.get(k);
-    b.total += 1;
-    if (r.voted) b.voted += 1;
+    b.rows.push(r);
+    if (r.voted) b.votedRows.push(r);
   }
   const byDay = [...dayBuckets.values()]
     .sort((a, b) => (a.date && b.date ? a.date - b.date : 0))
     .map((b) => ({
       label: fmtDate(b.date),
-      total: b.total,
-      voted: b.voted,
-      votedPctOfDay: pct(b.voted, b.total),
-      votedPctOfAll: pct(b.voted, total),
+      total: b.rows.length,
+      voted: b.votedRows.length,
+      votedPctOfDay: pct(b.votedRows.length, b.rows.length),
+      votedPctOfAll: pct(b.votedRows.length, total),
+      rows: b.rows,
+      votedRows: b.votedRows,
     }));
 
   // Overall turnout.
   const votedRows = rows.filter((r) => r.voted);
-  const turnout = { count: votedRows.length, pct: pct(votedRows.length, total) };
+  const turnout = { count: votedRows.length, pct: pct(votedRows.length, total), rows: votedRows };
 
   // 4. Dekret turnout: how many of the dekret group voted.
   const dekretVotedRows = dekretRows.filter((r) => r.voted);
+  const dekretNotVotedRows = dekretRows.filter((r) => !r.voted);
   const dekretTurnout = {
     count: dekretVotedRows.length,
     pct: pct(dekretVotedRows.length, dekretRows.length),
     baseCount: dekretRows.length,
+    rows: dekretVotedRows,
+    notVotedRows: dekretNotVotedRows,
   };
 
   // 5. Dekret voters by format (ДЭГ / ОЧНО).
-  const dekretFormatMap = groupCount(dekretVotedRows, (r) => r.format || 'Не указано');
-  const dekretFormat = [...dekretFormatMap.entries()]
-    .map(([name, count]) => ({ name, count, pct: pct(count, dekretVotedRows.length) }))
+  const dekretFormatGroups = groupRows(dekretVotedRows, (r) => r.format || 'Не указано');
+  const dekretFormat = [...dekretFormatGroups.entries()]
+    .map(([name, groupedRows]) => ({ name, count: groupedRows.length, pct: pct(groupedRows.length, dekretVotedRows.length), rows: groupedRows }))
     .sort((a, b) => b.count - a.count);
 
   // Overall format among all voters.
-  const formatMap = groupCount(votedRows, (r) => r.format || 'Не указано');
-  const format = [...formatMap.entries()]
-    .map(([name, count]) => ({ name, count, pct: pct(count, votedRows.length) }))
+  const formatGroups = groupRows(votedRows, (r) => r.format || 'Не указано');
+  const format = [...formatGroups.entries()]
+    .map(([name, groupedRows]) => ({ name, count: groupedRows.length, pct: pct(groupedRows.length, votedRows.length), rows: groupedRows }))
     .sort((a, b) => b.count - a.count);
 
   // Turnout by department.
-  const deptTurnout = byDept.map(({ name }) => {
-    const deptRows = rows.filter((r) => r.dept === name);
-    const deptVoted = deptRows.filter((r) => r.voted).length;
-    return { name, total: deptRows.length, voted: deptVoted, pct: pct(deptVoted, deptRows.length) };
+  const deptTurnout = byDept.map(({ name, rows: deptRows }) => {
+    const deptVotedRows = deptRows.filter((r) => r.voted);
+    return { name, total: deptRows.length, voted: deptVotedRows.length, pct: pct(deptVotedRows.length, deptRows.length), rows: deptRows, votedRows: deptVotedRows };
   });
 
   // Day x format matrix (among voters).
   const dayFormat = byDay.map((d) => {
-    const dayRows = rows.filter((r) => fmtDate(r.date) === d.label && r.voted);
-    const deg = dayRows.filter((r) => r.format === 'ДЭГ').length;
-    const ochno = dayRows.filter((r) => r.format === 'ОЧНО').length;
-    return { label: d.label, deg, ochno };
+    const degRows = d.votedRows.filter((r) => r.format === 'ДЭГ');
+    const ochnoRows = d.votedRows.filter((r) => r.format === 'ОЧНО');
+    return { label: d.label, deg: degRows.length, ochno: ochnoRows.length, degRows, ochnoRows };
   });
 
   // Instructor load.
-  const instrMap = groupCount(rows, (r) => r.instructor);
-  const byInstructor = [...instrMap.entries()]
-    .map(([name, count]) => {
-      const instrRows = rows.filter((r) => r.instructor === name);
-      const voted = instrRows.filter((r) => r.voted).length;
-      return { name, count, voted, pct: pct(voted, count) };
+  const instrGroups = groupRows(rows, (r) => r.instructor);
+  const byInstructor = [...instrGroups.entries()]
+    .map(([name, instrRows]) => {
+      const instrVotedRows = instrRows.filter((r) => r.voted);
+      return { name, count: instrRows.length, voted: instrVotedRows.length, pct: pct(instrVotedRows.length, instrRows.length), rows: instrRows, votedRows: instrVotedRows };
     })
     .sort((a, b) => b.count - a.count);
 
@@ -1257,6 +1374,22 @@ function gridScale(p, extra) {
     },
     extra || {}
   );
+}
+
+// Click-to-drill-down: resolve(element) returns {title, rows} for the
+// clicked mark (or a falsy value to ignore the click), and the pointer
+// turns into a hand while hovering any clickable mark.
+function drilldownHandlers(resolve) {
+  return {
+    onHover: (evt, elements, chart) => {
+      chart.canvas.style.cursor = elements.length ? 'pointer' : 'default';
+    },
+    onClick: (evt, elements) => {
+      if (!elements.length) return;
+      const result = resolve(elements[0]);
+      if (result) openDrilldown(result.title, result.rows);
+    },
+  };
 }
 
 // --- Volume helpers: gradient fills + drop shadow so bars/donuts read as
@@ -1444,6 +1577,7 @@ function renderDeptChart(stats) {
           label: 'Сотрудников',
           data: stats.byDept.map((d) => d.count),
           backgroundColor: glossyColorByIndex(colors, { horizontal: true }),
+          hoverBackgroundColor: glossyColorByIndex(colors, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
           borderRadius: 8,
           maxBarThickness: 34,
         },
@@ -1465,6 +1599,10 @@ function renderDeptChart(stats) {
           },
         },
       }),
+      ...drilldownHandlers((el) => {
+        const d = stats.byDept[el.index];
+        return { title: `Отдел: ${d.name}`, rows: d.rows };
+      }),
     }),
   });
 
@@ -1475,7 +1613,8 @@ function renderDeptChart(stats) {
   );
 }
 
-function donutChart(canvasId, p, labels, data, colors, centerLabel) {
+function donutChart(canvasId, p, labels, data, colors, opts) {
+  const { rowsByIndex, titlePrefix } = opts || {};
   return new Chart(document.getElementById(canvasId), {
     type: 'doughnut',
     plugins: [volumeShadowPlugin, donutGlossPlugin],
@@ -1485,6 +1624,7 @@ function donutChart(canvasId, p, labels, data, colors, centerLabel) {
         {
           data,
           backgroundColor: glossyColorByIndex(colors, { lightAmt: 0.5, darkAmt: 0.3 }),
+          hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.62, darkAmt: 0.22 }),
           borderWidth: 0,
           hoverOffset: 10,
           hoverBorderWidth: 0,
@@ -1515,6 +1655,12 @@ function donutChart(canvasId, p, labels, data, colors, centerLabel) {
           },
         },
       },
+      ...(rowsByIndex
+        ? drilldownHandlers((el) => ({
+            title: titlePrefix ? `${titlePrefix} — ${labels[el.index]}` : labels[el.index],
+            rows: rowsByIndex[el.index],
+          }))
+        : {}),
     },
   });
 }
@@ -1525,7 +1671,10 @@ function renderDekretChart(stats) {
   const labels = ['В декрете (ДО)', 'Без ДО'];
   const data = [stats.dekret.count, stats.dekret.withoutCount];
   const colors = [categoricalColor(0), categoricalColor(1)];
-  chartRegistry.dekret = donutChart('chart-dekret', p, labels, data, colors);
+  chartRegistry.dekret = donutChart('chart-dekret', p, labels, data, colors, {
+    rowsByIndex: [stats.dekret.rows, stats.dekret.withoutRows],
+    titlePrefix: 'Декретный отпуск',
+  });
   renderTable(
     'table-dekret',
     [{ label: '' }, { label: 'Категория' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
@@ -1551,6 +1700,7 @@ function renderDaysChart(stats) {
           label: 'Проголосовало',
           data: stats.byDay.map((d) => d.voted),
           backgroundColor: glossyColorByIndex(colors),
+          hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.62, darkAmt: 0.2 }),
           borderRadius: 8,
           maxBarThickness: 56,
         },
@@ -1570,6 +1720,10 @@ function renderDaysChart(stats) {
             },
           },
         },
+      }),
+      ...drilldownHandlers((el) => {
+        const d = stats.byDay[el.index];
+        return { title: `Проголосовали ${d.label}`, rows: d.votedRows };
       }),
     }),
   });
@@ -1591,7 +1745,8 @@ function renderFormatChart(stats) {
     p,
     labels,
     stats.format.map((f) => f.count),
-    colors
+    colors,
+    { rowsByIndex: stats.format.map((f) => f.rows), titlePrefix: 'Способ голосования' }
   );
   renderTable(
     'table-format',
@@ -1607,7 +1762,10 @@ function renderDekretTurnoutChart(stats) {
   const labels = ['Проголосовали', 'Не проголосовали'];
   const data = [stats.dekretTurnout.count, notVoted];
   const colors = [p.good, p.muted];
-  chartRegistry.dekretTurnout = donutChart('chart-dekret-turnout', p, labels, data, colors);
+  chartRegistry.dekretTurnout = donutChart('chart-dekret-turnout', p, labels, data, colors, {
+    rowsByIndex: [stats.dekretTurnout.rows, stats.dekretTurnout.notVotedRows],
+    titlePrefix: 'Явка сотрудников в ДО',
+  });
   renderTable(
     'table-dekret-turnout',
     [{ label: '' }, { label: '' }, { label: 'Кол-во', num: true }, { label: 'Доля', num: true }],
@@ -1628,7 +1786,8 @@ function renderDekretFormatChart(stats) {
     p,
     labels,
     stats.dekretFormat.map((f) => f.count),
-    colors
+    colors,
+    { rowsByIndex: stats.dekretFormat.map((f) => f.rows), titlePrefix: 'ДО: способ голосования' }
   );
   renderTable(
     'table-dekret-format',
@@ -1649,8 +1808,22 @@ function renderDayFormatChart(stats) {
     data: {
       labels,
       datasets: [
-        { label: 'ДЭГ', data: stats.dayFormat.map((d) => d.deg), backgroundColor: glossyColor(c1), borderRadius: 8, maxBarThickness: 40 },
-        { label: 'ОЧНО', data: stats.dayFormat.map((d) => d.ochno), backgroundColor: glossyColor(c2), borderRadius: 8, maxBarThickness: 40 },
+        {
+          label: 'ДЭГ',
+          data: stats.dayFormat.map((d) => d.deg),
+          backgroundColor: glossyColor(c1),
+          hoverBackgroundColor: glossyColor(c1, { lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 40,
+        },
+        {
+          label: 'ОЧНО',
+          data: stats.dayFormat.map((d) => d.ochno),
+          backgroundColor: glossyColor(c2),
+          hoverBackgroundColor: glossyColor(c2, { lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 40,
+        },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
@@ -1664,6 +1837,11 @@ function renderDayFormatChart(stats) {
           position: 'bottom',
           labels: { color: p.textSecondary, boxWidth: 10, boxHeight: 10, font: { size: 11.5 } },
         },
+      }),
+      ...drilldownHandlers((el) => {
+        const d = stats.dayFormat[el.index];
+        const isDeg = el.datasetIndex === 0;
+        return { title: `${d.label} — ${isDeg ? 'ДЭГ' : 'ОЧНО'}`, rows: isDeg ? d.degRows : d.ochnoRows };
       }),
     }),
   });
@@ -1683,6 +1861,7 @@ function renderDeptTurnoutChart(stats) {
           label: 'Явка, %',
           data: stats.deptTurnout.map((d) => Number(d.pct.toFixed(1))),
           backgroundColor: glossyColor(p.good),
+          hoverBackgroundColor: glossyColor(p.good, { lightAmt: 0.62, darkAmt: 0.2 }),
           borderRadius: 8,
           maxBarThickness: 40,
         },
@@ -1703,6 +1882,10 @@ function renderDeptTurnoutChart(stats) {
           },
         },
       }),
+      ...drilldownHandlers((el) => {
+        const d = stats.deptTurnout[el.index];
+        return { title: `Явка — ${d.name}`, rows: d.votedRows };
+      }),
     }),
   });
 }
@@ -1717,8 +1900,22 @@ function renderInstructorChart(stats) {
     data: {
       labels,
       datasets: [
-        { label: 'Всего закреплено', data: stats.byInstructor.map((d) => d.count), backgroundColor: glossyColor(p.muted, { horizontal: true }), borderRadius: 8, maxBarThickness: 34 },
-        { label: 'Проголосовало', data: stats.byInstructor.map((d) => d.voted), backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }), borderRadius: 8, maxBarThickness: 34 },
+        {
+          label: 'Всего закреплено',
+          data: stats.byInstructor.map((d) => d.count),
+          backgroundColor: glossyColor(p.muted, { horizontal: true }),
+          hoverBackgroundColor: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 34,
+        },
+        {
+          label: 'Проголосовало',
+          data: stats.byInstructor.map((d) => d.voted),
+          backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }),
+          hoverBackgroundColor: glossyColor(categoricalColor(0), { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: 8,
+          maxBarThickness: 34,
+        },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
@@ -1733,6 +1930,11 @@ function renderInstructorChart(stats) {
           position: 'bottom',
           labels: { color: p.textSecondary, boxWidth: 10, boxHeight: 10, font: { size: 11.5 } },
         },
+      }),
+      ...drilldownHandlers((el) => {
+        const d = stats.byInstructor[el.index];
+        const isAll = el.datasetIndex === 0;
+        return { title: `${d.name} — ${isAll ? 'всего закреплено' : 'проголосовало'}`, rows: isAll ? d.rows : d.votedRows };
       }),
     }),
   });
@@ -1776,6 +1978,12 @@ const els = {
   deptPanel: document.getElementById('dept-dropdown-panel'),
   deptList: document.getElementById('dept-dropdown-list'),
   deptReset: document.getElementById('dept-dropdown-reset'),
+  drilldownOverlay: document.getElementById('drilldown-overlay'),
+  drilldownTitle: document.getElementById('drilldown-title'),
+  drilldownCount: document.getElementById('drilldown-count'),
+  drilldownTbody: document.getElementById('drilldown-tbody'),
+  drilldownClose: document.getElementById('drilldown-close'),
+  drilldownExport: document.getElementById('drilldown-export'),
 };
 
 const CHECK_ICON_SVG =
@@ -1947,8 +2155,62 @@ function clearData() {
   els.clearBtn.hidden = true;
   els.filterBar.hidden = true;
   closeDeptDropdown();
+  closeDrilldown();
   els.subtitle.textContent = 'Загрузите Excel-файл, чтобы увидеть статистику';
   Object.keys(chartRegistry).forEach(destroyChart);
+}
+
+// --- Drill-down modal ----------------------------------------------------
+
+let drilldownRows = [];
+let drilldownTitle = '';
+
+function formatDrilldownDate(row) {
+  return row.date ? row.date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' }) : '—';
+}
+
+function openDrilldown(title, rows) {
+  drilldownRows = rows || [];
+  drilldownTitle = title;
+  els.drilldownTitle.textContent = title;
+  els.drilldownCount.textContent = `${drilldownRows.length} чел.`;
+  els.drilldownTbody.innerHTML = '';
+  drilldownRows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    [i + 1, r.fio, r.dept, r.tabNum ?? '', r.instructor, formatDrilldownDate(r), r.voted ? 'Да' : '—', r.format || '—'].forEach((value) => {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+    els.drilldownTbody.appendChild(tr);
+  });
+  els.drilldownOverlay.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeDrilldown() {
+  els.drilldownOverlay.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function exportDrilldown() {
+  if (!drilldownRows.length) return;
+  const data = drilldownRows.map((r) => ({
+    'Отдел': r.dept,
+    'Фамилия, Имя, Отчество': r.fio,
+    'Таб.№': r.tabNum ?? '',
+    'SAP таб': r.sapNum ?? '',
+    'Декрет': r.dekret ? 'ДО' : '',
+    'Инструктор': r.instructor,
+    'Факт выполнения': r.voted ? 'Да' : '',
+    'ДАТА': formatDrilldownDate(r),
+    'ДЭГ/ОЧНО': r.format || '',
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Список');
+  const safeName = drilldownTitle.replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_+|_+$/g, '') || 'spisok';
+  XLSX.writeFile(wb, `${safeName}.xlsx`);
 }
 
 // --- Theme -------------------------------------------------------------
@@ -1993,6 +2255,13 @@ document.addEventListener('keydown', (e) => {
     closeDeptDropdown();
     els.deptTrigger.focus();
   }
+  if (e.key === 'Escape' && !els.drilldownOverlay.hidden) closeDrilldown();
+});
+
+els.drilldownClose.addEventListener('click', closeDrilldown);
+els.drilldownExport.addEventListener('click', exportDrilldown);
+els.drilldownOverlay.addEventListener('click', (e) => {
+  if (e.target === els.drilldownOverlay) closeDrilldown();
 });
 
 ['dragover', 'dragenter'].forEach((evt) =>

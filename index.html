@@ -202,6 +202,43 @@
   </section>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <div id="drilldown-overlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drilldown-title">
+      <div class="modal__head">
+        <div>
+          <h3 id="drilldown-title">Список сотрудников</h3>
+          <p class="modal__count" id="drilldown-count"></p>
+        </div>
+        <button type="button" class="btn btn--icon" id="drilldown-close" aria-label="Закрыть">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="modal__body">
+        <table class="stat-table drilldown-table">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>ФИО</th>
+              <th>Отдел</th>
+              <th>Таб.№</th>
+              <th>Инструктор</th>
+              <th>Дата</th>
+              <th>Факт</th>
+              <th>Способ</th>
+            </tr>
+          </thead>
+          <tbody id="drilldown-tbody"></tbody>
+        </table>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--primary" id="drilldown-export">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v12M12 16l-4-4M12 16l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Выгрузить в Excel
+        </button>
+      </div>
+    </div>
+  </div>
 </main>
 </div>
 
