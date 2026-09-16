@@ -198,16 +198,47 @@ they grow from the center instead of only sweeping around. Both bar and donut op
 animation for just the hover/active state — without it, hover color transitions would inherit
 the 700ms bounce and feel sluggish.
 
-**Bars get a hover "pop" too, not just a color swap.** Donuts already animate on hover for
-free via their own native `hoverOffset`/`animateScale` options; bars have no built-in
-equivalent, so every bar dataset uses `borderRadius: hoverGrowRadius(base)` instead of a flat
-`borderRadius: N` — it returns `base` normally and `base + 6` while `ctx.active`, growing the
-corner rounding on hover. This only animates smoothly because `baseChartOptions` registers
-`animations: { borderRadius: { properties: ['borderRadius'], type: 'number' } }` — Chart.js
-only animates its built-in `'numbers'`/`'colors'` property groups by default, so without this
-the radius would just snap instead of easing in over the same `transitions.active` duration
-the color swap already uses. **When adding a new bar dataset, use `hoverGrowRadius()` instead
-of a static `borderRadius`**, or it'll be the one flat-feeling chart next to the others.
+**Bars get a real hover bounce, not just a color swap — `barHoverBouncePlugin`.** Donuts
+already animate on hover for free via their own native `hoverOffset`/`animateScale` options;
+bars have no built-in equivalent. A first attempt animated `borderRadius` growing 8→14 on
+hover — rejected on sight ("они форму меняют", they're changing shape) even though it was a
+smooth, deliberate animation, because rounding corners reads as the mark *warping*, not lifting.
+The working version is a real translation instead: the active bar's own Chart.js-drawn fill is
+hidden (`hoverBackgroundColor: 'transparent'`) and `barHoverBouncePlugin` (`afterDatasetsDraw`,
+registered on every bar chart) redraws it translated straight **up** by up to `BAR_LIFT_PX`
+(16px), fully rounded, with a much bigger drop shadow — width/height never change, so the bar's
+shape (and the value it represents) never visibly distorts, only its position and depth cues do.
+The lift is always "up" on screen regardless of chart orientation (not "further along the value
+axis", which for a horizontal bar would be sideways) specifically so a hovered segment in the
+*stacked* instructor chart floats clear of its row without sliding sideways into the segment
+stacked next to it. `renderDeptChart`'s `barInlineLabelsPlugin` reads the same lift so its
+in-bar label stays centered on the bar it names instead of getting left behind.
+
+Getting this smoothly *animated* — not a hover snap — needed a workaround: Chart.js only
+resolves a fixed whitelist of properties into a bar element's `.options` (see `BarElement`'s
+own defaults — `borderRadius`, `borderWidth`, `backgroundColor`, …); an arbitrary custom key
+like a hypothetical `hoverLift` is silently dropped and never animates at all (tried this
+first — `bar.options.hoverLift` came back `undefined` every time). So `borderRadius` itself is
+repurposed as the animation *carrier*: `hoverBorderRadius()` returns `BASE_RADIUS` (8) normally
+and `HOVER_RADIUS` (14) while `ctx.active`; `baseChartOptions` registers it as animatable
+(`animations: { borderRadius: { properties: ['borderRadius'], type: 'number' } }` — Chart.js
+doesn't auto-animate it otherwise) with its own bouncier, slower transition nested under the
+mode-specific override (`transitions.active.animations.borderRadius = { duration: 600, easing:
+'easeOutBounce' }`, layered *more specifically* than the flat `transitions.active.animation`
+200ms/`easeOutQuart` the color swap still uses — Chart.js resolves the more specific
+per-property override first). The *actual* bar's corner radius doesn't matter while
+hovered since it's invisible (`hoverBackgroundColor: 'transparent'`) — `barHoverBouncePlugin`
+just reads `bar.options.borderRadius`'s live interpolated value each frame and rescales it
+back to a 0..1 lift progress (`(raw - BASE_RADIUS) / (HOVER_RADIUS - BASE_RADIUS)`) to drive
+the translate/shadow. **When adding a new bar dataset, follow the existing pattern**:
+`backgroundColor` normal, `hoverBackgroundColor: 'transparent'`, `hoverFillFn: <the old boosted
+gradient the hover color used to be>` (a plain function stored directly on the dataset — not a
+real Chart.js option key, so `barHoverBouncePlugin` just reads it straight off
+`chart.data.datasets[i]` rather than through the animated-options system), `borderRadius:
+hoverBorderRadius()`, and add `barHoverBouncePlugin` to that chart's `plugins: [...]` array
+(after `volumeShadowPlugin`, before any label-drawing plugin) — skipping any one of these
+either leaves a visible ghost of the old un-lifted bar behind, or gives that one chart no bounce
+at all.
 
 **No hover tooltips.** `baseChartOptions` and `donutChart` both set `plugins.tooltip = { enabled: false }`
 — removed on request. Don't re-add a per-chart `tooltip.callbacks` override; if a chart needs

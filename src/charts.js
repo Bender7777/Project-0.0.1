@@ -28,29 +28,26 @@ function baseChartOptions(p) {
     responsive: true,
     maintainAspectRatio: false,
     animation: marksAnimation(),
-    // Registers `borderRadius` as an animatable numeric property (Chart.js
-    // only animates the built-in 'colors'/'numbers' groups otherwise) so
-    // `hoverGrowRadius()` below can make bars visibly "pop" on hover, the
-    // same way donuts already do via their own animateScale/hoverOffset —
-    // without this, the radius would just snap instead of easing in.
+    // `borderRadius` doubles as barHoverBouncePlugin's animation carrier
+    // (see the plugin's comment for why) — registering it here is what
+    // makes Chart.js actually interpolate it at all (Chart.js only auto-
+    // animates its own built-in 'colors'/'numbers' property groups, and
+    // 'borderRadius' isn't in either). The 200ms/easeOutQuart on
+    // `transitions.active` covers the ordinary hover color swap as before;
+    // the more specific `animations.borderRadius` override nested under it
+    // gives *this* property its own slower, genuinely bouncy easing.
     animations: { borderRadius: { properties: ['borderRadius'], type: 'number' } },
-    transitions: { active: { animation: { duration: 200, easing: 'easeOutQuart' } } },
+    transitions: {
+      active: {
+        animation: { duration: 200, easing: 'easeOutQuart' },
+        animations: { borderRadius: { duration: 600, easing: 'easeOutBounce' } },
+      },
+    },
     plugins: {
       legend: { display: false },
       tooltip: { enabled: false },
     },
   };
-}
-
-// A bar's own hover "pop": rounder corners while active, animated via the
-// `animations.borderRadius` group + `transitions.active` above. Donuts get
-// their hover motion for free from `hoverOffset`/`animateScale` (native
-// Chart.js doughnut options); bars have no built-in equivalent, so this is
-// the bar-chart counterpart — keep using it (not a flat `borderRadius: N`)
-// on every bar dataset so hover isn't just a color swap.
-function hoverGrowRadius(base, boost) {
-  const grown = base + (boost ?? 6);
-  return (ctx) => (ctx.active ? grown : base);
 }
 
 // Horizontal (and grouped-horizontal) bar charts need a per-category row
@@ -166,6 +163,89 @@ const volumeShadowPlugin = {
   },
 };
 
+// Bars have no built-in equivalent to donuts' hoverOffset/animateScale, so
+// this is the bar-chart counterpart — a genuine "bounce", not a resize.
+// Chart.js only resolves a fixed whitelist of properties into a bar
+// element's `.options` (borderRadius/borderWidth/backgroundColor/…, see
+// BarElement's own defaults) — an arbitrary custom key like `hoverLift`
+// never makes it there and silently animates nothing, so `borderRadius`
+// itself is repurposed as the animation carrier: each dataset's
+// `borderRadius` is scriptable (`BASE_RADIUS` normally, `HOVER_RADIUS`
+// while `ctx.active`, see `hoverBorderRadius()` below), and with it
+// registered in `baseChartOptions.animations` it eases between the two
+// with real 'easeOutBounce' easing. This plugin reads the *live
+// interpolated* value each frame, rescales it back to a 0..1 progress, and
+// redraws that one bar translated straight up by up to BAR_LIFT_PX with a
+// much bigger drop shadow and fully-rounded corners — so it reads as
+// having physically hopped up off the row/baseline. Pure translation,
+// never a change to the bar's own width/height, so its shape (and the
+// value it represents) never visibly distorts — only its *position* and
+// depth cues (shadow/gloss) animate. The lift direction is always "up" on
+// screen regardless of chart orientation (not "further from the axis"
+// along the value axis) specifically so a hovered segment in a *stacked*
+// bar (renderInstructorChart) floats clear of its row without sliding
+// into — and overlapping — the segment stacked next to it. Each dataset's
+// own `backgroundColor` is left alone for the *normal* (non-hover) render;
+// only `hoverFillFn` (a second, brighter glossy-gradient function stored
+// directly on the dataset — not a real Chart.js option key, so it's simply
+// read straight off `chart.data.datasets[i]` rather than routed through
+// the animated-options system) feeds this plugin's replacement fill — and
+// `hoverBackgroundColor: 'transparent'` on that same dataset hides Chart.js's
+// own unlifted copy of the active bar so this one doesn't draw on top of a
+// visible duplicate left behind at the original position.
+const BAR_LIFT_PX = 16;
+const BASE_RADIUS = 8;
+const HOVER_RADIUS = 14;
+
+function hoverBorderRadius() {
+  return (ctx) => (ctx.active ? HOVER_RADIUS : BASE_RADIUS);
+}
+
+const barHoverBouncePlugin = {
+  id: 'barHoverBounce',
+  afterDatasetsDraw(chart) {
+    const horizontal = chart.options.indexAxis === 'y';
+    const ctx = chart.ctx;
+    chart.data.datasets.forEach((dataset, datasetIndex) => {
+      const meta = chart.getDatasetMeta(datasetIndex);
+      if (!meta || meta.hidden || !meta.data) return;
+      meta.data.forEach((bar, index) => {
+        const raw = bar.options && bar.options.borderRadius;
+        const lift = raw == null ? 0 : Math.max(0, Math.min(1, (raw - BASE_RADIUS) / (HOVER_RADIUS - BASE_RADIUS)));
+        if (!lift) return;
+        const offset = lift * BAR_LIFT_PX;
+        let x, y, w, h;
+        if (horizontal) {
+          const left = Math.min(bar.x, bar.base);
+          w = Math.max(bar.x, bar.base) - left;
+          h = bar.height;
+          x = left;
+          y = bar.y - h / 2 - offset;
+        } else {
+          const top = Math.min(bar.y, bar.base);
+          w = bar.width;
+          h = Math.max(bar.y, bar.base) - top;
+          x = bar.x - w / 2;
+          y = top - offset;
+        }
+        ctx.save();
+        ctx.shadowColor = shadowColorForMode();
+        ctx.shadowBlur = 16 + lift * 26;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 8 + lift * 16;
+        const fillFn = dataset.hoverFillFn;
+        ctx.fillStyle = fillFn ? fillFn({ chart, dataIndex: index }) : bar.options.backgroundColor;
+        ctx.beginPath();
+        const r = Math.min(14, w / 2, h / 2);
+        if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+        else ctx.rect(x, y, w, h);
+        ctx.fill();
+        ctx.restore();
+      });
+    });
+  },
+};
+
 // Soft specular highlight arced across the top of a doughnut ring, so it
 // reads as a glossy dome rather than a flat painted disc.
 const donutGlossPlugin = {
@@ -219,7 +299,12 @@ const barInlineLabelsPlugin = {
       const fitsInside = end - start - pad * 2 >= ctx.measureText(text).width;
       ctx.textAlign = 'left';
       ctx.fillStyle = fitsInside ? 'rgba(255,255,255,0.95)' : textColor || '#0b0b0b';
-      ctx.fillText(text, (fitsInside ? start : end) + pad, bar.y);
+      // Follow barHoverBouncePlugin's own upward offset (same borderRadius-
+      // as-carrier trick, see that plugin's comment) so the label stays
+      // centered on the bar it names instead of getting left behind.
+      const raw = bar.options && bar.options.borderRadius;
+      const lift = raw == null ? 0 : Math.max(0, Math.min(1, (raw - BASE_RADIUS) / (HOVER_RADIUS - BASE_RADIUS)));
+      ctx.fillText(text, (fitsInside ? start : end) + pad, bar.y - lift * BAR_LIFT_PX);
     });
     ctx.restore();
   },
@@ -356,7 +441,7 @@ function renderDeptChart(stats) {
   sizeCategoryChartBody('chart-dept', stats.byDept.length, { perRow: 32, gap: 10, padding: 24, min: 180, max: 460 });
   chartRegistry.dept = new Chart(document.getElementById('chart-dept'), {
     type: 'bar',
-    plugins: [volumeShadowPlugin, deptRowHighlightPlugin, barInlineLabelsPlugin],
+    plugins: [volumeShadowPlugin, deptRowHighlightPlugin, barHoverBouncePlugin, barInlineLabelsPlugin],
     data: {
       labels,
       datasets: [
@@ -364,8 +449,9 @@ function renderDeptChart(stats) {
           label: 'Сотрудников',
           data: stats.byDept.map((d) => d.count),
           backgroundColor: glossyColorByIndex(colors, { horizontal: true }),
-          hoverBackgroundColor: glossyColorByIndex(colors, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: hoverGrowRadius(8),
+          hoverBackgroundColor: 'transparent',
+          hoverFillFn: glossyColorByIndex(colors, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: hoverBorderRadius(),
           maxBarThickness: 34,
         },
       ],
@@ -452,7 +538,7 @@ function renderDaysChart(stats) {
   const colors = labels.map((_, i) => categoricalColor(i));
   chartRegistry.days = new Chart(document.getElementById('chart-days'), {
     type: 'bar',
-    plugins: [volumeShadowPlugin],
+    plugins: [volumeShadowPlugin, barHoverBouncePlugin],
     data: {
       labels,
       datasets: [
@@ -460,8 +546,9 @@ function renderDaysChart(stats) {
           label: 'Проголосовало',
           data: stats.byDay.map((d) => d.voted),
           backgroundColor: glossyColorByIndex(colors),
-          hoverBackgroundColor: glossyColorByIndex(colors, { lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: hoverGrowRadius(8),
+          hoverBackgroundColor: 'transparent',
+          hoverFillFn: glossyColorByIndex(colors, { lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: hoverBorderRadius(),
           maxBarThickness: 56,
         },
       ],
@@ -513,7 +600,7 @@ function renderDayFormatChart(stats) {
   const c2 = categoricalColor(1);
   chartRegistry.dayFormat = new Chart(document.getElementById('chart-day-format'), {
     type: 'bar',
-    plugins: [volumeShadowPlugin],
+    plugins: [volumeShadowPlugin, barHoverBouncePlugin],
     data: {
       labels,
       datasets: [
@@ -521,16 +608,18 @@ function renderDayFormatChart(stats) {
           label: 'ДЭГ',
           data: stats.dayFormat.map((d) => d.deg),
           backgroundColor: glossyColor(c1),
-          hoverBackgroundColor: glossyColor(c1, { lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: hoverGrowRadius(8),
+          hoverBackgroundColor: 'transparent',
+          hoverFillFn: glossyColor(c1, { lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: hoverBorderRadius(),
           maxBarThickness: 40,
         },
         {
           label: 'ОЧНО',
           data: stats.dayFormat.map((d) => d.ochno),
           backgroundColor: glossyColor(c2),
-          hoverBackgroundColor: glossyColor(c2, { lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: hoverGrowRadius(8),
+          hoverBackgroundColor: 'transparent',
+          hoverFillFn: glossyColor(c2, { lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: hoverBorderRadius(),
           maxBarThickness: 40,
         },
       ],
@@ -562,7 +651,7 @@ function renderDeptTurnoutChart(stats) {
   const labels = stats.deptTurnout.map((d) => d.name);
   chartRegistry.deptTurnout = new Chart(document.getElementById('chart-dept-turnout'), {
     type: 'bar',
-    plugins: [volumeShadowPlugin],
+    plugins: [volumeShadowPlugin, barHoverBouncePlugin],
     data: {
       labels,
       datasets: [
@@ -570,8 +659,9 @@ function renderDeptTurnoutChart(stats) {
           label: 'Явка, %',
           data: stats.deptTurnout.map((d) => Number(d.pct.toFixed(1))),
           backgroundColor: glossyColor(p.good),
-          hoverBackgroundColor: glossyColor(p.good, { lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: hoverGrowRadius(8),
+          hoverBackgroundColor: 'transparent',
+          hoverFillFn: glossyColor(p.good, { lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: hoverBorderRadius(),
           maxBarThickness: 40,
         },
       ],
@@ -599,7 +689,7 @@ function renderInstructorChart(stats) {
   sizeCategoryChartBody('chart-instructor', stats.byInstructor.length, { perRow: 34, gap: 16, padding: 60, min: 240, max: 540 });
   chartRegistry.instructor = new Chart(document.getElementById('chart-instructor'), {
     type: 'bar',
-    plugins: [volumeShadowPlugin],
+    plugins: [volumeShadowPlugin, barHoverBouncePlugin],
     data: {
       labels,
       datasets: [
@@ -607,16 +697,18 @@ function renderInstructorChart(stats) {
           label: 'Проголосовало',
           data: stats.byInstructor.map((d) => d.voted),
           backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }),
-          hoverBackgroundColor: glossyColor(categoricalColor(0), { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: hoverGrowRadius(8),
+          hoverBackgroundColor: 'transparent',
+          hoverFillFn: glossyColor(categoricalColor(0), { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: hoverBorderRadius(),
           maxBarThickness: 30,
         },
         {
           label: 'Не проголосовало',
           data: stats.byInstructor.map((d) => d.count - d.voted),
           backgroundColor: glossyColor(p.muted, { horizontal: true }),
-          hoverBackgroundColor: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
-          borderRadius: hoverGrowRadius(8),
+          hoverBackgroundColor: 'transparent',
+          hoverFillFn: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
+          borderRadius: hoverBorderRadius(),
           maxBarThickness: 30,
         },
       ],
