@@ -30,7 +30,15 @@
   --flag-blue: #0039a6;
   --flag-red: #d52b1e;
   --radius: 14px;
-  --shadow: 0 1px 2px rgba(11,11,11,0.04), 0 6px 20px rgba(11,11,11,0.06);
+  --shadow: 0 2px 5px rgba(11,11,11,0.05), 0 14px 32px rgba(11,11,11,0.10), inset 0 1px 0 rgba(255,255,255,0.75);
+  --shadow-lg: 0 10px 20px rgba(11,11,11,0.09), 0 32px 64px rgba(11,11,11,0.18), inset 0 1px 0 rgba(255,255,255,0.75);
+  --shadow-inset: inset 0 1px 2px rgba(11,11,11,0.06);
+  --gradient-blue: linear-gradient(160deg, #2a63d6 0%, #0039a6 55%, #002d86 100%);
+  --gradient-red: linear-gradient(160deg, #e2543f 0%, #d52b1e 55%, #a81f14 100%);
+  --shadow-blue: 0 2px 5px rgba(0,57,166,0.22), 0 12px 26px rgba(0,57,166,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+  --shadow-red: 0 2px 5px rgba(213,43,30,0.22), 0 12px 26px rgba(213,43,30,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+  --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(0,57,166,0.07), transparent 60%),
+    radial-gradient(900px 480px at 102% 4%, rgba(213,43,30,0.055), transparent 55%), var(--page);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,7 +57,15 @@
     --series-2: #e66767;
     --flag-blue: #3987e5;
     --flag-red: #e66767;
-    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    --shadow: 0 2px 5px rgba(0,0,0,0.35), 0 16px 36px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.06);
+    --shadow-lg: 0 12px 24px rgba(0,0,0,0.42), 0 36px 72px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08);
+    --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.4);
+    --gradient-blue: linear-gradient(160deg, #5a9bee 0%, #3987e5 55%, #1f5fc0 100%);
+    --gradient-red: linear-gradient(160deg, #ee8b7f 0%, #e66767 55%, #c23f3f 100%);
+    --shadow-blue: 0 2px 5px rgba(57,135,229,0.28), 0 14px 30px rgba(57,135,229,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+    --shadow-red: 0 2px 5px rgba(230,103,103,0.28), 0 14px 30px rgba(230,103,103,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+    --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(57,135,229,0.14), transparent 60%),
+      radial-gradient(900px 480px at 102% 4%, rgba(230,103,103,0.10), transparent 55%), var(--page);
   }
 }
 :root[data-theme="dark"] {
@@ -67,7 +83,15 @@
   --series-2: #e66767;
   --flag-blue: #3987e5;
   --flag-red: #e66767;
-  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  --shadow: 0 2px 5px rgba(0,0,0,0.35), 0 16px 36px rgba(0,0,0,0.42), inset 0 1px 0 rgba(255,255,255,0.06);
+  --shadow-lg: 0 12px 24px rgba(0,0,0,0.42), 0 36px 72px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.08);
+  --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.4);
+  --gradient-blue: linear-gradient(160deg, #5a9bee 0%, #3987e5 55%, #1f5fc0 100%);
+  --gradient-red: linear-gradient(160deg, #ee8b7f 0%, #e66767 55%, #c23f3f 100%);
+  --shadow-blue: 0 2px 5px rgba(57,135,229,0.28), 0 14px 30px rgba(57,135,229,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+  --shadow-red: 0 2px 5px rgba(230,103,103,0.28), 0 14px 30px rgba(230,103,103,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+  --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(57,135,229,0.14), transparent 60%),
+    radial-gradient(900px 480px at 102% 4%, rgba(230,103,103,0.10), transparent 55%), var(--page);
 }
 
 * { box-sizing: border-box; }
@@ -83,7 +107,11 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
-body { min-height: 100vh; }
+body {
+  min-height: 100vh;
+  background: var(--page-bg);
+  background-attachment: fixed;
+}
 
 .flag-ribbon {
   display: flex;
@@ -123,8 +151,9 @@ body { min-height: 100vh; }
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
-  background: var(--series-1);
+  border-radius: 11px;
+  background: var(--gradient-blue);
+  box-shadow: var(--shadow-blue);
   color: #fff;
   flex: none;
 }
@@ -155,31 +184,41 @@ body { min-height: 100vh; }
   font: inherit;
   font-size: 13.5px;
   font-weight: 600;
-  padding: 9px 14px;
-  border-radius: 10px;
+  padding: 9px 16px;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface-1);
   color: var(--text-primary);
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s, transform 0.05s;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s, filter 0.15s;
 }
-.btn:hover { background: var(--grid); }
+.btn:hover { background: var(--grid); transform: translateY(-1px); }
 .btn:active { transform: translateY(1px); }
 .btn--primary {
-  background: var(--series-1);
+  background: var(--gradient-blue);
   border-color: transparent;
   color: #fff;
+  box-shadow: var(--shadow-blue);
 }
-.btn--primary:hover { filter: brightness(1.06); background: var(--series-1); }
-.btn--ghost { background: transparent; }
+.btn--primary:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: var(--shadow-blue); }
+.btn--primary:active { transform: translateY(1px); }
+.btn--ghost { background: transparent; box-shadow: none; }
+.btn--ghost:hover { transform: none; }
 .btn--icon { padding: 9px; }
 .btn--danger {
   background: transparent;
   border-color: var(--flag-red);
   color: var(--flag-red);
+  box-shadow: none;
 }
-.btn--danger:hover { background: var(--flag-red); color: #fff; }
+.btn--danger:hover {
+  background: var(--gradient-red);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--shadow-red);
+  transform: translateY(-1px);
+}
 
 #app { padding: 20px; max-width: 1280px; margin: 0 auto; }
 
@@ -192,7 +231,18 @@ body { min-height: 100vh; }
   padding: 80px 20px;
   color: var(--text-secondary);
 }
-.empty-state__icon { color: var(--muted); margin-bottom: 4px; }
+.empty-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  color: var(--flag-blue);
+  background: radial-gradient(circle at 35% 30%, var(--surface-1), var(--grid));
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 8px;
+}
 .empty-state h2 { margin: 0; color: var(--text-primary); font-size: 18px; }
 .empty-state p { margin: 0; max-width: 420px; font-size: 14px; }
 .empty-state__hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
@@ -201,48 +251,144 @@ body { min-height: 100vh; }
 .filter-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 5;
 }
 .filter-bar__label {
   font-size: 12.5px;
   font-weight: 600;
   color: var(--text-secondary);
 }
-.filter-bar__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+
+.dropdown {
+  position: relative;
 }
-.chip {
+
+.dropdown__trigger {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 14px;
+  min-width: 200px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+.dropdown__trigger span:first-child { flex: 1; text-align: left; }
+.dropdown__trigger:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.dropdown__trigger:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
+.dropdown__chevron {
+  color: var(--muted);
+  transition: transform 0.18s ease;
+  flex: none;
+}
+.dropdown.is-open .dropdown__trigger {
+  border-color: var(--flag-blue);
+  box-shadow: var(--shadow-blue);
+}
+.dropdown.is-open .dropdown__chevron { transform: rotate(180deg); color: var(--flag-blue); }
+
+.dropdown__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 260px;
+  max-height: 320px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.dropdown__list {
+  overflow-y: auto;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.dropdown__option:hover { background: var(--grid); }
+.dropdown__option:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: -2px; }
+
+.dropdown__check {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 6px;
+  border: 1.5px solid var(--baseline);
+  background: var(--surface-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: background 0.12s, border-color 0.12s;
+}
+.dropdown__option.is-checked .dropdown__check {
+  background: var(--gradient-blue);
+  border-color: transparent;
+  box-shadow: var(--shadow-blue);
+}
+.dropdown__check svg { opacity: 0; transform: scale(0.6); transition: opacity 0.12s, transform 0.12s; }
+.dropdown__option.is-checked .dropdown__check svg { opacity: 1; transform: scale(1); }
+
+.dropdown__option-label { flex: 1; }
+.dropdown__option-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dropdown__footer {
+  border-top: 1px solid var(--grid);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+.dropdown__reset {
+  width: 100%;
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1.5px solid var(--baseline);
-  background: var(--surface-1);
-  color: var(--text-secondary);
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--flag-blue);
   cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  text-align: center;
 }
-.chip:hover { border-color: var(--flag-blue); }
-.chip__count {
-  font-variant-numeric: tabular-nums;
-  opacity: 0.75;
-}
-.chip.is-active {
-  background: var(--flag-blue);
-  border-color: var(--flag-blue);
-  color: #fff;
-}
-.chip.chip--all {
-  border-style: dashed;
-}
+.dropdown__reset:hover { background: var(--grid); }
 
 .kpi-grid {
   display: grid;
@@ -257,7 +403,9 @@ body { min-height: 100vh; }
   border-radius: var(--radius);
   padding: 16px;
   box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
+.kpi:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
 .kpi__label {
   font-size: 12px;
   color: var(--text-secondary);
@@ -293,7 +441,9 @@ body { min-height: 100vh; }
   padding: 16px;
   display: flex;
   flex-direction: column;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
+.card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
 .card--wide { grid-column: 1 / -1; }
 
 .card__head h3 { margin: 0; font-size: 14.5px; font-weight: 700; }
@@ -407,8 +557,19 @@ body { min-height: 100vh; }
   <section id="dashboard" class="dashboard" hidden>
 
     <div class="filter-bar" id="filter-bar" hidden>
-      <span class="filter-bar__label">Отдел:</span>
-      <div class="filter-bar__chips" id="dept-filter-chips"></div>
+      <span class="filter-bar__label">Отдел</span>
+      <div class="dropdown" id="dept-dropdown">
+        <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <span id="dept-dropdown-label">Все отделы</span>
+          <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
+          <div class="dropdown__list" id="dept-dropdown-list"></div>
+          <div class="dropdown__footer">
+            <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="kpi-grid" id="kpi-grid"></div>
@@ -1301,8 +1462,16 @@ const els = {
   fileMeta: document.getElementById('file-meta'),
   toast: document.getElementById('toast'),
   filterBar: document.getElementById('filter-bar'),
-  deptChips: document.getElementById('dept-filter-chips'),
+  deptDropdown: document.getElementById('dept-dropdown'),
+  deptTrigger: document.getElementById('dept-dropdown-trigger'),
+  deptLabel: document.getElementById('dept-dropdown-label'),
+  deptPanel: document.getElementById('dept-dropdown-panel'),
+  deptList: document.getElementById('dept-dropdown-list'),
+  deptReset: document.getElementById('dept-dropdown-reset'),
 };
+
+const CHECK_ICON_SVG =
+  '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function showToast(message, isError) {
   els.toast.textContent = message;
@@ -1329,19 +1498,45 @@ function getFilteredRows() {
   return currentRows.filter((r) => !excludedDepts.has(r.dept));
 }
 
-function chipButton({ label, count, active, dashed }) {
+function openDeptDropdown() {
+  els.deptDropdown.classList.add('is-open');
+  els.deptPanel.hidden = false;
+  els.deptTrigger.setAttribute('aria-expanded', 'true');
+}
+
+function closeDeptDropdown() {
+  els.deptDropdown.classList.remove('is-open');
+  els.deptPanel.hidden = true;
+  els.deptTrigger.setAttribute('aria-expanded', 'false');
+}
+
+function toggleDeptDropdown() {
+  if (els.deptPanel.hidden) openDeptDropdown();
+  else closeDeptDropdown();
+}
+
+function deptOptionRow({ label, count, checked }) {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'chip' + (active ? ' is-active' : '') + (dashed ? ' chip--all' : '');
+  btn.className = 'dropdown__option' + (checked ? ' is-checked' : '');
+  btn.setAttribute('role', 'option');
+  btn.setAttribute('aria-selected', String(checked));
+
+  const check = document.createElement('span');
+  check.className = 'dropdown__check';
+  check.innerHTML = CHECK_ICON_SVG;
+  btn.appendChild(check);
+
   const labelSpan = document.createElement('span');
+  labelSpan.className = 'dropdown__option-label';
   labelSpan.textContent = label;
   btn.appendChild(labelSpan);
-  if (count != null) {
-    const countSpan = document.createElement('span');
-    countSpan.className = 'chip__count';
-    countSpan.textContent = count;
-    btn.appendChild(countSpan);
-  }
+
+  const countSpan = document.createElement('span');
+  countSpan.className = 'dropdown__option-count';
+  countSpan.textContent = count;
+  btn.appendChild(countSpan);
+
   return btn;
 }
 
@@ -1352,23 +1547,26 @@ function renderDeptFilter() {
 
   if (depts.length < 2) {
     els.filterBar.hidden = true;
+    closeDeptDropdown();
     return;
   }
   els.filterBar.hidden = false;
-  els.deptChips.innerHTML = '';
 
-  const allChip = chipButton({ label: 'Все', count: currentRows.length, active: excludedDepts.size === 0, dashed: true });
-  allChip.addEventListener('click', () => {
-    excludedDepts.clear();
-    refreshDashboard();
-  });
-  els.deptChips.appendChild(allChip);
+  const includedCount = depts.length - excludedDepts.size;
+  if (excludedDepts.size === 0) {
+    els.deptLabel.textContent = `Все отделы (${currentRows.length})`;
+  } else if (includedCount === 1) {
+    els.deptLabel.textContent = depts.find(([d]) => !excludedDepts.has(d))[0];
+  } else {
+    els.deptLabel.textContent = `${includedCount} из ${depts.length} отделов`;
+  }
 
+  els.deptList.innerHTML = '';
   for (const [dept, count] of depts) {
-    const active = !excludedDepts.has(dept);
-    const chip = chipButton({ label: dept, count, active });
-    chip.addEventListener('click', () => {
-      if (active) {
+    const checked = !excludedDepts.has(dept);
+    const option = deptOptionRow({ label: dept, count, checked });
+    option.addEventListener('click', () => {
+      if (checked) {
         // Keep at least one department selected.
         if (excludedDepts.size >= depts.length - 1) return;
         excludedDepts.add(dept);
@@ -1377,7 +1575,7 @@ function renderDeptFilter() {
       }
       refreshDashboard();
     });
-    els.deptChips.appendChild(chip);
+    els.deptList.appendChild(option);
   }
 }
 
@@ -1440,6 +1638,7 @@ function clearData() {
   els.emptyState.hidden = false;
   els.clearBtn.hidden = true;
   els.filterBar.hidden = true;
+  closeDeptDropdown();
   els.subtitle.textContent = 'Загрузите Excel-файл, чтобы увидеть статистику';
   Object.keys(chartRegistry).forEach(destroyChart);
 }
@@ -1472,6 +1671,21 @@ els.fileInput.addEventListener('change', (e) => {
 
 els.clearBtn.addEventListener('click', clearData);
 els.themeToggle.addEventListener('click', toggleTheme);
+
+els.deptTrigger.addEventListener('click', toggleDeptDropdown);
+els.deptReset.addEventListener('click', () => {
+  excludedDepts.clear();
+  refreshDashboard();
+});
+document.addEventListener('click', (e) => {
+  if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !els.deptPanel.hidden) {
+    closeDeptDropdown();
+    els.deptTrigger.focus();
+  }
+});
 
 ['dragover', 'dragenter'].forEach((evt) =>
   els.emptyState.addEventListener(evt, (e) => {

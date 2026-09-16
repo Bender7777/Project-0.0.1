@@ -63,17 +63,26 @@ reappears on reload/offline; `clearData()` removes it. The theme choice is a sep
 
 **Department filter:** `app.js` keeps the full parsed rows in `currentRows` and an
 `excludedDepts` Set; `getFilteredRows()` applies it and `refreshDashboard()` re-runs
-`computeStats` + `renderAllCharts` + `renderDeptFilter` against the filtered subset — the
-filter bar chips are rebuilt from `currentRows` (unfiltered) on every render so their counts
-stay stable while their active/inactive state reflects `excludedDepts`. At least one
-department is always kept selected. `computeStats`/`charts.js` are filter-agnostic — they
-just operate on whatever row array they're given.
+`computeStats` + `renderAllCharts` + `renderDeptFilter` against the filtered subset. The
+filter UI is a multi-select dropdown (`#dept-dropdown`): a trigger button showing a summary
+label ("Все отделы (N)" / one dept's name / "K из N отделов") and a checkbox-list panel,
+rebuilt from `currentRows` (unfiltered) on every render so option counts stay stable while
+each row's checked state reflects `excludedDepts`. At least one department is always kept
+selected. Panel open/close state lives in `dropdown.is-open` + the panel's `hidden` attribute,
+toggled by the trigger, an outside-click listener, and Escape. `computeStats`/`charts.js` are
+filter-agnostic — they just operate on whatever row array they're given.
 
-**Visual theme:** chrome (header, primary/danger buttons, active filter chips, the top
-`flag-ribbon` bar) uses Russian-flag colors (`--flag-white`/`--flag-blue`/`--flag-red` in
+**Visual theme:** chrome (header, primary/danger buttons, the dropdown trigger/checkboxes, the
+top `flag-ribbon` bar) uses Russian-flag colors (`--flag-white`/`--flag-blue`/`--flag-red` in
 `style.css`, white `#fff`, blue `#0039a6`/`#3987e5` dark, red `#d52b1e`/`#e66767` dark) via
 `--series-1`/`--series-2`. This is independent of the validated categorical/status colors in
 `palette.js` used for chart data series — don't conflate the two when changing colors.
+Depth/"volume" (glossy gradients, layered shadows, hover lift) is centralized in a handful of
+tokens — `--shadow`/`--shadow-lg` (ambient + contact shadow, plus an inset top highlight),
+`--gradient-blue`/`--gradient-red`, `--shadow-blue`/`--shadow-red`, and the page's
+`--page-bg` radial-gradient glow — reused by `.card`, `.kpi`, `.btn--primary`, `.btn--danger`,
+and the dropdown; adjust those tokens rather than styling each component's shadow/gradient
+individually.
 
 **Service worker cache list:** `sw.js` precaches an explicit `APP_SHELL` file list. Any new
 file added under `src/`, `vendor/`, or `icons/` that the app needs offline must be added to

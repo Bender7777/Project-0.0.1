@@ -54,8 +54,19 @@
   <section id="dashboard" class="dashboard" hidden>
 
     <div class="filter-bar" id="filter-bar" hidden>
-      <span class="filter-bar__label">Отдел:</span>
-      <div class="filter-bar__chips" id="dept-filter-chips"></div>
+      <span class="filter-bar__label">Отдел</span>
+      <div class="dropdown" id="dept-dropdown">
+        <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <span id="dept-dropdown-label">Все отделы</span>
+          <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
+          <div class="dropdown__list" id="dept-dropdown-list"></div>
+          <div class="dropdown__footer">
+            <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="kpi-grid" id="kpi-grid"></div>

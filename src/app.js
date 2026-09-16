@@ -15,8 +15,16 @@ const els = {
   fileMeta: document.getElementById('file-meta'),
   toast: document.getElementById('toast'),
   filterBar: document.getElementById('filter-bar'),
-  deptChips: document.getElementById('dept-filter-chips'),
+  deptDropdown: document.getElementById('dept-dropdown'),
+  deptTrigger: document.getElementById('dept-dropdown-trigger'),
+  deptLabel: document.getElementById('dept-dropdown-label'),
+  deptPanel: document.getElementById('dept-dropdown-panel'),
+  deptList: document.getElementById('dept-dropdown-list'),
+  deptReset: document.getElementById('dept-dropdown-reset'),
 };
+
+const CHECK_ICON_SVG =
+  '<svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function showToast(message, isError) {
   els.toast.textContent = message;
@@ -43,19 +51,45 @@ function getFilteredRows() {
   return currentRows.filter((r) => !excludedDepts.has(r.dept));
 }
 
-function chipButton({ label, count, active, dashed }) {
+function openDeptDropdown() {
+  els.deptDropdown.classList.add('is-open');
+  els.deptPanel.hidden = false;
+  els.deptTrigger.setAttribute('aria-expanded', 'true');
+}
+
+function closeDeptDropdown() {
+  els.deptDropdown.classList.remove('is-open');
+  els.deptPanel.hidden = true;
+  els.deptTrigger.setAttribute('aria-expanded', 'false');
+}
+
+function toggleDeptDropdown() {
+  if (els.deptPanel.hidden) openDeptDropdown();
+  else closeDeptDropdown();
+}
+
+function deptOptionRow({ label, count, checked }) {
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'chip' + (active ? ' is-active' : '') + (dashed ? ' chip--all' : '');
+  btn.className = 'dropdown__option' + (checked ? ' is-checked' : '');
+  btn.setAttribute('role', 'option');
+  btn.setAttribute('aria-selected', String(checked));
+
+  const check = document.createElement('span');
+  check.className = 'dropdown__check';
+  check.innerHTML = CHECK_ICON_SVG;
+  btn.appendChild(check);
+
   const labelSpan = document.createElement('span');
+  labelSpan.className = 'dropdown__option-label';
   labelSpan.textContent = label;
   btn.appendChild(labelSpan);
-  if (count != null) {
-    const countSpan = document.createElement('span');
-    countSpan.className = 'chip__count';
-    countSpan.textContent = count;
-    btn.appendChild(countSpan);
-  }
+
+  const countSpan = document.createElement('span');
+  countSpan.className = 'dropdown__option-count';
+  countSpan.textContent = count;
+  btn.appendChild(countSpan);
+
   return btn;
 }
 
@@ -66,23 +100,26 @@ function renderDeptFilter() {
 
   if (depts.length < 2) {
     els.filterBar.hidden = true;
+    closeDeptDropdown();
     return;
   }
   els.filterBar.hidden = false;
-  els.deptChips.innerHTML = '';
 
-  const allChip = chipButton({ label: 'Все', count: currentRows.length, active: excludedDepts.size === 0, dashed: true });
-  allChip.addEventListener('click', () => {
-    excludedDepts.clear();
-    refreshDashboard();
-  });
-  els.deptChips.appendChild(allChip);
+  const includedCount = depts.length - excludedDepts.size;
+  if (excludedDepts.size === 0) {
+    els.deptLabel.textContent = `Все отделы (${currentRows.length})`;
+  } else if (includedCount === 1) {
+    els.deptLabel.textContent = depts.find(([d]) => !excludedDepts.has(d))[0];
+  } else {
+    els.deptLabel.textContent = `${includedCount} из ${depts.length} отделов`;
+  }
 
+  els.deptList.innerHTML = '';
   for (const [dept, count] of depts) {
-    const active = !excludedDepts.has(dept);
-    const chip = chipButton({ label: dept, count, active });
-    chip.addEventListener('click', () => {
-      if (active) {
+    const checked = !excludedDepts.has(dept);
+    const option = deptOptionRow({ label: dept, count, checked });
+    option.addEventListener('click', () => {
+      if (checked) {
         // Keep at least one department selected.
         if (excludedDepts.size >= depts.length - 1) return;
         excludedDepts.add(dept);
@@ -91,7 +128,7 @@ function renderDeptFilter() {
       }
       refreshDashboard();
     });
-    els.deptChips.appendChild(chip);
+    els.deptList.appendChild(option);
   }
 }
 
@@ -154,6 +191,7 @@ function clearData() {
   els.emptyState.hidden = false;
   els.clearBtn.hidden = true;
   els.filterBar.hidden = true;
+  closeDeptDropdown();
   els.subtitle.textContent = 'Загрузите Excel-файл, чтобы увидеть статистику';
   Object.keys(chartRegistry).forEach(destroyChart);
 }
@@ -186,6 +224,21 @@ els.fileInput.addEventListener('change', (e) => {
 
 els.clearBtn.addEventListener('click', clearData);
 els.themeToggle.addEventListener('click', toggleTheme);
+
+els.deptTrigger.addEventListener('click', toggleDeptDropdown);
+els.deptReset.addEventListener('click', () => {
+  excludedDepts.clear();
+  refreshDashboard();
+});
+document.addEventListener('click', (e) => {
+  if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !els.deptPanel.hidden) {
+    closeDeptDropdown();
+    els.deptTrigger.focus();
+  }
+});
 
 ['dragover', 'dragenter'].forEach((evt) =>
   els.emptyState.addEventListener(evt, (e) => {
