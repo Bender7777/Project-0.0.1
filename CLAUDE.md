@@ -155,17 +155,25 @@ colors in `palette.js` used for chart data series (`good`/`warning`/`serious`/`c
 `--grid`/`--baseline`/`--border` in dark mode are translucent white (`rgba(255,255,255,…)`)
 rather than solid grays, matching the source theme's own glass-style tokens — this is
 intentional, not a bug, and reads correctly wherever they're used as a hover-fill tint or a
-hairline border. Depth/"volume" (glossy gradients, layered shadows, hover lift) is centralized
+hairline border. The reskin also reaches the KPI/chart-card bento colors, not just this chrome
+— see **KPI hero tiles** below for the `--kpi-N-*`/`--kpi-card-border`/`--kpi-icon-*` side of
+it (frosted glass replacing the warm per-card hues in dark mode, uniformly across all cards).
+Depth/"volume" (glossy gradients, layered shadows, hover lift) is centralized
 in a handful of tokens — `--shadow`/`--shadow-lg` (ambient + contact shadow, plus an inset top
 highlight), `--gradient-blue`/`--gradient-red`, `--shadow-blue`/`--shadow-red`, and the page's
 `--page-bg` radial-gradient glow — reused by `.card`, `.kpi`, `.btn--primary`, `.btn--danger`,
 and the dropdown; adjust those tokens rather than styling each component's shadow/gradient
 individually (and if you touch the *dark* values, mirror the change into both dark blocks).
 
-**KPI hero tiles:** the 4 KPI cards use a fixed, non-themed palette (`--kpi-1-bg`…`--kpi-4-bg`
-+ matching `-text`/`-sub`/`-icon`/`-shadow` tokens in `:root`) — cream, orange, gold, green —
-independent of light/dark mode, each with a glass icon badge (`renderKPIs`'s `KPI_ICONS` in
-`charts.js` picks the SVG per card by index). The grid is an explicit asymmetric layout
+**KPI hero tiles:** the 4 KPI cards use a bento palette (`--kpi-1-bg`…`--kpi-4-bg` + matching
+`-text`/`-sub`/`-icon`/`-shadow` tokens, declared once in `:root`) — cream, orange, gold, green
+in **light mode only**. Dark mode overrides all four sets to the *same* frosted-glass values
+(see the dark-theme reskin comment at the top of `style.css`) rather than keeping the warm
+hero colors, so don't reintroduce a light-mode-style per-card hue distinction in the dark
+overrides — that was specifically removed. Each tile has a glass icon badge (`renderKPIs`'s
+`KPI_ICONS` in `charts.js` picks the SVG per card by index; its background/border color comes
+from `--kpi-icon-bg`/`--kpi-icon-border`, retinted teal in dark mode via the same override).
+The grid is an explicit asymmetric layout
 (`.kpi-grid` in `style.css`: card 1 spans both rows on the left, cards 2–4 fill the right)
 that collapses to a single column under 720px — `renderKPIs` always emits exactly 4 cards in
 this order, so adding/removing a KPI tile means updating both the JS and the CSS grid-area
