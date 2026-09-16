@@ -98,14 +98,6 @@ function glossyColorByIndex(colors, opts) {
   };
 }
 
-function edgeColor(hex) {
-  return darken(hex, 0.4);
-}
-
-function edgeColorByIndex(colors) {
-  return (ctx) => darken(colors[ctx.dataIndex], 0.4);
-}
-
 function shadowColorForMode() {
   return currentThemeMode() === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(15,15,15,0.4)';
 }
@@ -236,9 +228,6 @@ function renderDeptChart(stats) {
           label: 'Сотрудников',
           data: stats.byDept.map((d) => d.count),
           backgroundColor: glossyColorByIndex(colors, { horizontal: true }),
-          borderColor: edgeColorByIndex(colors),
-          borderWidth: 1.5,
-          borderSkipped: false,
           borderRadius: 8,
           maxBarThickness: 34,
         },
@@ -346,9 +335,6 @@ function renderDaysChart(stats) {
           label: 'Проголосовало',
           data: stats.byDay.map((d) => d.voted),
           backgroundColor: glossyColorByIndex(colors),
-          borderColor: edgeColorByIndex(colors),
-          borderWidth: 1.5,
-          borderSkipped: false,
           borderRadius: 8,
           maxBarThickness: 56,
         },
@@ -447,8 +433,8 @@ function renderDayFormatChart(stats) {
     data: {
       labels,
       datasets: [
-        { label: 'ДЭГ', data: stats.dayFormat.map((d) => d.deg), backgroundColor: glossyColor(c1), borderColor: edgeColor(c1), borderWidth: 1.5, borderSkipped: false, borderRadius: 8, maxBarThickness: 40 },
-        { label: 'ОЧНО', data: stats.dayFormat.map((d) => d.ochno), backgroundColor: glossyColor(c2), borderColor: edgeColor(c2), borderWidth: 1.5, borderSkipped: false, borderRadius: 8, maxBarThickness: 40 },
+        { label: 'ДЭГ', data: stats.dayFormat.map((d) => d.deg), backgroundColor: glossyColor(c1), borderRadius: 8, maxBarThickness: 40 },
+        { label: 'ОЧНО', data: stats.dayFormat.map((d) => d.ochno), backgroundColor: glossyColor(c2), borderRadius: 8, maxBarThickness: 40 },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
@@ -481,9 +467,6 @@ function renderDeptTurnoutChart(stats) {
           label: 'Явка, %',
           data: stats.deptTurnout.map((d) => Number(d.pct.toFixed(1))),
           backgroundColor: glossyColor(p.good),
-          borderColor: edgeColor(p.good),
-          borderWidth: 1.5,
-          borderSkipped: false,
           borderRadius: 8,
           maxBarThickness: 40,
         },
@@ -518,8 +501,8 @@ function renderInstructorChart(stats) {
     data: {
       labels,
       datasets: [
-        { label: 'Всего закреплено', data: stats.byInstructor.map((d) => d.count), backgroundColor: glossyColor(p.muted, { horizontal: true }), borderColor: edgeColor(p.muted), borderWidth: 1.5, borderSkipped: false, borderRadius: 8, maxBarThickness: 34 },
-        { label: 'Проголосовало', data: stats.byInstructor.map((d) => d.voted), backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }), borderColor: edgeColor(categoricalColor(0)), borderWidth: 1.5, borderSkipped: false, borderRadius: 8, maxBarThickness: 34 },
+        { label: 'Всего закреплено', data: stats.byInstructor.map((d) => d.count), backgroundColor: glossyColor(p.muted, { horizontal: true }), borderRadius: 8, maxBarThickness: 34 },
+        { label: 'Проголосовало', data: stats.byInstructor.map((d) => d.voted), backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }), borderRadius: 8, maxBarThickness: 34 },
       ],
     },
     options: Object.assign(baseChartOptions(p), {

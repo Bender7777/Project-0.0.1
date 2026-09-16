@@ -104,12 +104,12 @@ exists, then swaps in the gradient once layout is known — so **when adding a n
 chart config) instead of a flat color/array**, or it'll look flat next to the others. Only the
 lightness changes, never the hue, so this doesn't affect categorical identity or CVD
 separation — swap `categoricalColor()`/`p.*` inputs, not the gradient math, if a color needs
-to change. Bars also get a `borderColor` from `edgeColor`/`edgeColorByIndex` (a darker shade of
-the same fill, `borderWidth: 1.5`, `borderSkipped: false`) as a bevel edge — donuts
-deliberately have no border (`borderWidth: 0`) since a white ring reads as a seam once the
-fill itself is shaded; `donutGlossPlugin` adds a soft specular highlight near the top of the
-ring instead, clipped to the annulus via `arc.innerRadius`/`outerRadius`/`x`/`y` off the first
-`ArcElement`.
+to change. Bars have no `borderColor`/outline (tried once, reverted — the user didn't want an
+edge stroke, and `borderSkipped: false` also rounds the base of the bar, which reads wrong for
+a bar chart sitting on its axis) — `borderRadius` alone gives the rounded top. Donuts likewise
+have no border (`borderWidth: 0`) since a white ring reads as a seam once the fill itself is
+shaded; `donutGlossPlugin` adds a soft specular highlight near the top of the ring instead,
+clipped to the annulus via `arc.innerRadius`/`outerRadius`/`x`/`y` off the first `ArcElement`.
 
 **Chart cards are bento tiles too:** every `.card` in `index.html` carries a `.card--1`…
 `.card--4` class that cycles through the same 4 hero-palette tokens as the KPI cards (same
