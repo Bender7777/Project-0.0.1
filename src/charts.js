@@ -71,12 +71,12 @@ function darken(hex, amount) {
 
 function obliqueGradient(ctx, area, hex, opts) {
   if (!area) return hex;
-  const { horizontal = false, lightAmt = 0.32, darkAmt = 0.22 } = opts || {};
+  const { horizontal = false, lightAmt = 0.45, darkAmt = 0.36 } = opts || {};
   const grad = horizontal
     ? ctx.createLinearGradient(area.left, 0, area.right, 0)
     : ctx.createLinearGradient(0, area.top, 0, area.bottom);
   grad.addColorStop(0, lighten(hex, lightAmt));
-  grad.addColorStop(0.55, hex);
+  grad.addColorStop(0.5, hex);
   grad.addColorStop(1, darken(hex, darkAmt));
   return grad;
 }
@@ -98,8 +98,16 @@ function glossyColorByIndex(colors, opts) {
   };
 }
 
+function edgeColor(hex) {
+  return darken(hex, 0.4);
+}
+
+function edgeColorByIndex(colors) {
+  return (ctx) => darken(colors[ctx.dataIndex], 0.4);
+}
+
 function shadowColorForMode() {
-  return currentThemeMode() === 'dark' ? 'rgba(0,0,0,0.55)' : 'rgba(15,15,15,0.28)';
+  return currentThemeMode() === 'dark' ? 'rgba(0,0,0,0.7)' : 'rgba(15,15,15,0.4)';
 }
 
 const volumeShadowPlugin = {
@@ -108,12 +116,40 @@ const volumeShadowPlugin = {
     const ctx = chart.ctx;
     ctx.save();
     ctx.shadowColor = shadowColorForMode();
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 18;
     ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 5;
+    ctx.shadowOffsetY = 9;
   },
   afterDatasetsDraw(chart) {
     chart.ctx.restore();
+  },
+};
+
+// Soft specular highlight arced across the top of a doughnut ring, so it
+// reads as a glossy dome rather than a flat painted disc.
+const donutGlossPlugin = {
+  id: 'donutGloss',
+  afterDatasetsDraw(chart) {
+    const meta = chart.getDatasetMeta(0);
+    const arc = meta && meta.data && meta.data[0];
+    if (!arc || arc.innerRadius == null) return;
+    const { x: cx, y: cy, innerRadius, outerRadius } = arc;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, outerRadius, 0, Math.PI * 2);
+    ctx.arc(cx, cy, innerRadius, 0, Math.PI * 2, true);
+    ctx.closePath();
+    ctx.clip();
+    const hx = cx - outerRadius * 0.28;
+    const hy = cy - outerRadius * 0.62;
+    const grad = ctx.createRadialGradient(hx, hy, 1, hx, hy, outerRadius * 1.15);
+    grad.addColorStop(0, 'rgba(255,255,255,0.65)');
+    grad.addColorStop(0.45, 'rgba(255,255,255,0.16)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(cx - outerRadius, cy - outerRadius, outerRadius * 2, outerRadius * 2);
+    ctx.restore();
   },
 };
 
@@ -200,7 +236,10 @@ function renderDeptChart(stats) {
           label: 'Сотрудников',
           data: stats.byDept.map((d) => d.count),
           backgroundColor: glossyColorByIndex(colors, { horizontal: true }),
-          borderRadius: 6,
+          borderColor: edgeColorByIndex(colors),
+          borderWidth: 1.5,
+          borderSkipped: false,
+          borderRadius: 8,
           maxBarThickness: 34,
         },
       ],
@@ -234,16 +273,16 @@ function renderDeptChart(stats) {
 function donutChart(canvasId, p, labels, data, colors, centerLabel) {
   return new Chart(document.getElementById(canvasId), {
     type: 'doughnut',
-    plugins: [volumeShadowPlugin],
+    plugins: [volumeShadowPlugin, donutGlossPlugin],
     data: {
       labels,
       datasets: [
         {
           data,
-          backgroundColor: glossyColorByIndex(colors, { lightAmt: 0.35, darkAmt: 0.18 }),
-          borderWidth: 2,
-          borderColor: p.surface,
-          hoverOffset: 6,
+          backgroundColor: glossyColorByIndex(colors, { lightAmt: 0.5, darkAmt: 0.3 }),
+          borderWidth: 0,
+          hoverOffset: 10,
+          hoverBorderWidth: 0,
         },
       ],
     },
@@ -307,6 +346,9 @@ function renderDaysChart(stats) {
           label: 'Проголосовало',
           data: stats.byDay.map((d) => d.voted),
           backgroundColor: glossyColorByIndex(colors),
+          borderColor: edgeColorByIndex(colors),
+          borderWidth: 1.5,
+          borderSkipped: false,
           borderRadius: 8,
           maxBarThickness: 56,
         },
@@ -405,8 +447,8 @@ function renderDayFormatChart(stats) {
     data: {
       labels,
       datasets: [
-        { label: 'ДЭГ', data: stats.dayFormat.map((d) => d.deg), backgroundColor: glossyColor(c1), borderRadius: 6, maxBarThickness: 40 },
-        { label: 'ОЧНО', data: stats.dayFormat.map((d) => d.ochno), backgroundColor: glossyColor(c2), borderRadius: 6, maxBarThickness: 40 },
+        { label: 'ДЭГ', data: stats.dayFormat.map((d) => d.deg), backgroundColor: glossyColor(c1), borderColor: edgeColor(c1), borderWidth: 1.5, borderSkipped: false, borderRadius: 8, maxBarThickness: 40 },
+        { label: 'ОЧНО', data: stats.dayFormat.map((d) => d.ochno), backgroundColor: glossyColor(c2), borderColor: edgeColor(c2), borderWidth: 1.5, borderSkipped: false, borderRadius: 8, maxBarThickness: 40 },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
@@ -439,7 +481,10 @@ function renderDeptTurnoutChart(stats) {
           label: 'Явка, %',
           data: stats.deptTurnout.map((d) => Number(d.pct.toFixed(1))),
           backgroundColor: glossyColor(p.good),
-          borderRadius: 6,
+          borderColor: edgeColor(p.good),
+          borderWidth: 1.5,
+          borderSkipped: false,
+          borderRadius: 8,
           maxBarThickness: 40,
         },
       ],
@@ -473,8 +518,8 @@ function renderInstructorChart(stats) {
     data: {
       labels,
       datasets: [
-        { label: 'Всего закреплено', data: stats.byInstructor.map((d) => d.count), backgroundColor: glossyColor(p.muted, { horizontal: true }), borderRadius: 6, maxBarThickness: 34 },
-        { label: 'Проголосовало', data: stats.byInstructor.map((d) => d.voted), backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }), borderRadius: 6, maxBarThickness: 34 },
+        { label: 'Всего закреплено', data: stats.byInstructor.map((d) => d.count), backgroundColor: glossyColor(p.muted, { horizontal: true }), borderColor: edgeColor(p.muted), borderWidth: 1.5, borderSkipped: false, borderRadius: 8, maxBarThickness: 34 },
+        { label: 'Проголосовало', data: stats.byInstructor.map((d) => d.voted), backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }), borderColor: edgeColor(categoricalColor(0)), borderWidth: 1.5, borderSkipped: false, borderRadius: 8, maxBarThickness: 34 },
       ],
     },
     options: Object.assign(baseChartOptions(p), {
