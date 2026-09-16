@@ -141,15 +141,26 @@ department — a filter with nothing selected isn't a valid state to commit.
 
 **Visual theme:** chrome (header, primary/danger buttons, the dropdown trigger/checkboxes, the
 top `flag-ribbon` bar) uses Russian-flag colors (`--flag-white`/`--flag-blue`/`--flag-red` in
-`style.css`, white `#fff`, blue `#0039a6`/`#3987e5` dark, red `#d52b1e`/`#e66767` dark) via
-`--series-1`/`--series-2`. This is independent of the validated categorical/status colors in
-`palette.js` used for chart data series — don't conflate the two when changing colors.
-Depth/"volume" (glossy gradients, layered shadows, hover lift) is centralized in a handful of
-tokens — `--shadow`/`--shadow-lg` (ambient + contact shadow, plus an inset top highlight),
-`--gradient-blue`/`--gradient-red`, `--shadow-blue`/`--shadow-red`, and the page's
+`style.css`) via `--series-1`/`--series-2` — but **only in light mode**. Dark mode is a
+deliberate full reskin ported from a different app's "Анализатор" dark theme (graphite/navy
+`#202633` surfaces + teal `#3FD0D8` accent, coral `#FF6961` danger) rather than a dark variant
+of the flag palette — `--flag-blue`/`--flag-red`/`--series-1`/`--series-2` hold teal/coral in
+both of `style.css`'s dark blocks (`@media (prefers-color-scheme: dark)` and
+`:root[data-theme="dark"]`, still kept mirrored per usual), so the ribbon, primary/danger
+buttons, focus rings, and the "Категория" segmented control's active state all read teal/coral
+once dark mode is on, not blue/red. This is independent of the validated categorical/status
+colors in `palette.js` used for chart data series (`good`/`warning`/`serious`/`critical`/
+`categorical` were deliberately left untouched by the reskin — see the comment above
+`PALETTE.dark`) — don't conflate the two when changing colors, in *either* direction.
+`--grid`/`--baseline`/`--border` in dark mode are translucent white (`rgba(255,255,255,…)`)
+rather than solid grays, matching the source theme's own glass-style tokens — this is
+intentional, not a bug, and reads correctly wherever they're used as a hover-fill tint or a
+hairline border. Depth/"volume" (glossy gradients, layered shadows, hover lift) is centralized
+in a handful of tokens — `--shadow`/`--shadow-lg` (ambient + contact shadow, plus an inset top
+highlight), `--gradient-blue`/`--gradient-red`, `--shadow-blue`/`--shadow-red`, and the page's
 `--page-bg` radial-gradient glow — reused by `.card`, `.kpi`, `.btn--primary`, `.btn--danger`,
 and the dropdown; adjust those tokens rather than styling each component's shadow/gradient
-individually.
+individually (and if you touch the *dark* values, mirror the change into both dark blocks).
 
 **KPI hero tiles:** the 4 KPI cards use a fixed, non-themed palette (`--kpi-1-bg`…`--kpi-4-bg`
 + matching `-text`/`-sub`/`-icon`/`-shadow` tokens in `:root`) — cream, orange, gold, green —

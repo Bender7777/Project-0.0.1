@@ -15,15 +15,21 @@ const PALETTE = {
     critical: '#d03b3b',
     categorical: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'],
   },
+  // "Анализатор" dark theme (graphite/navy #202633 + teal accent #3FD0D8),
+  // ported in wholesale for surface/text/grid tokens — these must stay
+  // numerically identical to style.css's dark blocks (mirrored, see
+  // CLAUDE.md). good/warning/serious/critical/categorical are left alone:
+  // that's the dataviz skill's validated, CVD-safe status/series palette,
+  // a separate system from UI chrome and untouched by this reskin.
   dark: {
-    surface: '#1a1a19',
-    page: '#0d0d0d',
-    textPrimary: '#ffffff',
-    textSecondary: '#c3c2b7',
-    muted: '#898781',
-    grid: '#2c2c2a',
-    baseline: '#383835',
-    border: 'rgba(255,255,255,0.10)',
+    surface: '#272e38',
+    page: '#202633',
+    textPrimary: '#f5f5f7',
+    textSecondary: '#a1a1a6',
+    muted: '#9a9aa0',
+    grid: 'rgba(255,255,255,0.08)',
+    baseline: 'rgba(255,255,255,0.22)',
+    border: 'rgba(255,255,255,0.14)',
     good: '#0ca30c',
     warning: '#fab219',
     serious: '#ec835a',

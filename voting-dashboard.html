@@ -65,57 +65,73 @@
   --kpi-4-shadow: 0 3px 6px rgba(15,60,36,0.35), 0 20px 44px rgba(15,60,36,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
 }
 
+/* Dark theme ported wholesale from a different app's "Анализатор" dark
+   mode (graphite/navy #202633 + teal accent #3FD0D8) — a deliberate full
+   reskin, not a themed variant of the light palette above: the Russian-flag
+   blue/red identity (`--flag-blue`/`--flag-red`, the ribbon stripes, the
+   primary/danger gradients) is replaced with that app's teal accent
+   (`#3FD0D8`) and coral danger (`#FF6961`) in dark mode only — light mode
+   keeps the flag colors untouched. `--good`/`--warning`/`--serious`/
+   `--critical` in palette.js and the multi-series `categorical` array are
+   deliberately NOT touched here (see palette.js) — those are the dataviz
+   skill's validated, CVD-safe data colors, a different system from this
+   chrome reskin, and `--critical` below still matches palette.js's
+   unchanged value so the two stay mirrored per the usual convention.
+   `--grid`/`--baseline`/`--border` are translucent white now (glass-style,
+   matching the source theme's own `--glass-*` tokens) rather than solid
+   grays — this reads correctly wherever they're used as a background tint
+   or hairline border, by design. */
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
     color-scheme: dark;
-    --surface-1: #1a1a19;
-    --page: #0d0d0d;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --muted: #898781;
-    --grid: #2c2c2a;
-    --baseline: #383835;
-    --border: rgba(255,255,255,0.10);
+    --surface-1: #272e38;
+    --page: #202633;
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --muted: #9a9aa0;
+    --grid: rgba(255,255,255,0.08);
+    --baseline: rgba(255,255,255,0.22);
+    --border: rgba(255,255,255,0.14);
     --critical: #e66767;
-    --series-1: #3987e5;
-    --series-2: #e66767;
-    --flag-blue: #3987e5;
-    --flag-red: #e66767;
-    --shadow: 0 3px 6px rgba(0,0,0,0.4), 0 20px 44px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.07);
-    --shadow-lg: 0 16px 30px rgba(0,0,0,0.48), 0 44px 88px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09);
+    --series-1: #3FD0D8;
+    --series-2: #FF6961;
+    --flag-blue: #3FD0D8;
+    --flag-red: #FF6961;
+    --shadow: 0 3px 6px rgba(0,0,0,0.4), 0 20px 44px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
+    --shadow-lg: 0 16px 30px rgba(0,0,0,0.48), 0 44px 88px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.16);
     --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.4);
-    --gradient-blue: linear-gradient(160deg, #5a9bee 0%, #3987e5 55%, #1f5fc0 100%);
-    --gradient-red: linear-gradient(160deg, #ee8b7f 0%, #e66767 55%, #c23f3f 100%);
-    --shadow-blue: 0 2px 5px rgba(57,135,229,0.28), 0 14px 30px rgba(57,135,229,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
-    --shadow-red: 0 2px 5px rgba(230,103,103,0.28), 0 14px 30px rgba(230,103,103,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
-    --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(57,135,229,0.14), transparent 60%),
-      radial-gradient(900px 480px at 102% 4%, rgba(230,103,103,0.10), transparent 55%), var(--page);
+    --gradient-blue: linear-gradient(160deg, #7FE3E8 0%, #3FD0D8 55%, #28878C 100%);
+    --gradient-red: linear-gradient(160deg, #FF9690 0%, #FF6961 55%, #BF4F49 100%);
+    --shadow-blue: 0 2px 5px rgba(63,208,216,0.28), 0 14px 30px rgba(63,208,216,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+    --shadow-red: 0 2px 5px rgba(255,105,97,0.28), 0 14px 30px rgba(255,105,97,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+    --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(63,208,216,0.14), transparent 60%),
+      radial-gradient(900px 480px at 102% 4%, rgba(255,105,97,0.10), transparent 55%), var(--page);
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --surface-1: #1a1a19;
-  --page: #0d0d0d;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --muted: #898781;
-  --grid: #2c2c2a;
-  --baseline: #383835;
-  --border: rgba(255,255,255,0.10);
+  --surface-1: #272e38;
+  --page: #202633;
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --muted: #9a9aa0;
+  --grid: rgba(255,255,255,0.08);
+  --baseline: rgba(255,255,255,0.22);
+  --border: rgba(255,255,255,0.14);
   --critical: #e66767;
-  --series-1: #3987e5;
-  --series-2: #e66767;
-  --flag-blue: #3987e5;
-  --flag-red: #e66767;
-  --shadow: 0 3px 6px rgba(0,0,0,0.4), 0 20px 44px rgba(0,0,0,0.48), inset 0 1px 0 rgba(255,255,255,0.07);
-  --shadow-lg: 0 16px 30px rgba(0,0,0,0.48), 0 44px 88px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09);
+  --series-1: #3FD0D8;
+  --series-2: #FF6961;
+  --flag-blue: #3FD0D8;
+  --flag-red: #FF6961;
+  --shadow: 0 3px 6px rgba(0,0,0,0.4), 0 20px 44px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
+  --shadow-lg: 0 16px 30px rgba(0,0,0,0.48), 0 44px 88px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.16);
   --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.4);
-  --gradient-blue: linear-gradient(160deg, #5a9bee 0%, #3987e5 55%, #1f5fc0 100%);
-  --gradient-red: linear-gradient(160deg, #ee8b7f 0%, #e66767 55%, #c23f3f 100%);
-  --shadow-blue: 0 2px 5px rgba(57,135,229,0.28), 0 14px 30px rgba(57,135,229,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
-  --shadow-red: 0 2px 5px rgba(230,103,103,0.28), 0 14px 30px rgba(230,103,103,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
-  --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(57,135,229,0.14), transparent 60%),
-    radial-gradient(900px 480px at 102% 4%, rgba(230,103,103,0.10), transparent 55%), var(--page);
+  --gradient-blue: linear-gradient(160deg, #7FE3E8 0%, #3FD0D8 55%, #28878C 100%);
+  --gradient-red: linear-gradient(160deg, #FF9690 0%, #FF6961 55%, #BF4F49 100%);
+  --shadow-blue: 0 2px 5px rgba(63,208,216,0.28), 0 14px 30px rgba(63,208,216,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+  --shadow-red: 0 2px 5px rgba(255,105,97,0.28), 0 14px 30px rgba(255,105,97,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+  --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(63,208,216,0.14), transparent 60%),
+    radial-gradient(900px 480px at 102% 4%, rgba(255,105,97,0.10), transparent 55%), var(--page);
 }
 
 * { box-sizing: border-box; }
@@ -1090,15 +1106,21 @@ const PALETTE = {
     critical: '#d03b3b',
     categorical: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948'],
   },
+  // "Анализатор" dark theme (graphite/navy #202633 + teal accent #3FD0D8),
+  // ported in wholesale for surface/text/grid tokens — these must stay
+  // numerically identical to style.css's dark blocks (mirrored, see
+  // CLAUDE.md). good/warning/serious/critical/categorical are left alone:
+  // that's the dataviz skill's validated, CVD-safe status/series palette,
+  // a separate system from UI chrome and untouched by this reskin.
   dark: {
-    surface: '#1a1a19',
-    page: '#0d0d0d',
-    textPrimary: '#ffffff',
-    textSecondary: '#c3c2b7',
-    muted: '#898781',
-    grid: '#2c2c2a',
-    baseline: '#383835',
-    border: 'rgba(255,255,255,0.10)',
+    surface: '#272e38',
+    page: '#202633',
+    textPrimary: '#f5f5f7',
+    textSecondary: '#a1a1a6',
+    muted: '#9a9aa0',
+    grid: 'rgba(255,255,255,0.08)',
+    baseline: 'rgba(255,255,255,0.22)',
+    border: 'rgba(255,255,255,0.14)',
     good: '#0ca30c',
     warning: '#fab219',
     serious: '#ec835a',
