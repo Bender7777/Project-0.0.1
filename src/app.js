@@ -2,6 +2,8 @@ const STORAGE_KEY = 'voting-dashboard:last-dataset:v1';
 const THEME_KEY = 'voting-dashboard:theme';
 
 let currentStats = null;
+let currentRows = [];
+let excludedDepts = new Set();
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -12,6 +14,8 @@ const els = {
   subtitle: document.getElementById('subtitle'),
   fileMeta: document.getElementById('file-meta'),
   toast: document.getElementById('toast'),
+  filterBar: document.getElementById('filter-bar'),
+  deptChips: document.getElementById('dept-filter-chips'),
 };
 
 function showToast(message, isError) {
@@ -32,13 +36,80 @@ function deserializeRows(rows) {
   return rows.map((r) => ({ ...r, date: r.date ? new Date(r.date) : null }));
 }
 
-function renderStats(stats, meta) {
+// --- Department filter -----------------------------------------------------
+
+function getFilteredRows() {
+  if (!excludedDepts.size) return currentRows;
+  return currentRows.filter((r) => !excludedDepts.has(r.dept));
+}
+
+function chipButton({ label, count, active, dashed }) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'chip' + (active ? ' is-active' : '') + (dashed ? ' chip--all' : '');
+  const labelSpan = document.createElement('span');
+  labelSpan.textContent = label;
+  btn.appendChild(labelSpan);
+  if (count != null) {
+    const countSpan = document.createElement('span');
+    countSpan.className = 'chip__count';
+    countSpan.textContent = count;
+    btn.appendChild(countSpan);
+  }
+  return btn;
+}
+
+function renderDeptFilter() {
+  const deptMap = new Map();
+  for (const r of currentRows) deptMap.set(r.dept, (deptMap.get(r.dept) || 0) + 1);
+  const depts = [...deptMap.entries()].sort((a, b) => b[1] - a[1]);
+
+  if (depts.length < 2) {
+    els.filterBar.hidden = true;
+    return;
+  }
+  els.filterBar.hidden = false;
+  els.deptChips.innerHTML = '';
+
+  const allChip = chipButton({ label: 'Все', count: currentRows.length, active: excludedDepts.size === 0, dashed: true });
+  allChip.addEventListener('click', () => {
+    excludedDepts.clear();
+    refreshDashboard();
+  });
+  els.deptChips.appendChild(allChip);
+
+  for (const [dept, count] of depts) {
+    const active = !excludedDepts.has(dept);
+    const chip = chipButton({ label: dept, count, active });
+    chip.addEventListener('click', () => {
+      if (active) {
+        // Keep at least one department selected.
+        if (excludedDepts.size >= depts.length - 1) return;
+        excludedDepts.add(dept);
+      } else {
+        excludedDepts.delete(dept);
+      }
+      refreshDashboard();
+    });
+    els.deptChips.appendChild(chip);
+  }
+}
+
+// --- Rendering ---------------------------------------------------------
+
+function refreshDashboard(meta) {
+  const filtered = getFilteredRows();
+  const stats = computeStats(filtered);
   currentStats = stats;
   els.emptyState.hidden = true;
   els.dashboard.hidden = false;
   els.clearBtn.hidden = false;
-  els.subtitle.textContent = `${stats.total} записей • обновлено ${new Date().toLocaleString('ru-RU')}`;
+
+  const filterNote = excludedDepts.size ? ` (отфильтровано из ${currentRows.length})` : '';
+  els.subtitle.textContent = `${stats.total} записей${filterNote} • обновлено ${new Date().toLocaleString('ru-RU')}`;
   if (meta) els.fileMeta.textContent = meta;
+
+  renderDeptFilter();
   renderAllCharts(stats);
 }
 
@@ -46,8 +117,9 @@ async function handleFile(file) {
   try {
     const buffer = await file.arrayBuffer();
     const { rows, warnings } = parseWorkbook(buffer);
-    const stats = computeStats(rows);
-    renderStats(stats, `Файл: ${file.name} • ${rows.length} строк`);
+    currentRows = rows;
+    excludedDepts = new Set();
+    refreshDashboard(`Файл: ${file.name} • ${rows.length} строк`);
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ rows: serializeRows(rows), fileName: file.name, savedAt: Date.now() })
@@ -65,12 +137,9 @@ function restoreFromStorage() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const { rows, fileName, savedAt } = JSON.parse(raw);
-    const restored = deserializeRows(rows);
-    const stats = computeStats(restored);
-    renderStats(
-      stats,
-      `Файл: ${fileName} • сохранено ${new Date(savedAt).toLocaleString('ru-RU')}`
-    );
+    currentRows = deserializeRows(rows);
+    excludedDepts = new Set();
+    refreshDashboard(`Файл: ${fileName} • сохранено ${new Date(savedAt).toLocaleString('ru-RU')}`);
   } catch (err) {
     console.warn('Не удалось восстановить сохранённые данные', err);
   }
@@ -79,9 +148,12 @@ function restoreFromStorage() {
 function clearData() {
   localStorage.removeItem(STORAGE_KEY);
   currentStats = null;
+  currentRows = [];
+  excludedDepts = new Set();
   els.dashboard.hidden = true;
   els.emptyState.hidden = false;
   els.clearBtn.hidden = true;
+  els.filterBar.hidden = true;
   els.subtitle.textContent = 'Загрузите Excel-файл, чтобы увидеть статистику';
   Object.keys(chartRegistry).forEach(destroyChart);
 }

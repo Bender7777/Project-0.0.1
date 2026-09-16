@@ -61,6 +61,20 @@ a color, update it in both `palette.js` and `style.css`.
 reappears on reload/offline; `clearData()` removes it. The theme choice is a separate
 `localStorage` key (`THEME_KEY`).
 
+**Department filter:** `app.js` keeps the full parsed rows in `currentRows` and an
+`excludedDepts` Set; `getFilteredRows()` applies it and `refreshDashboard()` re-runs
+`computeStats` + `renderAllCharts` + `renderDeptFilter` against the filtered subset — the
+filter bar chips are rebuilt from `currentRows` (unfiltered) on every render so their counts
+stay stable while their active/inactive state reflects `excludedDepts`. At least one
+department is always kept selected. `computeStats`/`charts.js` are filter-agnostic — they
+just operate on whatever row array they're given.
+
+**Visual theme:** chrome (header, primary/danger buttons, active filter chips, the top
+`flag-ribbon` bar) uses Russian-flag colors (`--flag-white`/`--flag-blue`/`--flag-red` in
+`style.css`, white `#fff`, blue `#0039a6`/`#3987e5` dark, red `#d52b1e`/`#e66767` dark) via
+`--series-1`/`--series-2`. This is independent of the validated categorical/status colors in
+`palette.js` used for chart data series — don't conflate the two when changing colors.
+
 **Service worker cache list:** `sw.js` precaches an explicit `APP_SHELL` file list. Any new
 file added under `src/`, `vendor/`, or `icons/` that the app needs offline must be added to
 that list, and `CACHE_NAME` bumped so returning clients pick up the change.
