@@ -103,6 +103,16 @@
      frosted glass with no green of its own left to match. */
   --login-submit-bg: var(--kpi-4-bg);
   --login-submit-shadow: var(--kpi-4-shadow);
+
+  /* Login screen's lock-icon badge: matches KPI card 3's gold hue in light
+     mode instead of --gradient-blue, same reasoning/pattern as
+     --login-submit-bg above. --login-icon-fg pairs with it (KPI 3's own
+     text color, dark brown) since a white glyph reads too low-contrast on
+     that light gold background — unlike --gradient-blue, which is dark
+     enough for a plain white icon. */
+  --login-icon-bg: var(--kpi-3-bg);
+  --login-icon-shadow: var(--kpi-3-shadow);
+  --login-icon-fg: var(--kpi-3-text);
 }
 
 /* Dark theme ported wholesale from a different app's "Анализатор" dark
@@ -204,6 +214,10 @@
     /* Same reasoning for the login button — dark KPI 4 is neutral glass. */
     --login-submit-bg: var(--gradient-blue);
     --login-submit-shadow: var(--shadow-blue);
+    /* Same for the lock icon — dark KPI 3 is neutral glass too. */
+    --login-icon-bg: var(--gradient-blue);
+    --login-icon-shadow: var(--shadow-blue);
+    --login-icon-fg: #fff;
   }
 }
 :root[data-theme="dark"] {
@@ -267,6 +281,9 @@
   --kpi-scope-active-shadow: var(--shadow-blue);
   --login-submit-bg: var(--gradient-blue);
   --login-submit-shadow: var(--shadow-blue);
+  --login-icon-bg: var(--gradient-blue);
+  --login-icon-shadow: var(--shadow-blue);
+  --login-icon-fg: #fff;
 }
 
 * { box-sizing: border-box; }
@@ -317,9 +334,15 @@ html.authed #login-screen { display: none; }
   height: 52px;
   margin-bottom: 6px;
   border-radius: 14px;
-  background: var(--gradient-blue);
-  box-shadow: var(--shadow-blue);
-  color: #fff;
+  background: var(--login-icon-bg);
+  box-shadow: var(--login-icon-shadow);
+  color: var(--login-icon-fg);
+}
+
+.login-theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
 .login-card h1 {
@@ -1143,6 +1166,9 @@ body {
 </script>
 
 <div id="login-screen" class="login-screen">
+  <button class="btn btn--icon login-theme-toggle" id="login-theme-toggle" title="Сменить тему" aria-label="Сменить тему">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+  </button>
   <form id="login-form" class="login-card" autocomplete="off">
     <div class="login-card__icon" aria-hidden="true">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg>
@@ -2592,6 +2618,7 @@ const els = {
   loginForm: document.getElementById('login-form'),
   loginPassword: document.getElementById('login-password'),
   loginError: document.getElementById('login-error'),
+  loginThemeToggle: document.getElementById('login-theme-toggle'),
 };
 
 const CHECK_ICON_SVG =
@@ -2978,6 +3005,7 @@ els.fileInput.addEventListener('change', (e) => {
 });
 
 els.loginForm.addEventListener('submit', handleLoginSubmit);
+els.loginThemeToggle.addEventListener('click', toggleTheme);
 
 els.clearBtn.addEventListener('click', clearData);
 els.themeToggle.addEventListener('click', toggleTheme);

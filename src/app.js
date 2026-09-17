@@ -45,6 +45,7 @@ const els = {
   loginForm: document.getElementById('login-form'),
   loginPassword: document.getElementById('login-password'),
   loginError: document.getElementById('login-error'),
+  loginThemeToggle: document.getElementById('login-theme-toggle'),
 };
 
 const CHECK_ICON_SVG =
@@ -431,6 +432,7 @@ els.fileInput.addEventListener('change', (e) => {
 });
 
 els.loginForm.addEventListener('submit', handleLoginSubmit);
+els.loginThemeToggle.addEventListener('click', toggleTheme);
 
 els.clearBtn.addEventListener('click', clearData);
 els.themeToggle.addEventListener('click', toggleTheme);

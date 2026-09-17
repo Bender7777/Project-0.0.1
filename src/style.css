@@ -92,6 +92,16 @@
      frosted glass with no green of its own left to match. */
   --login-submit-bg: var(--kpi-4-bg);
   --login-submit-shadow: var(--kpi-4-shadow);
+
+  /* Login screen's lock-icon badge: matches KPI card 3's gold hue in light
+     mode instead of --gradient-blue, same reasoning/pattern as
+     --login-submit-bg above. --login-icon-fg pairs with it (KPI 3's own
+     text color, dark brown) since a white glyph reads too low-contrast on
+     that light gold background — unlike --gradient-blue, which is dark
+     enough for a plain white icon. */
+  --login-icon-bg: var(--kpi-3-bg);
+  --login-icon-shadow: var(--kpi-3-shadow);
+  --login-icon-fg: var(--kpi-3-text);
 }
 
 /* Dark theme ported wholesale from a different app's "Анализатор" dark
@@ -193,6 +203,10 @@
     /* Same reasoning for the login button — dark KPI 4 is neutral glass. */
     --login-submit-bg: var(--gradient-blue);
     --login-submit-shadow: var(--shadow-blue);
+    /* Same for the lock icon — dark KPI 3 is neutral glass too. */
+    --login-icon-bg: var(--gradient-blue);
+    --login-icon-shadow: var(--shadow-blue);
+    --login-icon-fg: #fff;
   }
 }
 :root[data-theme="dark"] {
@@ -256,6 +270,9 @@
   --kpi-scope-active-shadow: var(--shadow-blue);
   --login-submit-bg: var(--gradient-blue);
   --login-submit-shadow: var(--shadow-blue);
+  --login-icon-bg: var(--gradient-blue);
+  --login-icon-shadow: var(--shadow-blue);
+  --login-icon-fg: #fff;
 }
 
 * { box-sizing: border-box; }
@@ -306,9 +323,15 @@ html.authed #login-screen { display: none; }
   height: 52px;
   margin-bottom: 6px;
   border-radius: 14px;
-  background: var(--gradient-blue);
-  box-shadow: var(--shadow-blue);
-  color: #fff;
+  background: var(--login-icon-bg);
+  box-shadow: var(--login-icon-shadow);
+  color: var(--login-icon-fg);
+}
+
+.login-theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
 .login-card h1 {

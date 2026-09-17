@@ -477,6 +477,25 @@ come later in the file and set `background`/`box-shadow` at the same one-class s
 single-class `.login-card__submit` rule would lose to them on source order alone despite
 appearing to look more specific to this button.
 
+The lock-icon badge (`.login-card__icon`) follows the identical pattern one card over — KPI
+card 3's gold hue in light mode via `--login-icon-bg`/`--login-icon-shadow` (`:root`, set to
+`var(--kpi-3-bg)`/`var(--kpi-3-shadow)`), reset to `var(--gradient-blue)`/`var(--shadow-blue)`
+in both dark blocks. It also needs a third var, `--login-icon-fg` (the badge's `color`, which
+the inline SVG's `stroke`/`fill="currentColor"` picks up): `--gradient-blue` is dark enough for
+a plain white glyph everywhere else it's used (the header logo, `.btn--primary`), but KPI 3's
+light gold isn't, so `--login-icon-fg` is `var(--kpi-3-text)` (its own dark-brown text color) in
+light mode and back to `#fff` in dark mode, where the icon reuses the same dark blue/teal
+gradient as everything else.
+
+**Login screen has its own theme toggle** (`#login-theme-toggle`, top-right corner of
+`.login-screen`, `position: absolute` — `.login-screen` is itself the `position: fixed`
+containing block) since the header's own toggle lives inside `.viz-root`, which is hidden until
+authed. It's wired straight to the same global `toggleTheme()` app.js already exposes for the
+header button — no separate state: `toggleTheme()`/`applyTheme()` only touch `data-theme` on
+`<html>` and the `THEME_KEY` localStorage entry, both independent of auth, so flipping it on the
+login screen and then logging in leaves the dashboard already in that theme, and the header
+toggle stays in sync with whatever was last set from either button.
+
 **Expected Excel columns** (header text, any order): `Отдел`, `Фамилия, Имя, Отчество`,
 `Таб.№`, `SAP таб`, `Декрет`, `Инструктор`, `Факт выполнения`, `ДАТА`, `ДЭГ/ОЧНО`. `Декрет`
 is treated as boolean (`ДО` vs blank), `Факт выполнения` as boolean (`Да` vs blank), and
