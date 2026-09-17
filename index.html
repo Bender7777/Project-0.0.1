@@ -152,6 +152,15 @@
           <p class="card__desc">Количество закреплённых сотрудников и явка</p>
         </div>
         <div class="card__panel">
+          <div class="instructor-sort" id="instructor-sort" role="group" aria-label="Сортировка по явке">
+            <span class="instructor-sort__label">Сортировать:</span>
+            <button type="button" class="instructor-sort__btn" data-sort-key="voted">
+              Проголосовали<span class="instructor-sort__arrow" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="instructor-sort__btn" data-sort-key="notVoted">
+              Не проголосовали<span class="instructor-sort__arrow" aria-hidden="true"></span>
+            </button>
+          </div>
           <div class="card__body">
             <div class="card__body-inner">
               <canvas id="chart-instructor" role="img" aria-label="Нагрузка по инструкторам"></canvas>

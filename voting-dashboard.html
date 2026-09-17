@@ -821,6 +821,47 @@ body {
   box-shadow: var(--shadow-inset);
 }
 
+/* Instructor-load card only. Sorting reorders stats.byInstructor before it
+   reaches Chart.js (see charts.js's sortedInstructors()) rather than doing
+   anything to the DOM — a plain toolbar, not a themed KPI/segmented chip,
+   since it always sits on the neutral --surface-1 .card__panel, never
+   directly on a colored .card background. */
+.instructor-sort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.instructor-sort__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.instructor-sort__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.instructor-sort__btn:hover { color: var(--text-primary); border-color: var(--flag-blue); }
+.instructor-sort__btn:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
+.instructor-sort__btn.is-active {
+  background: var(--gradient-blue);
+  border-color: transparent;
+  color: #fff;
+}
+.instructor-sort__arrow { font-size: 10px; line-height: 1; }
+
 .card__body { position: relative; height: 240px; margin-top: 0; }
 .card__body--donut { height: 220px; }
 .card__body--scroll { overflow-y: auto; overflow-x: hidden; }
@@ -1124,6 +1165,15 @@ body {
           <p class="card__desc">Количество закреплённых сотрудников и явка</p>
         </div>
         <div class="card__panel">
+          <div class="instructor-sort" id="instructor-sort" role="group" aria-label="Сортировка по явке">
+            <span class="instructor-sort__label">Сортировать:</span>
+            <button type="button" class="instructor-sort__btn" data-sort-key="voted">
+              Проголосовали<span class="instructor-sort__arrow" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="instructor-sort__btn" data-sort-key="notVoted">
+              Не проголосовали<span class="instructor-sort__arrow" aria-hidden="true"></span>
+            </button>
+          </div>
           <div class="card__body">
             <div class="card__body-inner">
               <canvas id="chart-instructor" role="img" aria-label="Нагрузка по инструкторам"></canvas>
@@ -2278,10 +2328,21 @@ function renderDeptTurnoutChart(stats) {
   });
 }
 
+// `instructorSort` (app.js: { key: null|'voted'|'notVoted', dir: 'desc'|'asc' })
+// drives the sort toolbar above this chart — null key keeps stats.byInstructor's
+// own default order (total headcount, descending, set in computeStats).
+function sortedInstructors(byInstructor) {
+  if (!instructorSort.key) return byInstructor;
+  const dir = instructorSort.dir === 'asc' ? 1 : -1;
+  const valueOf = (d) => (instructorSort.key === 'voted' ? d.voted : d.count - d.voted);
+  return [...byInstructor].sort((a, b) => (valueOf(a) - valueOf(b)) * dir);
+}
+
 function renderInstructorChart(stats) {
   const p = currentPalette();
   destroyChart('instructor');
-  const labels = stats.byInstructor.map((d) => d.name);
+  const list = sortedInstructors(stats.byInstructor);
+  const labels = list.map((d) => d.name);
   // One stacked bar per instructor (voted + not voted = total assigned)
   // instead of two side-by-side bars — half the vertical space for the
   // same information, and the proportion reads at a glance. Rows are
@@ -2290,7 +2351,7 @@ function renderInstructorChart(stats) {
   // comfortably inside a full-width bar — this card in particular tends to
   // carry many rows (every instructor, unfiltered by category) so legible
   // row height matters more here than card compactness.
-  sizeCategoryChartBody('chart-instructor', stats.byInstructor.length, { perRow: 44, gap: 20, padding: 60, min: 240, max: 540 });
+  sizeCategoryChartBody('chart-instructor', list.length, { perRow: 44, gap: 20, padding: 60, min: 240, max: 540 });
   chartRegistry.instructor = new Chart(document.getElementById('chart-instructor'), {
     type: 'bar',
     plugins: [volumeShadowPlugin, barHoverBouncePlugin, stackedSegmentLabelsPlugin],
@@ -2299,7 +2360,7 @@ function renderInstructorChart(stats) {
       datasets: [
         {
           label: 'Проголосовало',
-          data: stats.byInstructor.map((d) => d.voted),
+          data: list.map((d) => d.voted),
           backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }),
           hoverBackgroundColor: 'transparent',
           hoverFillFn: glossyColor(categoricalColor(0), { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
@@ -2308,7 +2369,7 @@ function renderInstructorChart(stats) {
         },
         {
           label: 'Не проголосовало',
-          data: stats.byInstructor.map((d) => d.count - d.voted),
+          data: list.map((d) => d.count - d.voted),
           backgroundColor: glossyColor(p.muted, { horizontal: true }),
           hoverBackgroundColor: 'transparent',
           hoverFillFn: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
@@ -2331,7 +2392,7 @@ function renderInstructorChart(stats) {
         },
       }),
       ...drilldownHandlers((el) => {
-        const d = stats.byInstructor[el.index];
+        const d = list[el.index];
         const isVoted = el.datasetIndex === 0;
         return { title: `${d.name} — ${isVoted ? 'проголосовало' : 'не проголосовало'}`, rows: isVoted ? d.votedRows : d.notVotedRows };
       }),
@@ -2362,6 +2423,7 @@ let currentDeptStats = null;
 let currentRows = [];
 let excludedDepts = new Set();
 let scopeFilter = 'all'; // 'all' | 'chke' | 'do'
+let instructorSort = { key: null, dir: 'desc' }; // key: null | 'voted' | 'notVoted'
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -2387,6 +2449,7 @@ const els = {
   drilldownTbody: document.getElementById('drilldown-tbody'),
   drilldownClose: document.getElementById('drilldown-close'),
   drilldownExport: document.getElementById('drilldown-export'),
+  instructorSort: document.getElementById('instructor-sort'),
 };
 
 const CHECK_ICON_SVG =
@@ -2455,6 +2518,33 @@ function filterByDepartment(name) {
   const onlyThis = excludedDepts.size === allDeptNames.length - 1 && !excludedDepts.has(name);
   excludedDepts = onlyThis ? new Set() : new Set(allDeptNames.filter((d) => d !== name));
   refreshDashboard();
+}
+
+// "Нагрузка по инструкторам" sort toolbar: picking a key starts it at
+// descending, re-clicking the already-active key flips asc/desc.
+// `renderInstructorChart` (charts.js) reads `instructorSort` directly to
+// reorder `stats.byInstructor` — only that one chart needs to re-render,
+// not the full computeStats/refreshDashboard pass every other filter goes
+// through.
+function setInstructorSort(key) {
+  if (instructorSort.key === key) {
+    instructorSort.dir = instructorSort.dir === 'desc' ? 'asc' : 'desc';
+  } else {
+    instructorSort.key = key;
+    instructorSort.dir = 'desc';
+  }
+  syncInstructorSortVisuals();
+  if (currentStats) renderInstructorChart(currentStats);
+}
+
+function syncInstructorSortVisuals() {
+  els.instructorSort.querySelectorAll('.instructor-sort__btn').forEach((btn) => {
+    const active = btn.dataset.sortKey === instructorSort.key;
+    btn.classList.toggle('is-active', active);
+    btn.querySelector('.instructor-sort__arrow').textContent = active
+      ? (instructorSort.dir === 'desc' ? ' ↓' : ' ↑')
+      : '';
+  });
 }
 
 function updateDeptOkState() {
@@ -2591,6 +2681,8 @@ async function handleFile(file) {
     currentRows = rows;
     excludedDepts = new Set();
     scopeFilter = 'all';
+    instructorSort = { key: null, dir: 'desc' };
+    syncInstructorSortVisuals();
     refreshDashboard(`Файл: ${file.name} • ${rows.length} строк`);
     localStorage.setItem(
       STORAGE_KEY,
@@ -2612,6 +2704,8 @@ function restoreFromStorage() {
     currentRows = deserializeRows(rows);
     excludedDepts = new Set();
     scopeFilter = 'all';
+    instructorSort = { key: null, dir: 'desc' };
+    syncInstructorSortVisuals();
     refreshDashboard(`Файл: ${fileName} • сохранено ${new Date(savedAt).toLocaleString('ru-RU')}`);
   } catch (err) {
     console.warn('Не удалось восстановить сохранённые данные', err);
@@ -2625,6 +2719,8 @@ function clearData() {
   currentRows = [];
   excludedDepts = new Set();
   scopeFilter = 'all';
+  instructorSort = { key: null, dir: 'desc' };
+  syncInstructorSortVisuals();
   els.dashboard.hidden = true;
   els.emptyState.hidden = false;
   els.clearBtn.hidden = true;
@@ -2727,6 +2823,10 @@ els.deptReset.addEventListener('click', () => {
   syncDeptOptionVisuals();
 });
 els.deptOk.addEventListener('click', applyDeptDropdown);
+els.instructorSort.addEventListener('click', (e) => {
+  const btn = e.target.closest('.instructor-sort__btn');
+  if (btn) setInstructorSort(btn.dataset.sortKey);
+});
 document.addEventListener('click', (e) => {
   if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
 });

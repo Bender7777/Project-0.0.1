@@ -6,6 +6,7 @@ let currentDeptStats = null;
 let currentRows = [];
 let excludedDepts = new Set();
 let scopeFilter = 'all'; // 'all' | 'chke' | 'do'
+let instructorSort = { key: null, dir: 'desc' }; // key: null | 'voted' | 'notVoted'
 
 const els = {
   fileInput: document.getElementById('file-input'),
@@ -31,6 +32,7 @@ const els = {
   drilldownTbody: document.getElementById('drilldown-tbody'),
   drilldownClose: document.getElementById('drilldown-close'),
   drilldownExport: document.getElementById('drilldown-export'),
+  instructorSort: document.getElementById('instructor-sort'),
 };
 
 const CHECK_ICON_SVG =
@@ -99,6 +101,33 @@ function filterByDepartment(name) {
   const onlyThis = excludedDepts.size === allDeptNames.length - 1 && !excludedDepts.has(name);
   excludedDepts = onlyThis ? new Set() : new Set(allDeptNames.filter((d) => d !== name));
   refreshDashboard();
+}
+
+// "Нагрузка по инструкторам" sort toolbar: picking a key starts it at
+// descending, re-clicking the already-active key flips asc/desc.
+// `renderInstructorChart` (charts.js) reads `instructorSort` directly to
+// reorder `stats.byInstructor` — only that one chart needs to re-render,
+// not the full computeStats/refreshDashboard pass every other filter goes
+// through.
+function setInstructorSort(key) {
+  if (instructorSort.key === key) {
+    instructorSort.dir = instructorSort.dir === 'desc' ? 'asc' : 'desc';
+  } else {
+    instructorSort.key = key;
+    instructorSort.dir = 'desc';
+  }
+  syncInstructorSortVisuals();
+  if (currentStats) renderInstructorChart(currentStats);
+}
+
+function syncInstructorSortVisuals() {
+  els.instructorSort.querySelectorAll('.instructor-sort__btn').forEach((btn) => {
+    const active = btn.dataset.sortKey === instructorSort.key;
+    btn.classList.toggle('is-active', active);
+    btn.querySelector('.instructor-sort__arrow').textContent = active
+      ? (instructorSort.dir === 'desc' ? ' ↓' : ' ↑')
+      : '';
+  });
 }
 
 function updateDeptOkState() {
@@ -235,6 +264,8 @@ async function handleFile(file) {
     currentRows = rows;
     excludedDepts = new Set();
     scopeFilter = 'all';
+    instructorSort = { key: null, dir: 'desc' };
+    syncInstructorSortVisuals();
     refreshDashboard(`Файл: ${file.name} • ${rows.length} строк`);
     localStorage.setItem(
       STORAGE_KEY,
@@ -256,6 +287,8 @@ function restoreFromStorage() {
     currentRows = deserializeRows(rows);
     excludedDepts = new Set();
     scopeFilter = 'all';
+    instructorSort = { key: null, dir: 'desc' };
+    syncInstructorSortVisuals();
     refreshDashboard(`Файл: ${fileName} • сохранено ${new Date(savedAt).toLocaleString('ru-RU')}`);
   } catch (err) {
     console.warn('Не удалось восстановить сохранённые данные', err);
@@ -269,6 +302,8 @@ function clearData() {
   currentRows = [];
   excludedDepts = new Set();
   scopeFilter = 'all';
+  instructorSort = { key: null, dir: 'desc' };
+  syncInstructorSortVisuals();
   els.dashboard.hidden = true;
   els.emptyState.hidden = false;
   els.clearBtn.hidden = true;
@@ -371,6 +406,10 @@ els.deptReset.addEventListener('click', () => {
   syncDeptOptionVisuals();
 });
 els.deptOk.addEventListener('click', applyDeptDropdown);
+els.instructorSort.addEventListener('click', (e) => {
+  const btn = e.target.closest('.instructor-sort__btn');
+  if (btn) setInstructorSort(btn.dataset.sortKey);
+});
 document.addEventListener('click', (e) => {
   if (!els.deptPanel.hidden && !els.deptDropdown.contains(e.target)) closeDeptDropdown();
 });

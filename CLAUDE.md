@@ -358,6 +358,26 @@ drawing a segment's number when that segment is too narrow to hold it, rather th
 text. `byInstructor` entries in `stats.js` carry `notVotedRows` (`rows.filter(r => !r.voted)`)
 alongside `rows`/`votedRows` for this dataset's drill-down.
 
+**Its rows are also sortable, by voted or not-voted count, either direction.** The
+`#instructor-sort` toolbar (plain buttons in `index.html`, inside `.card__panel` above
+`.card__body` — a neutral toolbar, not a themed chip, since it always sits on `--surface-1`,
+never a colored `.card` background) drives app.js's `instructorSort` state
+(`{ key: null|'voted'|'notVoted', dir: 'desc'|'asc' }`). Clicking a button that isn't already
+active switches to that key at `'desc'`; clicking the already-active one flips `dir`.
+`setInstructorSort()` calls `renderInstructorChart(currentStats)` directly rather than going
+through `refreshDashboard()` — sorting doesn't change any figures, only their order, so there's
+no reason to re-run `computeStats`/re-render every other chart for it. `charts.js`'s
+`sortedInstructors()` reads `instructorSort` (a plain global, same cross-file pattern as
+`excludedDepts`/`scopeFilter`) and returns `stats.byInstructor` unchanged when `key` is `null`
+(computeStats's own default order: total headcount, descending) or a freshly-sorted copy
+otherwise — `renderInstructorChart` uses that returned list everywhere (labels, both datasets'
+`data`, and the click handler's row lookup by index) instead of `stats.byInstructor` directly,
+so the drilldown and the bar order always agree with what's on screen. Like the department and
+scope filters, `instructorSort` resets to its default (`{ key: null, dir: 'desc' }`) in
+`handleFile`/`restoreFromStorage`/`clearData` — new data shouldn't inherit a sort chosen for a
+previous file — but *survives* a theme toggle or a scope/department filter change, since
+`renderAllCharts`/`applyTheme` re-render this chart with the same `stats` it already had.
+
 **No more ДО-specific charts or KPI tiles — that information now lives entirely behind the
 scope filter.** The dashboard used to carry four decree-specific visualizations (a "Декретный
 отпуск" donut, a "Явка сотрудников в ДО" donut, a "ДО: способ голосования" donut, and a

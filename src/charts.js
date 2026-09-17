@@ -747,10 +747,21 @@ function renderDeptTurnoutChart(stats) {
   });
 }
 
+// `instructorSort` (app.js: { key: null|'voted'|'notVoted', dir: 'desc'|'asc' })
+// drives the sort toolbar above this chart — null key keeps stats.byInstructor's
+// own default order (total headcount, descending, set in computeStats).
+function sortedInstructors(byInstructor) {
+  if (!instructorSort.key) return byInstructor;
+  const dir = instructorSort.dir === 'asc' ? 1 : -1;
+  const valueOf = (d) => (instructorSort.key === 'voted' ? d.voted : d.count - d.voted);
+  return [...byInstructor].sort((a, b) => (valueOf(a) - valueOf(b)) * dir);
+}
+
 function renderInstructorChart(stats) {
   const p = currentPalette();
   destroyChart('instructor');
-  const labels = stats.byInstructor.map((d) => d.name);
+  const list = sortedInstructors(stats.byInstructor);
+  const labels = list.map((d) => d.name);
   // One stacked bar per instructor (voted + not voted = total assigned)
   // instead of two side-by-side bars — half the vertical space for the
   // same information, and the proportion reads at a glance. Rows are
@@ -759,7 +770,7 @@ function renderInstructorChart(stats) {
   // comfortably inside a full-width bar — this card in particular tends to
   // carry many rows (every instructor, unfiltered by category) so legible
   // row height matters more here than card compactness.
-  sizeCategoryChartBody('chart-instructor', stats.byInstructor.length, { perRow: 44, gap: 20, padding: 60, min: 240, max: 540 });
+  sizeCategoryChartBody('chart-instructor', list.length, { perRow: 44, gap: 20, padding: 60, min: 240, max: 540 });
   chartRegistry.instructor = new Chart(document.getElementById('chart-instructor'), {
     type: 'bar',
     plugins: [volumeShadowPlugin, barHoverBouncePlugin, stackedSegmentLabelsPlugin],
@@ -768,7 +779,7 @@ function renderInstructorChart(stats) {
       datasets: [
         {
           label: 'Проголосовало',
-          data: stats.byInstructor.map((d) => d.voted),
+          data: list.map((d) => d.voted),
           backgroundColor: glossyColor(categoricalColor(0), { horizontal: true }),
           hoverBackgroundColor: 'transparent',
           hoverFillFn: glossyColor(categoricalColor(0), { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
@@ -777,7 +788,7 @@ function renderInstructorChart(stats) {
         },
         {
           label: 'Не проголосовало',
-          data: stats.byInstructor.map((d) => d.count - d.voted),
+          data: list.map((d) => d.count - d.voted),
           backgroundColor: glossyColor(p.muted, { horizontal: true }),
           hoverBackgroundColor: 'transparent',
           hoverFillFn: glossyColor(p.muted, { horizontal: true, lightAmt: 0.62, darkAmt: 0.2 }),
@@ -800,7 +811,7 @@ function renderInstructorChart(stats) {
         },
       }),
       ...drilldownHandlers((el) => {
-        const d = stats.byInstructor[el.index];
+        const d = list[el.index];
         const isVoted = el.datasetIndex === 0;
         return { title: `${d.name} — ${isVoted ? 'проголосовало' : 'не проголосовало'}`, rows: isVoted ? d.votedRows : d.notVotedRows };
       }),

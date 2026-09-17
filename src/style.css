@@ -810,6 +810,47 @@ body {
   box-shadow: var(--shadow-inset);
 }
 
+/* Instructor-load card only. Sorting reorders stats.byInstructor before it
+   reaches Chart.js (see charts.js's sortedInstructors()) rather than doing
+   anything to the DOM — a plain toolbar, not a themed KPI/segmented chip,
+   since it always sits on the neutral --surface-1 .card__panel, never
+   directly on a colored .card background. */
+.instructor-sort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.instructor-sort__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.instructor-sort__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.instructor-sort__btn:hover { color: var(--text-primary); border-color: var(--flag-blue); }
+.instructor-sort__btn:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
+.instructor-sort__btn.is-active {
+  background: var(--gradient-blue);
+  border-color: transparent;
+  color: #fff;
+}
+.instructor-sort__arrow { font-size: 10px; line-height: 1; }
+
 .card__body { position: relative; height: 240px; margin-top: 0; }
 .card__body--donut { height: 220px; }
 .card__body--scroll { overflow-y: auto; overflow-x: hidden; }
