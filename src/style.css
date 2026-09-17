@@ -63,6 +63,27 @@
   --kpi-icon-border: rgba(255,255,255,0.55);
   --kpi-icon-bg-4: rgba(255,255,255,0.16);
   --kpi-icon-border-4: rgba(255,255,255,0.3);
+
+  /* Per-card *hover-elevation* shadow — the extra layer `.kpi--N:hover`/
+     `.card--N:hover` stacks on top of the card's own resting `--kpi-N-shadow`.
+     In light mode each card keeps its own hue on hover too (not a shared
+     grey `--shadow-lg`), same rgb as that card's `--kpi-N-shadow` just
+     scaled up to match `--shadow-lg`'s spread/blur. Dark mode (below)
+     collapses all four to the single shared `--shadow-lg` instead, since
+     dark cards no longer carry a per-card hue at all. */
+  --kpi-1-shadow-lg: 0 14px 26px rgba(154,125,60,0.22), 0 40px 80px rgba(154,125,60,0.32), inset 0 1px 0 rgba(255,255,255,0.8);
+  --kpi-2-shadow-lg: 0 14px 26px rgba(216,110,30,0.24), 0 40px 80px rgba(216,110,30,0.34), inset 0 1px 0 rgba(255,255,255,0.6);
+  --kpi-3-shadow-lg: 0 14px 26px rgba(214,158,30,0.24), 0 40px 80px rgba(214,158,30,0.34), inset 0 1px 0 rgba(255,255,255,0.6);
+  --kpi-4-shadow-lg: 0 14px 26px rgba(15,60,36,0.3), 0 40px 80px rgba(15,60,36,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+
+  /* Card 2's "Категория" active button: matches that card's own orange hue
+     (see --kpi-2-bg) with a bit of transparency so it reads as blending
+     into the card rather than a generic blue chip sitting on top of an
+     unrelated color. Dark mode (below) resets this back to the shared
+     teal accent, since dark card 2 is neutral glass with no orange to
+     match. */
+  --kpi-scope-active-bg: linear-gradient(160deg, rgba(244,174,105,0.85) 0%, rgba(232,130,58,0.9) 55%, rgba(209,105,31,0.9) 100%);
+  --kpi-scope-active-shadow: 0 2px 5px rgba(209,105,31,0.28), 0 14px 30px rgba(209,105,31,0.32), inset 0 1px 0 rgba(255,255,255,0.4);
 }
 
 /* Dark theme ported wholesale from a different app's "Анализатор" dark
@@ -98,7 +119,9 @@
     --flag-blue: #3FD0D8;
     --flag-red: #FF6961;
     --shadow: 0 3px 6px rgba(0,0,0,0.4), 0 20px 44px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
-    --shadow-lg: 0 16px 30px rgba(0,0,0,0.48), 0 44px 88px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.16);
+    /* Hover-elevation shadow reads teal, not black, matching the reskin —
+       used for the resting-vs-hover lift on cards/dropdown/modal alike. */
+    --shadow-lg: 0 16px 30px rgba(63,208,216,0.22), 0 44px 88px rgba(63,208,216,0.28), inset 0 1px 0 rgba(255,255,255,0.16);
     --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.4);
     --gradient-blue: linear-gradient(160deg, #7FE3E8 0%, #3FD0D8 55%, #28878C 100%);
     --gradient-red: linear-gradient(160deg, #FF9690 0%, #FF6961 55%, #BF4F49 100%);
@@ -148,6 +171,17 @@
     --kpi-icon-border: rgba(63,208,216,0.32);
     --kpi-icon-bg-4: var(--kpi-icon-bg);
     --kpi-icon-border-4: var(--kpi-icon-border);
+    /* All four cards share one hue in dark mode (see above), so their
+       hover-elevation shadow collapses to the single shared teal --shadow-lg
+       too instead of the four distinct per-card hues light mode uses. */
+    --kpi-1-shadow-lg: var(--shadow-lg);
+    --kpi-2-shadow-lg: var(--shadow-lg);
+    --kpi-3-shadow-lg: var(--shadow-lg);
+    --kpi-4-shadow-lg: var(--shadow-lg);
+    /* Card 2's active button stays the shared teal accent — dark card 2 has
+       no orange hue of its own to match (see :root's comment on this var). */
+    --kpi-scope-active-bg: var(--gradient-blue);
+    --kpi-scope-active-shadow: var(--shadow-blue);
   }
 }
 :root[data-theme="dark"] {
@@ -166,7 +200,7 @@
   --flag-blue: #3FD0D8;
   --flag-red: #FF6961;
   --shadow: 0 3px 6px rgba(0,0,0,0.4), 0 20px 44px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
-  --shadow-lg: 0 16px 30px rgba(0,0,0,0.48), 0 44px 88px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.16);
+  --shadow-lg: 0 16px 30px rgba(63,208,216,0.22), 0 44px 88px rgba(63,208,216,0.28), inset 0 1px 0 rgba(255,255,255,0.16);
   --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.4);
   --gradient-blue: linear-gradient(160deg, #7FE3E8 0%, #3FD0D8 55%, #28878C 100%);
   --gradient-red: linear-gradient(160deg, #FF9690 0%, #FF6961 55%, #BF4F49 100%);
@@ -203,6 +237,12 @@
   --kpi-icon-border: rgba(63,208,216,0.32);
   --kpi-icon-bg-4: var(--kpi-icon-bg);
   --kpi-icon-border-4: var(--kpi-icon-border);
+  --kpi-1-shadow-lg: var(--shadow-lg);
+  --kpi-2-shadow-lg: var(--shadow-lg);
+  --kpi-3-shadow-lg: var(--shadow-lg);
+  --kpi-4-shadow-lg: var(--shadow-lg);
+  --kpi-scope-active-bg: var(--gradient-blue);
+  --kpi-scope-active-shadow: var(--shadow-blue);
 }
 
 * { box-sizing: border-box; }
@@ -404,10 +444,10 @@ body {
 .segmented__btn:hover { opacity: 0.95; }
 .segmented__btn:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
 .segmented__btn.is-active {
-  background: var(--gradient-blue);
+  background: var(--kpi-scope-active-bg);
   color: #fff;
   opacity: 1;
-  box-shadow: var(--shadow-blue);
+  box-shadow: var(--kpi-scope-active-shadow);
 }
 
 .dropdown {
@@ -608,10 +648,10 @@ body {
 .kpi--2 { background: var(--kpi-2-bg); color: var(--kpi-2-text); box-shadow: var(--kpi-2-shadow); }
 .kpi--3 { background: var(--kpi-3-bg); color: var(--kpi-3-text); box-shadow: var(--kpi-3-shadow); }
 .kpi--4 { background: var(--kpi-4-bg); color: var(--kpi-4-text); box-shadow: var(--kpi-4-shadow); }
-.kpi--1:hover { box-shadow: var(--kpi-1-shadow), var(--shadow-lg); }
-.kpi--2:hover { box-shadow: var(--kpi-2-shadow), var(--shadow-lg); }
-.kpi--3:hover { box-shadow: var(--kpi-3-shadow), var(--shadow-lg); }
-.kpi--4:hover { box-shadow: var(--kpi-4-shadow), var(--shadow-lg); }
+.kpi--1:hover { box-shadow: var(--kpi-1-shadow), var(--kpi-1-shadow-lg); }
+.kpi--2:hover { box-shadow: var(--kpi-2-shadow), var(--kpi-2-shadow-lg); }
+.kpi--3:hover { box-shadow: var(--kpi-3-shadow), var(--kpi-3-shadow-lg); }
+.kpi--4:hover { box-shadow: var(--kpi-4-shadow), var(--kpi-4-shadow-lg); }
 
 .kpi__icon {
   position: relative;
@@ -710,10 +750,10 @@ body {
   pointer-events: none;
 }
 .card:hover { transform: translateY(-4px); }
-.card--1:hover { box-shadow: var(--kpi-1-shadow), var(--shadow-lg); }
-.card--2:hover { box-shadow: var(--kpi-2-shadow), var(--shadow-lg); }
-.card--3:hover { box-shadow: var(--kpi-3-shadow), var(--shadow-lg); }
-.card--4:hover { box-shadow: var(--kpi-4-shadow), var(--shadow-lg); }
+.card--1:hover { box-shadow: var(--kpi-1-shadow), var(--kpi-1-shadow-lg); }
+.card--2:hover { box-shadow: var(--kpi-2-shadow), var(--kpi-2-shadow-lg); }
+.card--3:hover { box-shadow: var(--kpi-3-shadow), var(--kpi-3-shadow-lg); }
+.card--4:hover { box-shadow: var(--kpi-4-shadow), var(--kpi-4-shadow-lg); }
 .card--wide { grid-column: 1 / -1; }
 
 /* Grid rows stretch every item to the row's tallest sibling by default —

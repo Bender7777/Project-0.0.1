@@ -165,6 +165,34 @@ highlight), `--gradient-blue`/`--gradient-red`, `--shadow-blue`/`--shadow-red`, 
 and the dropdown; adjust those tokens rather than styling each component's shadow/gradient
 individually (and if you touch the *dark* values, mirror the change into both dark blocks).
 
+**Card hover shadow is colored, not black — differently in each theme, on purpose.**
+`.kpi--N:hover`/`.card--N:hover` stack two shadows: the card's own resting `--kpi-N-shadow`
+(unchanged by hovering) plus a second, bigger "lift" layer that used to always be the shared
+`--shadow-lg` — which was a plain black/grey ambient shadow in both themes, mismatched against
+the reskin. Now that second layer is `--kpi-N-shadow-lg` instead, and the two themes resolve it
+differently: in **light mode** all four are distinct, declared once in `:root` (`--kpi-1-shadow-lg`
+… `--kpi-4-shadow-lg`), each reusing that same card's own rgb from its `--kpi-N-shadow` just
+scaled up to `--shadow-lg`'s blur/spread — so hovering keeps each card's own hue instead of
+picking up a neutral grey one. In **dark mode** all four collapse to `var(--shadow-lg)` (set
+in both dark blocks), since dark cards no longer have a per-card hue to preserve (see KPI hero
+tiles below) — and `--shadow-lg` itself is teal (`rgba(63,208,216,…)`) there instead of black,
+so *that* shared shadow reads teal rather than a plain dark smudge. `--shadow-lg` is also reused
+by non-card hover chrome (dropdown trigger, empty-state icon, the dropdown panel, the modal) —
+letting it go teal in dark mode was deliberate too, consistent with the rest of the reskin, not
+scoped away from those.
+
+**Card 2's active Все/ЧКЭ/ДО button matches that card's own hue, with a bit of transparency.**
+`.segmented__btn.is-active` used to just reuse `--gradient-blue`/`--shadow-blue` (the same blue
+chip every other primary-styled control uses) — which read as an unrelated blue button dropped
+onto an otherwise-orange card in light mode. It now uses dedicated `--kpi-scope-active-bg`/
+`--kpi-scope-active-shadow` vars instead: in **light mode** (`:root`) these are an orange
+gradient built from `--kpi-2-bg`'s own rgb values at reduced alpha (`rgba(…,0.85-0.9)`, not
+opaque) so the active pill reads as blending into card 2's own background rather than a generic
+chip sitting on top of it. In **dark mode** (both dark blocks) they're reset back to
+`var(--gradient-blue)`/`var(--shadow-blue)` — the shared teal accent — since dark card 2 is
+neutral glass with no orange hue of its own left to match (see KPI hero tiles). `.segmented` is
+still only ever used inside this one card, so these two vars don't need a broader home.
+
 **KPI hero tiles:** the 4 KPI cards use a bento palette (`--kpi-1-bg`…`--kpi-4-bg` + matching
 `-text`/`-sub`/`-icon`/`-shadow` tokens, declared once in `:root`) — cream, orange, gold, green
 in **light mode only**. Dark mode overrides all four sets to the *same* frosted-glass values
