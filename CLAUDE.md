@@ -445,6 +445,26 @@ plain `backgroundColor` on any new dataset.
 file added under `src/`, `vendor/`, or `icons/` that the app needs offline must be added to
 that list, and `CACHE_NAME` bumped so returning clients pick up the change.
 
+**Password gate is a soft screen lock, not real access control.** There is no backend, so
+nothing here can actually stop someone with devtools — the point is only to keep the dashboard
+from being casually opened. `index.html` puts `#login-screen` (a centered card, styled like the
+rest of the app — `--gradient-blue`/`--shadow-blue` icon badge, `--surface-1` card) as the first
+child of `<body>`, before `.viz-root`; `src/style.css` hides `.viz-root` (`display: none`) and
+shows `#login-screen` by default, flipping both the moment `<html>` gets an `authed` class. Two
+things add that class: an inline `<script>` at the very top of `<body>` (before `#login-screen`
+is even parsed) that synchronously checks `sessionStorage.getItem('voting-dashboard:authed')`
+and adds the class right away if it's `'1'` — this runs before the browser paints, so a
+same-session reload never flashes the login card — and `app.js`'s `handleLoginSubmit` on a
+correct password, which also sets that same sessionStorage key so subsequent reloads in the
+same tab/browser session skip the gate (closing the tab/browser clears `sessionStorage`, so the
+next visit asks again — this was a deliberate choice over `localStorage`, which would never
+re-ask). The password itself is never stored in cleartext: `AUTH_PASSWORD_HASH` in `app.js`
+holds a SHA-256 hex digest (via `crypto.subtle`, available with no extra dependency — including
+under `file://`, verified directly, not just on `localhost`/HTTPS), and `sha256Hex()` hashes
+whatever's typed before comparing. **To change the password**, compute a new hash (the comment
+above `AUTH_PASSWORD_HASH` has a one-line browser-console snippet using
+`crypto.subtle.digest`) and replace the constant — there's no UI for this, it's a code change.
+
 **Expected Excel columns** (header text, any order): `Отдел`, `Фамилия, Имя, Отчество`,
 `Таб.№`, `SAP таб`, `Декрет`, `Инструктор`, `Факт выполнения`, `ДАТА`, `ДЭГ/ОЧНО`. `Декрет`
 is treated as boolean (`ДО` vs blank), `Факт выполнения` as boolean (`Да` vs blank), and

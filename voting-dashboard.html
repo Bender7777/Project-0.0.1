@@ -260,6 +260,95 @@
 
 [hidden] { display: none !important; }
 
+/* Client-side password gate. This is a static app with no backend, so this
+   is a soft gate (a screen lock), not real access control — anyone with
+   devtools can bypass it. The dashboard itself (`.viz-root`) stays hidden
+   until `html` gets the `authed` class, which app.js sets on a correct
+   password and an inline script in index.html sets synchronously on load
+   if sessionStorage already has the flag (avoids a login-screen flash for
+   an already-unlocked tab). */
+.viz-root { display: none; }
+html.authed .viz-root { display: block; }
+html.authed #login-screen { display: none; }
+
+.login-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--page-bg);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 32px 28px;
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 6px;
+  border-radius: 14px;
+  background: var(--gradient-blue);
+  box-shadow: var(--shadow-blue);
+  color: #fff;
+}
+
+.login-card h1 {
+  font-size: 17px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.login-card__hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.login-card__input {
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--page);
+  color: var(--text-primary);
+}
+.login-card__input:focus-visible {
+  outline: 2px solid var(--flag-blue);
+  outline-offset: 2px;
+}
+
+.login-card__error {
+  align-self: flex-start;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--critical);
+}
+
+.login-card__submit {
+  width: 100%;
+  margin-top: 6px;
+  justify-content: center;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -1025,6 +1114,29 @@ body {
 </style>
 </head>
 <body>
+<script>
+  (function () {
+    try {
+      if (sessionStorage.getItem('voting-dashboard:authed') === '1') {
+        document.documentElement.classList.add('authed');
+      }
+    } catch (e) {}
+  })();
+</script>
+
+<div id="login-screen" class="login-screen">
+  <form id="login-form" class="login-card" autocomplete="off">
+    <div class="login-card__icon" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg>
+    </div>
+    <h1>Дашборд голосования</h1>
+    <p class="login-card__hint">Введите пароль для доступа</p>
+    <input type="password" id="login-password" class="login-card__input" placeholder="Пароль" autocomplete="current-password" required>
+    <p class="login-card__error" id="login-error" hidden>Неверный пароль. Попробуйте ещё раз.</p>
+    <button type="submit" class="btn btn--primary login-card__submit">Войти</button>
+  </form>
+</div>
+
 <div class="viz-root">
 
 <div class="flag-ribbon" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -2417,6 +2529,15 @@ function renderAllCharts(stats, deptStats) {
 <script>
 const STORAGE_KEY = 'voting-dashboard:last-dataset:v1';
 const THEME_KEY = 'voting-dashboard:theme';
+const AUTH_KEY = 'voting-dashboard:authed';
+// SHA-256 of the access password — not real security (this is a static app
+// with no backend, so anyone with devtools can flip the `authed` class or
+// set the sessionStorage flag directly), just a soft screen lock. To change
+// the password, compute a new hash and replace this constant, e.g. in the
+// browser console: crypto.subtle.digest('SHA-256', new
+// TextEncoder().encode('newpassword')).then(b => console.log([...new
+// Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('')))
+const AUTH_PASSWORD_HASH = '6ecb9989a25c818ef76a290703c4e205f3e0801f3cbdcd23ba75b86ec95fcce0';
 
 let currentStats = null;
 let currentDeptStats = null;
@@ -2450,6 +2571,9 @@ const els = {
   drilldownClose: document.getElementById('drilldown-close'),
   drilldownExport: document.getElementById('drilldown-export'),
   instructorSort: document.getElementById('instructor-sort'),
+  loginForm: document.getElementById('login-form'),
+  loginPassword: document.getElementById('login-password'),
+  loginError: document.getElementById('login-error'),
 };
 
 const CHECK_ICON_SVG =
@@ -2784,6 +2908,31 @@ function exportDrilldown() {
   XLSX.writeFile(wb, `${safeName}.xlsx`);
 }
 
+// --- Login gate ----------------------------------------------------------
+
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const hash = await sha256Hex(els.loginPassword.value);
+  els.loginPassword.value = '';
+  if (hash === AUTH_PASSWORD_HASH) {
+    try {
+      sessionStorage.setItem(AUTH_KEY, '1');
+    } catch (err) {
+      // sessionStorage unavailable (private mode etc.) — still unlock this load
+    }
+    els.loginError.hidden = true;
+    document.documentElement.classList.add('authed');
+  } else {
+    els.loginError.hidden = false;
+    els.loginPassword.focus();
+  }
+}
+
 // --- Theme -------------------------------------------------------------
 
 function applyTheme(mode) {
@@ -2809,6 +2958,8 @@ els.fileInput.addEventListener('change', (e) => {
   if (file) handleFile(file);
   e.target.value = '';
 });
+
+els.loginForm.addEventListener('submit', handleLoginSubmit);
 
 els.clearBtn.addEventListener('click', clearData);
 els.themeToggle.addEventListener('click', toggleTheme);

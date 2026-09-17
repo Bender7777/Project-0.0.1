@@ -1,5 +1,14 @@
 const STORAGE_KEY = 'voting-dashboard:last-dataset:v1';
 const THEME_KEY = 'voting-dashboard:theme';
+const AUTH_KEY = 'voting-dashboard:authed';
+// SHA-256 of the access password — not real security (this is a static app
+// with no backend, so anyone with devtools can flip the `authed` class or
+// set the sessionStorage flag directly), just a soft screen lock. To change
+// the password, compute a new hash and replace this constant, e.g. in the
+// browser console: crypto.subtle.digest('SHA-256', new
+// TextEncoder().encode('newpassword')).then(b => console.log([...new
+// Uint8Array(b)].map(x => x.toString(16).padStart(2,'0')).join('')))
+const AUTH_PASSWORD_HASH = '6ecb9989a25c818ef76a290703c4e205f3e0801f3cbdcd23ba75b86ec95fcce0';
 
 let currentStats = null;
 let currentDeptStats = null;
@@ -33,6 +42,9 @@ const els = {
   drilldownClose: document.getElementById('drilldown-close'),
   drilldownExport: document.getElementById('drilldown-export'),
   instructorSort: document.getElementById('instructor-sort'),
+  loginForm: document.getElementById('login-form'),
+  loginPassword: document.getElementById('login-password'),
+  loginError: document.getElementById('login-error'),
 };
 
 const CHECK_ICON_SVG =
@@ -367,6 +379,31 @@ function exportDrilldown() {
   XLSX.writeFile(wb, `${safeName}.xlsx`);
 }
 
+// --- Login gate ----------------------------------------------------------
+
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  const hash = await sha256Hex(els.loginPassword.value);
+  els.loginPassword.value = '';
+  if (hash === AUTH_PASSWORD_HASH) {
+    try {
+      sessionStorage.setItem(AUTH_KEY, '1');
+    } catch (err) {
+      // sessionStorage unavailable (private mode etc.) — still unlock this load
+    }
+    els.loginError.hidden = true;
+    document.documentElement.classList.add('authed');
+  } else {
+    els.loginError.hidden = false;
+    els.loginPassword.focus();
+  }
+}
+
 // --- Theme -------------------------------------------------------------
 
 function applyTheme(mode) {
@@ -392,6 +429,8 @@ els.fileInput.addEventListener('change', (e) => {
   if (file) handleFile(file);
   e.target.value = '';
 });
+
+els.loginForm.addEventListener('submit', handleLoginSubmit);
 
 els.clearBtn.addEventListener('click', clearData);
 els.themeToggle.addEventListener('click', toggleTheme);

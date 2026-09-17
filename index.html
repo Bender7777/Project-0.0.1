@@ -12,6 +12,29 @@
 <link rel="stylesheet" href="src/style.css">
 </head>
 <body>
+<script>
+  (function () {
+    try {
+      if (sessionStorage.getItem('voting-dashboard:authed') === '1') {
+        document.documentElement.classList.add('authed');
+      }
+    } catch (e) {}
+  })();
+</script>
+
+<div id="login-screen" class="login-screen">
+  <form id="login-form" class="login-card" autocomplete="off">
+    <div class="login-card__icon" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg>
+    </div>
+    <h1>Дашборд голосования</h1>
+    <p class="login-card__hint">Введите пароль для доступа</p>
+    <input type="password" id="login-password" class="login-card__input" placeholder="Пароль" autocomplete="current-password" required>
+    <p class="login-card__error" id="login-error" hidden>Неверный пароль. Попробуйте ещё раз.</p>
+    <button type="submit" class="btn btn--primary login-card__submit">Войти</button>
+  </form>
+</div>
+
 <div class="viz-root">
 
 <div class="flag-ribbon" aria-hidden="true"><span></span><span></span><span></span></div>
