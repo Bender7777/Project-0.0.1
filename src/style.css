@@ -1,0 +1,1119 @@
+:root {
+  color-scheme: light;
+  --surface-1: #fcfcfb;
+  --page: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --series-1: #0039a6;
+  --series-2: #d52b1e;
+  --flag-white: #ffffff;
+  --flag-blue: #0039a6;
+  --flag-red: #d52b1e;
+  --radius: 14px;
+  --shadow: 0 3px 6px rgba(11,11,11,0.06), 0 18px 40px rgba(11,11,11,0.13), inset 0 1px 0 rgba(255,255,255,0.8);
+  --shadow-lg: 0 14px 26px rgba(11,11,11,0.12), 0 40px 80px rgba(11,11,11,0.22), inset 0 1px 0 rgba(255,255,255,0.8);
+  --shadow-inset: inset 0 1px 2px rgba(11,11,11,0.06);
+  --gradient-blue: linear-gradient(160deg, #2a63d6 0%, #0039a6 55%, #002d86 100%);
+  --gradient-red: linear-gradient(160deg, #e2543f 0%, #d52b1e 55%, #a81f14 100%);
+  --shadow-blue: 0 2px 5px rgba(0,57,166,0.22), 0 12px 26px rgba(0,57,166,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+  --shadow-red: 0 2px 5px rgba(213,43,30,0.22), 0 12px 26px rgba(213,43,30,0.3), inset 0 1px 0 rgba(255,255,255,0.4);
+  --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(0,57,166,0.07), transparent 60%),
+    radial-gradient(900px 480px at 102% 4%, rgba(213,43,30,0.055), transparent 55%), var(--page);
+
+  /* Fixed hero-tile palette for the KPI cards — not themed, same in light/dark UI. */
+  --kpi-1-bg: linear-gradient(160deg, #fbf5e7 0%, #f1e6cd 45%, #e4d2a7 100%);
+  --kpi-1-text: #35301f;
+  --kpi-1-sub: #6b6248;
+  --kpi-1-icon: #1c7f8c;
+  --kpi-1-shadow: 0 3px 6px rgba(154,125,60,0.18), 0 20px 44px rgba(154,125,60,0.28), inset 0 1px 0 rgba(255,255,255,0.85);
+
+  --kpi-2-bg: linear-gradient(160deg, #f4ae69 0%, #e8823a 50%, #d1691f 100%);
+  --kpi-2-text: #3a220b;
+  --kpi-2-sub: #5c3a19;
+  --kpi-2-icon: #7a3e12;
+  --kpi-2-shadow: 0 3px 6px rgba(216,110,30,0.28), 0 20px 44px rgba(216,110,30,0.38), inset 0 1px 0 rgba(255,255,255,0.5);
+
+  --kpi-3-bg: linear-gradient(160deg, #f7d789 0%, #e8b64a 50%, #cf9a28 100%);
+  --kpi-3-text: #3a2c05;
+  --kpi-3-sub: #5c4a17;
+  --kpi-3-icon: #7a5c0c;
+  --kpi-3-shadow: 0 3px 6px rgba(214,158,30,0.28), 0 20px 44px rgba(214,158,30,0.38), inset 0 1px 0 rgba(255,255,255,0.5);
+
+  --kpi-4-bg: linear-gradient(160deg, #2f8f5e 0%, #1f6f4a 55%, #123f28 100%);
+  --kpi-4-text: #f4faf6;
+  --kpi-4-sub: rgba(244,250,246,0.78);
+  --kpi-4-icon: #eafff2;
+  --kpi-4-shadow: 0 3px 6px rgba(15,60,36,0.35), 0 20px 44px rgba(15,60,36,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
+
+  /* .kpi/.card share these — factored out so dark mode (below) can retint
+     the border/glare/icon-badge chrome without touching the warm hero
+     colors above, which dark mode instead replaces wholesale. */
+  --kpi-card-border: rgba(255,255,255,0.4);
+  --kpi-glare: rgba(255,255,255,0.55);
+  --card-glare: rgba(255,255,255,0.5);
+  --kpi-icon-bg: rgba(255,255,255,0.4);
+  --kpi-icon-border: rgba(255,255,255,0.55);
+  --kpi-icon-bg-4: rgba(255,255,255,0.16);
+  --kpi-icon-border-4: rgba(255,255,255,0.3);
+
+  /* Per-card *hover-elevation* shadow — the extra layer `.kpi--N:hover`/
+     `.card--N:hover` stacks on top of the card's own resting `--kpi-N-shadow`.
+     In light mode each card keeps its own hue on hover too (not a shared
+     grey `--shadow-lg`), same rgb as that card's `--kpi-N-shadow` just
+     scaled up to match `--shadow-lg`'s spread/blur. Dark mode (below)
+     collapses all four to the single shared `--shadow-lg` instead, since
+     dark cards no longer carry a per-card hue at all. */
+  --kpi-1-shadow-lg: 0 14px 26px rgba(154,125,60,0.22), 0 40px 80px rgba(154,125,60,0.32), inset 0 1px 0 rgba(255,255,255,0.8);
+  --kpi-2-shadow-lg: 0 14px 26px rgba(216,110,30,0.24), 0 40px 80px rgba(216,110,30,0.34), inset 0 1px 0 rgba(255,255,255,0.6);
+  --kpi-3-shadow-lg: 0 14px 26px rgba(214,158,30,0.24), 0 40px 80px rgba(214,158,30,0.34), inset 0 1px 0 rgba(255,255,255,0.6);
+  --kpi-4-shadow-lg: 0 14px 26px rgba(15,60,36,0.3), 0 40px 80px rgba(15,60,36,0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+
+  /* Card 2's "Категория" active button: matches that card's own orange hue
+     (see --kpi-2-bg) with a bit of transparency so it reads as blending
+     into the card rather than a generic blue chip sitting on top of an
+     unrelated color. Dark mode (below) resets this back to the shared
+     teal accent, since dark card 2 is neutral glass with no orange to
+     match. */
+  --kpi-scope-active-bg: linear-gradient(160deg, rgba(244,174,105,0.85) 0%, rgba(232,130,58,0.9) 55%, rgba(209,105,31,0.9) 100%);
+  --kpi-scope-active-shadow: 0 2px 5px rgba(209,105,31,0.28), 0 14px 30px rgba(209,105,31,0.32), inset 0 1px 0 rgba(255,255,255,0.4);
+
+  /* Login screen's submit button: matches KPI card 4's green hue in light
+     mode instead of the generic --gradient-blue every other primary button
+     uses. Dark mode (below) resets this back to the shared teal accent,
+     same reasoning as --kpi-scope-active-bg above — dark KPI 4 is neutral
+     frosted glass with no green of its own left to match. */
+  --login-submit-bg: var(--kpi-4-bg);
+  --login-submit-shadow: var(--kpi-4-shadow);
+}
+
+/* Dark theme ported wholesale from a different app's "Анализатор" dark
+   mode (graphite/navy #202633 + teal accent #3FD0D8) — a deliberate full
+   reskin, not a themed variant of the light palette above: the Russian-flag
+   blue/red identity (`--flag-blue`/`--flag-red`, the ribbon stripes, the
+   primary/danger gradients) is replaced with that app's teal accent
+   (`#3FD0D8`) and coral danger (`#FF6961`) in dark mode only — light mode
+   keeps the flag colors untouched. `--good`/`--warning`/`--serious`/
+   `--critical` in palette.js and the multi-series `categorical` array are
+   deliberately NOT touched here (see palette.js) — those are the dataviz
+   skill's validated, CVD-safe data colors, a different system from this
+   chrome reskin, and `--critical` below still matches palette.js's
+   unchanged value so the two stay mirrored per the usual convention.
+   `--grid`/`--baseline`/`--border` are translucent white now (glass-style,
+   matching the source theme's own `--glass-*` tokens) rather than solid
+   grays — this reads correctly wherever they're used as a background tint
+   or hairline border, by design. */
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --surface-1: #272e38;
+    --page: #202633;
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --muted: #9a9aa0;
+    --grid: rgba(255,255,255,0.08);
+    --baseline: rgba(255,255,255,0.22);
+    --border: rgba(255,255,255,0.14);
+    --critical: #e66767;
+    --series-1: #3FD0D8;
+    --series-2: #FF6961;
+    --flag-blue: #3FD0D8;
+    --flag-red: #FF6961;
+    --shadow: 0 3px 6px rgba(0,0,0,0.4), 0 20px 44px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
+    /* Hover-elevation shadow reads teal, not black, matching the reskin —
+       used for the resting-vs-hover lift on cards/dropdown/modal alike. */
+    --shadow-lg: 0 16px 30px rgba(63,208,216,0.22), 0 44px 88px rgba(63,208,216,0.28), inset 0 1px 0 rgba(255,255,255,0.16);
+    --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.4);
+    --gradient-blue: linear-gradient(160deg, #7FE3E8 0%, #3FD0D8 55%, #28878C 100%);
+    --gradient-red: linear-gradient(160deg, #FF9690 0%, #FF6961 55%, #BF4F49 100%);
+    --shadow-blue: 0 2px 5px rgba(63,208,216,0.28), 0 14px 30px rgba(63,208,216,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+    --shadow-red: 0 2px 5px rgba(255,105,97,0.28), 0 14px 30px rgba(255,105,97,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+    --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(63,208,216,0.14), transparent 60%),
+      radial-gradient(900px 480px at 102% 4%, rgba(255,105,97,0.10), transparent 55%), var(--page);
+
+    /* KPI hero tiles and the matching chart-card bento colors are normally
+       a fixed, non-themed warm palette (cream/orange/gold/green — see
+       CLAUDE.md) — deliberately the *one* place this app carries "colored
+       parts from the light theme" into dark mode too. The source theme
+       doesn't do that: its own module tiles are a uniform frosted-glass
+       card in dark mode (see its `.tile` rule) and only bloom into
+       per-tile color in light mode. Overriding all four --kpi-N-* sets to
+       the same glass values here reproduces that — every KPI tile and
+       every chart card becomes one uniform frosted card in dark mode,
+       differentiated only by content, not hue; --kpi-card-border/--kpi-glare/
+       --card-glare/--kpi-icon-* (declared once in :root) get retinted too,
+       since the light-mode values (bright white border/glare/badge) were
+       tuned for opaque warm backgrounds and read too stark on translucent
+       dark glass. */
+    --kpi-1-bg: linear-gradient(160deg, rgba(255,255,255,0.13), rgba(255,255,255,0.07) 65%);
+    --kpi-1-text: var(--text-primary);
+    --kpi-1-sub: var(--text-secondary);
+    --kpi-1-icon: var(--flag-blue);
+    --kpi-1-shadow: 0 3px 6px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.13);
+    --kpi-2-bg: var(--kpi-1-bg);
+    --kpi-2-text: var(--kpi-1-text);
+    --kpi-2-sub: var(--kpi-1-sub);
+    --kpi-2-icon: var(--kpi-1-icon);
+    --kpi-2-shadow: var(--kpi-1-shadow);
+    --kpi-3-bg: var(--kpi-1-bg);
+    --kpi-3-text: var(--kpi-1-text);
+    --kpi-3-sub: var(--kpi-1-sub);
+    --kpi-3-icon: var(--kpi-1-icon);
+    --kpi-3-shadow: var(--kpi-1-shadow);
+    --kpi-4-bg: var(--kpi-1-bg);
+    --kpi-4-text: var(--kpi-1-text);
+    --kpi-4-sub: var(--kpi-1-sub);
+    --kpi-4-icon: var(--kpi-1-icon);
+    --kpi-4-shadow: var(--kpi-1-shadow);
+    --kpi-card-border: rgba(255,255,255,0.12);
+    --kpi-glare: rgba(255,255,255,0.10);
+    --card-glare: rgba(255,255,255,0.08);
+    --kpi-icon-bg: rgba(63,208,216,0.16);
+    --kpi-icon-border: rgba(63,208,216,0.32);
+    --kpi-icon-bg-4: var(--kpi-icon-bg);
+    --kpi-icon-border-4: var(--kpi-icon-border);
+    /* All four cards share one hue in dark mode (see above), so their
+       hover-elevation shadow collapses to the single shared teal --shadow-lg
+       too instead of the four distinct per-card hues light mode uses. */
+    --kpi-1-shadow-lg: var(--shadow-lg);
+    --kpi-2-shadow-lg: var(--shadow-lg);
+    --kpi-3-shadow-lg: var(--shadow-lg);
+    --kpi-4-shadow-lg: var(--shadow-lg);
+    /* Card 2's active button stays the shared teal accent — dark card 2 has
+       no orange hue of its own to match (see :root's comment on this var). */
+    --kpi-scope-active-bg: var(--gradient-blue);
+    --kpi-scope-active-shadow: var(--shadow-blue);
+    /* Same reasoning for the login button — dark KPI 4 is neutral glass. */
+    --login-submit-bg: var(--gradient-blue);
+    --login-submit-shadow: var(--shadow-blue);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-1: #272e38;
+  --page: #202633;
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1a6;
+  --muted: #9a9aa0;
+  --grid: rgba(255,255,255,0.08);
+  --baseline: rgba(255,255,255,0.22);
+  --border: rgba(255,255,255,0.14);
+  --critical: #e66767;
+  --series-1: #3FD0D8;
+  --series-2: #FF6961;
+  --flag-blue: #3FD0D8;
+  --flag-red: #FF6961;
+  --shadow: 0 3px 6px rgba(0,0,0,0.4), 0 20px 44px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
+  --shadow-lg: 0 16px 30px rgba(63,208,216,0.22), 0 44px 88px rgba(63,208,216,0.28), inset 0 1px 0 rgba(255,255,255,0.16);
+  --shadow-inset: inset 0 1px 2px rgba(0,0,0,0.4);
+  --gradient-blue: linear-gradient(160deg, #7FE3E8 0%, #3FD0D8 55%, #28878C 100%);
+  --gradient-red: linear-gradient(160deg, #FF9690 0%, #FF6961 55%, #BF4F49 100%);
+  --shadow-blue: 0 2px 5px rgba(63,208,216,0.28), 0 14px 30px rgba(63,208,216,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+  --shadow-red: 0 2px 5px rgba(255,105,97,0.28), 0 14px 30px rgba(255,105,97,0.32), inset 0 1px 0 rgba(255,255,255,0.18);
+  --page-bg: radial-gradient(1100px 560px at 12% -8%, rgba(63,208,216,0.14), transparent 60%),
+    radial-gradient(900px 480px at 102% 4%, rgba(255,105,97,0.10), transparent 55%), var(--page);
+
+  /* Mirrors the @media block above — see its comment for why. */
+  --kpi-1-bg: linear-gradient(160deg, rgba(255,255,255,0.13), rgba(255,255,255,0.07) 65%);
+  --kpi-1-text: var(--text-primary);
+  --kpi-1-sub: var(--text-secondary);
+  --kpi-1-icon: var(--flag-blue);
+  --kpi-1-shadow: 0 3px 6px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.13);
+  --kpi-2-bg: var(--kpi-1-bg);
+  --kpi-2-text: var(--kpi-1-text);
+  --kpi-2-sub: var(--kpi-1-sub);
+  --kpi-2-icon: var(--kpi-1-icon);
+  --kpi-2-shadow: var(--kpi-1-shadow);
+  --kpi-3-bg: var(--kpi-1-bg);
+  --kpi-3-text: var(--kpi-1-text);
+  --kpi-3-sub: var(--kpi-1-sub);
+  --kpi-3-icon: var(--kpi-1-icon);
+  --kpi-3-shadow: var(--kpi-1-shadow);
+  --kpi-4-bg: var(--kpi-1-bg);
+  --kpi-4-text: var(--kpi-1-text);
+  --kpi-4-sub: var(--kpi-1-sub);
+  --kpi-4-icon: var(--kpi-1-icon);
+  --kpi-4-shadow: var(--kpi-1-shadow);
+  --kpi-card-border: rgba(255,255,255,0.12);
+  --kpi-glare: rgba(255,255,255,0.10);
+  --card-glare: rgba(255,255,255,0.08);
+  --kpi-icon-bg: rgba(63,208,216,0.16);
+  --kpi-icon-border: rgba(63,208,216,0.32);
+  --kpi-icon-bg-4: var(--kpi-icon-bg);
+  --kpi-icon-border-4: var(--kpi-icon-border);
+  --kpi-1-shadow-lg: var(--shadow-lg);
+  --kpi-2-shadow-lg: var(--shadow-lg);
+  --kpi-3-shadow-lg: var(--shadow-lg);
+  --kpi-4-shadow-lg: var(--shadow-lg);
+  --kpi-scope-active-bg: var(--gradient-blue);
+  --kpi-scope-active-shadow: var(--shadow-blue);
+  --login-submit-bg: var(--gradient-blue);
+  --login-submit-shadow: var(--shadow-blue);
+}
+
+* { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+/* Client-side password gate. This is a static app with no backend, so this
+   is a soft gate (a screen lock), not real access control — anyone with
+   devtools can bypass it. The dashboard itself (`.viz-root`) stays hidden
+   until `html` gets the `authed` class, which app.js sets on a correct
+   password and an inline script in index.html sets synchronously on load
+   if sessionStorage already has the flag (avoids a login-screen flash for
+   an already-unlocked tab). */
+.viz-root { display: none; }
+html.authed .viz-root { display: block; }
+html.authed #login-screen { display: none; }
+
+.login-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: var(--page-bg);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 32px 28px;
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 6px;
+  border-radius: 14px;
+  background: var(--gradient-blue);
+  box-shadow: var(--shadow-blue);
+  color: #fff;
+}
+
+.login-card h1 {
+  font-size: 17px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.login-card__hint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.login-card__input {
+  width: 100%;
+  font: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--page);
+  color: var(--text-primary);
+}
+.login-card__input:focus-visible {
+  outline: 2px solid var(--flag-blue);
+  outline-offset: 2px;
+}
+
+.login-card__error {
+  align-self: flex-start;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--critical);
+}
+
+.login-card__submit {
+  width: 100%;
+  margin-top: 6px;
+  justify-content: center;
+}
+.login-card__submit.btn--primary {
+  background: var(--login-submit-bg);
+  box-shadow: var(--login-submit-shadow);
+}
+.login-card__submit.btn--primary:hover { box-shadow: var(--login-submit-shadow); }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--page-bg);
+  background-attachment: fixed;
+}
+
+.flag-ribbon {
+  display: flex;
+  height: 6px;
+  width: 100%;
+}
+.flag-ribbon span {
+  flex: 1 1 0;
+}
+.flag-ribbon span:nth-child(1) { background: var(--flag-white); }
+.flag-ribbon span:nth-child(2) { background: var(--flag-blue); }
+.flag-ribbon span:nth-child(3) { background: var(--flag-red); }
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 20px;
+  background: var(--surface-1);
+  border-bottom: 2px solid var(--flag-red);
+  flex-wrap: wrap;
+}
+
+.app-header__title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-header__logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--gradient-blue);
+  box-shadow: var(--shadow-blue);
+  color: #fff;
+  flex: none;
+}
+
+.app-header h1 {
+  font-size: 16px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.app-header__subtitle {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.btn:hover { background: var(--grid); transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); }
+.btn--primary {
+  background: var(--gradient-blue);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--shadow-blue);
+}
+.btn--primary:hover { filter: brightness(1.08); transform: translateY(-1px); box-shadow: var(--shadow-blue); }
+.btn--primary:active { transform: translateY(1px); }
+.btn--ghost { background: transparent; box-shadow: none; }
+.btn--ghost:hover { transform: none; }
+.btn--icon { padding: 9px; }
+.btn--danger {
+  background: transparent;
+  border-color: var(--flag-red);
+  color: var(--flag-red);
+  box-shadow: none;
+}
+.btn--danger:hover {
+  background: var(--gradient-red);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: var(--shadow-red);
+  transform: translateY(-1px);
+}
+
+#app { padding: 20px; max-width: 1280px; margin: 0 auto; }
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 80px 20px;
+  color: var(--text-secondary);
+}
+.empty-state__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  color: var(--flag-blue);
+  background: radial-gradient(circle at 35% 30%, var(--surface-1), var(--grid));
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 8px;
+}
+.empty-state h2 { margin: 0; color: var(--text-primary); font-size: 18px; }
+.empty-state p { margin: 0; max-width: 420px; font-size: 14px; }
+.empty-state__hint { font-size: 12px; color: var(--muted); margin-top: 8px; }
+.empty-state.drag-over { outline: 2px dashed var(--series-1); outline-offset: 8px; border-radius: 16px; }
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 5;
+}
+.filter-bar__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Glass chip floating over the KPI card's gradient — same treatment as
+   .kpi__icon's badge (rgba white + blur + soft inset highlight) rather than
+   a flat --surface-1 box, since this now only ever sits on a colored card. */
+.segmented {
+  display: inline-flex;
+  padding: 4px;
+  gap: 3px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.4);
+  border: 1px solid rgba(255,255,255,0.55);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.segmented__btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 11px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s, box-shadow 0.15s;
+}
+.segmented__btn:hover { opacity: 0.95; }
+.segmented__btn:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
+.segmented__btn.is-active {
+  background: var(--kpi-scope-active-bg);
+  color: #fff;
+  opacity: 1;
+  box-shadow: var(--kpi-scope-active-shadow);
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 14px;
+  min-width: 200px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+.dropdown__trigger span:first-child { flex: 1; text-align: left; }
+.dropdown__trigger:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.dropdown__trigger:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
+.dropdown__chevron {
+  color: var(--muted);
+  transition: transform 0.18s ease;
+  flex: none;
+}
+.dropdown.is-open .dropdown__trigger {
+  border-color: var(--flag-blue);
+  box-shadow: var(--shadow-blue);
+}
+.dropdown.is-open .dropdown__chevron { transform: rotate(180deg); color: var(--flag-blue); }
+
+.dropdown__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 260px;
+  max-height: 320px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.dropdown__list {
+  overflow-y: auto;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dropdown__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.dropdown__option:hover { background: var(--grid); }
+.dropdown__option:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: -2px; }
+
+.dropdown__check {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  border-radius: 6px;
+  border: 1.5px solid var(--baseline);
+  background: var(--surface-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition: background 0.12s, border-color 0.12s;
+}
+.dropdown__option.is-checked .dropdown__check {
+  background: var(--gradient-blue);
+  border-color: transparent;
+  box-shadow: var(--shadow-blue);
+}
+.dropdown__check svg { opacity: 0; transform: scale(0.6); transition: opacity 0.12s, transform 0.12s; }
+.dropdown__option.is-checked .dropdown__check svg { opacity: 1; transform: scale(1); }
+
+.dropdown__option-label { flex: 1; }
+.dropdown__option-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dropdown__footer {
+  border-top: 1px solid var(--grid);
+  margin-top: 6px;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dropdown__quick-actions {
+  display: flex;
+  gap: 6px;
+}
+.dropdown__reset {
+  flex: 1;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--flag-blue);
+  cursor: pointer;
+  text-align: center;
+}
+.dropdown__reset:hover { background: var(--grid); }
+.dropdown__ok {
+  width: 100%;
+  justify-content: center;
+  padding: 9px 10px;
+}
+.dropdown__ok:disabled,
+.dropdown__ok:disabled:hover {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+  box-shadow: var(--shadow-blue);
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr 1fr;
+  grid-auto-rows: minmax(126px, auto);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.kpi:nth-child(1) { grid-column: 1; grid-row: 1 / 3; }
+.kpi:nth-child(2) { grid-column: 2 / 4; grid-row: 1; }
+.kpi:nth-child(3) { grid-column: 2; grid-row: 2; }
+.kpi:nth-child(4) { grid-column: 3; grid-row: 2; }
+
+@media (max-width: 720px) {
+  .kpi-grid { grid-template-columns: 1fr; grid-auto-rows: auto; }
+  .kpi:nth-child(1), .kpi:nth-child(2), .kpi:nth-child(3), .kpi:nth-child(4) {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+.kpi {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: var(--kpi-1-bg);
+  color: var(--kpi-1-text);
+  border: 1px solid var(--kpi-card-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--kpi-1-shadow);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.kpi:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
+.kpi::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 65% at 18% 0%, var(--kpi-glare), transparent 60%);
+  pointer-events: none;
+}
+.kpi:hover { transform: translateY(-4px); }
+.kpi--2 { background: var(--kpi-2-bg); color: var(--kpi-2-text); box-shadow: var(--kpi-2-shadow); }
+.kpi--3 { background: var(--kpi-3-bg); color: var(--kpi-3-text); box-shadow: var(--kpi-3-shadow); }
+.kpi--4 { background: var(--kpi-4-bg); color: var(--kpi-4-text); box-shadow: var(--kpi-4-shadow); }
+.kpi--1:hover { box-shadow: var(--kpi-1-shadow), var(--kpi-1-shadow-lg); }
+.kpi--2:hover { box-shadow: var(--kpi-2-shadow), var(--kpi-2-shadow-lg); }
+.kpi--3:hover { box-shadow: var(--kpi-3-shadow), var(--kpi-3-shadow-lg); }
+.kpi--4:hover { box-shadow: var(--kpi-4-shadow), var(--kpi-4-shadow-lg); }
+
+.kpi__icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  margin-bottom: auto;
+  border-radius: 13px;
+  background: var(--kpi-icon-bg);
+  border: 1px solid var(--kpi-icon-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.7);
+  color: var(--kpi-1-icon);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.kpi--2 .kpi__icon { color: var(--kpi-2-icon); }
+.kpi--3 .kpi__icon { color: var(--kpi-3-icon); }
+.kpi--4 .kpi__icon { color: var(--kpi-4-icon); background: var(--kpi-icon-bg-4); border-color: var(--kpi-icon-border-4); }
+
+.kpi__label {
+  position: relative;
+  z-index: 1;
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.75;
+  margin: 14px 0 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.kpi__value {
+  position: relative;
+  z-index: 1;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  margin: 0;
+}
+.kpi__sub {
+  position: relative;
+  z-index: 1;
+  margin: 7px 0 0;
+  font-size: 12.5px;
+  color: var(--kpi-1-sub);
+}
+.kpi--2 .kpi__sub { color: var(--kpi-2-sub); }
+.kpi--3 .kpi__sub { color: var(--kpi-3-sub); }
+.kpi--4 .kpi__sub { color: var(--kpi-4-sub); }
+.kpi__sub strong { color: var(--kpi-1-text); }
+.kpi--2 .kpi__sub strong { color: var(--kpi-2-text); }
+.kpi--3 .kpi__sub strong { color: var(--kpi-3-text); }
+.kpi--4 .kpi__sub strong { color: var(--kpi-4-text); }
+
+/* Card 2 is a pure Все/ЧКЭ/ДО filter control, not a clickable metric —
+   opt it out of the KPI tiles' pointer cursor and give its segmented
+   control room to fill the card's width instead of a value/sub pair. */
+.kpi--scope { cursor: default; }
+.kpi__segmented {
+  margin-top: 14px;
+  display: flex;
+  position: relative;
+  z-index: 1;
+}
+.kpi__segmented .segmented__btn { flex: 1; text-align: center; }
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--kpi-1-bg);
+  color: var(--kpi-1-text);
+  border: 1px solid var(--kpi-card-border);
+  border-radius: 20px;
+  box-shadow: var(--kpi-1-shadow);
+  padding: 20px;
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 65% at 18% 0%, var(--card-glare), transparent 60%);
+  pointer-events: none;
+}
+.card:hover { transform: translateY(-4px); }
+.card--1:hover { box-shadow: var(--kpi-1-shadow), var(--kpi-1-shadow-lg); }
+.card--2:hover { box-shadow: var(--kpi-2-shadow), var(--kpi-2-shadow-lg); }
+.card--3:hover { box-shadow: var(--kpi-3-shadow), var(--kpi-3-shadow-lg); }
+.card--4:hover { box-shadow: var(--kpi-4-shadow), var(--kpi-4-shadow-lg); }
+.card--wide { grid-column: 1 / -1; }
+
+/* Grid rows stretch every item to the row's tallest sibling by default —
+   fine for cards meant to line up, but this card is short on purpose (its
+   department list lives inside the bars, not in a separate table below),
+   so let it size to its own content instead of stretching to match its
+   row-mates. */
+#card-dept { align-self: start; }
+
+.card--2 { background: var(--kpi-2-bg); color: var(--kpi-2-text); box-shadow: var(--kpi-2-shadow); }
+.card--3 { background: var(--kpi-3-bg); color: var(--kpi-3-text); box-shadow: var(--kpi-3-shadow); }
+.card--4 { background: var(--kpi-4-bg); color: var(--kpi-4-text); box-shadow: var(--kpi-4-shadow); }
+
+.card__icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: var(--kpi-icon-bg);
+  border: 1px solid var(--kpi-icon-border);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.7);
+  color: var(--kpi-1-icon);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.card--2 .card__icon { color: var(--kpi-2-icon); }
+.card--3 .card__icon { color: var(--kpi-3-icon); }
+.card--4 .card__icon { color: var(--kpi-4-icon); background: var(--kpi-icon-bg-4); border-color: var(--kpi-icon-border-4); }
+
+.card__head { position: relative; z-index: 1; }
+.card__head h3 { margin: 0; font-size: 14.5px; font-weight: 800; color: inherit; }
+.card__desc { margin: 3px 0 0; font-size: 12px; color: var(--kpi-1-sub); }
+.card--2 .card__desc { color: var(--kpi-2-sub); }
+.card--3 .card__desc { color: var(--kpi-3-sub); }
+.card--4 .card__desc { color: var(--kpi-4-sub); }
+
+.card__panel {
+  position: relative;
+  z-index: 1;
+  margin-top: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow-inset);
+}
+
+/* Instructor-load card only. Sorting reorders stats.byInstructor before it
+   reaches Chart.js (see charts.js's sortedInstructors()) rather than doing
+   anything to the DOM — a plain toolbar, not a themed KPI/segmented chip,
+   since it always sits on the neutral --surface-1 .card__panel, never
+   directly on a colored .card background. */
+.instructor-sort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.instructor-sort__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.instructor-sort__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.instructor-sort__btn:hover { color: var(--text-primary); border-color: var(--flag-blue); }
+.instructor-sort__btn:focus-visible { outline: 2px solid var(--flag-blue); outline-offset: 2px; }
+.instructor-sort__btn.is-active {
+  background: var(--gradient-blue);
+  border-color: transparent;
+  color: #fff;
+}
+.instructor-sort__arrow { font-size: 10px; line-height: 1; }
+
+.card__body { position: relative; height: 240px; margin-top: 0; }
+.card__body--donut { height: 220px; }
+.card__body--scroll { overflow-y: auto; overflow-x: hidden; }
+/* Chart.js sizes its canvas to fill its *immediate* parent — if that parent
+   were `.card__body` itself, capping `.card__body`'s height for scrolling
+   would just squeeze every bar thinner instead of actually scrolling
+   (nothing left to overflow). This inner div is what `sizeCategoryChartBody`
+   actually sizes: at/under the cap it's 100% (no scroll needed), over the
+   cap it gets the *uncapped* content height so bars render at full
+   thickness and `.card__body`'s fixed+`overflow-y:auto` reveals them via a
+   real scrollbar instead. */
+.card__body-inner { position: relative; height: 100%; }
+
+.card__table { margin-top: 12px; max-height: 260px; overflow-y: auto; }
+
+/* A wide card built around a donut has room to put the chart and its table
+   side by side instead of stacking them with a lot of empty space below. */
+.card__panel--split {
+  flex-direction: row;
+  align-items: center;
+  gap: 20px;
+}
+.card__panel--split .card__body { flex: none; width: 240px; }
+.card__panel--split .card__table { flex: 1; margin-top: 0; align-self: center; }
+@media (max-width: 640px) {
+  .card__panel--split { flex-direction: column; align-items: stretch; }
+  .card__panel--split .card__body { width: 100%; }
+}
+
+.stat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.stat-table th, .stat-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-top: 1px solid var(--grid);
+}
+.stat-table th {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.stat-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-1);
+  z-index: 1;
+}
+.stat-table td.num, .stat-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.stat-table .swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.app-footer {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  color: var(--surface-1);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  box-shadow: var(--shadow);
+  z-index: 50;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(11, 11, 11, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: overlayIn 0.15s ease;
+}
+:root[data-theme="dark"] .modal-overlay,
+:root:where(:not([data-theme="light"])) .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  width: 100%;
+  max-width: 760px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: modalIn 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 14px;
+  flex: none;
+}
+.modal__head h3 { margin: 0; font-size: 16px; font-weight: 800; }
+.modal__count { margin: 4px 0 0; font-size: 12.5px; color: var(--text-secondary); }
+
+.modal__body {
+  overflow: auto;
+  padding: 0 20px;
+  flex: 1;
+}
+
+.modal__foot {
+  flex: none;
+  padding: 14px 20px 20px;
+  margin-top: 4px;
+  border-top: 1px solid var(--grid);
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 560px) {
+  .app-header { padding: 12px 14px; }
+  #app { padding: 14px; }
+  .app-header h1 { font-size: 14.5px; }
+  .modal { max-height: 88vh; }
+}

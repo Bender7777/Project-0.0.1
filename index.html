@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Голосование — дашборд</title>
+<meta name="description" content="Дашборд статистики голосования: загрузка Excel-файла и аналитика по отделам, декрету, дням и способу голосования.">
+<meta name="theme-color" content="#0039a6">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="src/style.css">
+</head>
+<body>
+<script>
+  (function () {
+    try {
+      if (sessionStorage.getItem('voting-dashboard:authed') === '1') {
+        document.documentElement.classList.add('authed');
+      }
+    } catch (e) {}
+  })();
+</script>
+
+<div id="login-screen" class="login-screen">
+  <form id="login-form" class="login-card" autocomplete="off">
+    <div class="login-card__icon" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="5" y="10.5" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15" r="1.6" fill="currentColor"/></svg>
+    </div>
+    <h1>Дашборд голосования</h1>
+    <p class="login-card__hint">Введите пароль для доступа</p>
+    <input type="password" id="login-password" class="login-card__input" placeholder="Пароль" autocomplete="current-password" required>
+    <p class="login-card__error" id="login-error" hidden>Неверный пароль. Попробуйте ещё раз.</p>
+    <button type="submit" class="btn btn--primary login-card__submit">Войти</button>
+  </form>
+</div>
+
+<div class="viz-root">
+
+<div class="flag-ribbon" aria-hidden="true"><span></span><span></span><span></span></div>
+
+<header class="app-header">
+  <div class="app-header__title">
+    <span class="app-header__logo" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="12" width="4" height="9" rx="1" fill="currentColor"/><rect x="10" y="7" width="4" height="14" rx="1" fill="currentColor" opacity="0.75"/><rect x="17" y="3" width="4" height="18" rx="1" fill="currentColor" opacity="0.5"/></svg>
+    </span>
+    <div>
+      <h1>Дашборд голосования</h1>
+      <p class="app-header__subtitle" id="subtitle">Загрузите Excel-файл, чтобы увидеть статистику</p>
+    </div>
+  </div>
+  <div class="app-header__actions">
+    <label class="btn btn--primary" for="file-input">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4M12 4L7 9M12 4l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Загрузить Excel
+    </label>
+    <input id="file-input" type="file" accept=".xlsx,.xls,.csv" hidden>
+    <button class="btn btn--danger" id="clear-btn" hidden>Очистить</button>
+    <button class="btn btn--icon" id="theme-toggle" title="Сменить тему" aria-label="Сменить тему">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="2"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8 6 18M18 6l1.8-1.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="app">
+
+  <section id="empty-state" class="empty-state">
+    <div class="empty-state__icon" aria-hidden="true">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4V4Z" stroke="currentColor" stroke-width="1.5" opacity="0.35"/><path d="M8 15l3-3 2 2 4-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2>Нет данных</h2>
+    <p>Загрузите файл со списком сотрудников — колонки «Отдел», «Декрет», «Инструктор», «Факт выполнения», «ДАТА», «ДЭГ/ОЧНО».</p>
+    <label class="btn btn--primary" for="file-input">Выбрать файл</label>
+    <p class="empty-state__hint">Файл обрабатывается только в браузере и никуда не отправляется.</p>
+  </section>
+
+  <section id="dashboard" class="dashboard" hidden>
+
+    <div class="filter-bar" id="filter-bar" hidden>
+      <span class="filter-bar__label">Отдел</span>
+      <div class="dropdown" id="dept-dropdown">
+        <button type="button" class="dropdown__trigger" id="dept-dropdown-trigger" aria-haspopup="listbox" aria-expanded="false">
+          <span id="dept-dropdown-label">Все отделы</span>
+          <svg class="dropdown__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="dropdown__panel" id="dept-dropdown-panel" role="listbox" aria-multiselectable="true" hidden>
+          <div class="dropdown__list" id="dept-dropdown-list"></div>
+          <div class="dropdown__footer">
+            <div class="dropdown__quick-actions">
+              <button type="button" class="dropdown__reset" id="dept-dropdown-select-all">Выбрать все</button>
+              <button type="button" class="dropdown__reset" id="dept-dropdown-reset">Сбросить</button>
+            </div>
+            <button type="button" class="btn btn--primary dropdown__ok" id="dept-dropdown-ok">Ок</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <div class="chart-grid">
+      <article class="card card--chart card--1" id="card-dept">
+        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 19c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 4.3c1.6.4 2.8 1.8 2.8 3.5 0 1.7-1.2 3.1-2.8 3.5M18.5 14.2c2 .5 3.5 2.3 3.5 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <div class="card__head">
+          <h3>По отделам</h3>
+          <p class="card__desc">Количество сотрудников в каждом отделе</p>
+        </div>
+        <div class="card__panel">
+          <div class="card__body">
+            <div class="card__body-inner">
+              <canvas id="chart-dept" role="img" aria-label="Распределение по отделам"></canvas>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card card--chart card--2" id="card-days">
+        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="3.4" height="9" rx="1" fill="currentColor"/><rect x="10.3" y="5.5" width="3.4" height="13.5" rx="1" fill="currentColor"/><rect x="16.6" y="13" width="3.4" height="6" rx="1" fill="currentColor"/></svg></span>
+        <div class="card__head">
+          <h3>Голосование по дням</h3>
+          <p class="card__desc">Явка 18, 19 и 20 сентября</p>
+        </div>
+        <div class="card__panel">
+          <div class="card__body">
+            <canvas id="chart-days" role="img" aria-label="Голосование по дням"></canvas>
+          </div>
+          <div class="card__table" id="table-days"></div>
+        </div>
+      </article>
+
+      <article class="card card--chart card--3" id="card-format">
+        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 4a8 8 0 0 1 6.9 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <div class="card__head">
+          <h3>Способ голосования</h3>
+          <p class="card__desc">ДЭГ (дистанционно) и очно — все проголосовавшие</p>
+        </div>
+        <div class="card__panel">
+          <div class="card__body card__body--donut">
+            <canvas id="chart-format" role="img" aria-label="Способ голосования"></canvas>
+          </div>
+          <div class="card__table" id="table-format"></div>
+        </div>
+      </article>
+
+      <article class="card card--chart card--wide card--4" id="card-day-format">
+        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="3.4" height="9" rx="1" fill="currentColor"/><rect x="10.3" y="5.5" width="3.4" height="13.5" rx="1" fill="currentColor"/><rect x="16.6" y="13" width="3.4" height="6" rx="1" fill="currentColor"/></svg></span>
+        <div class="card__head">
+          <h3>Дни × способ голосования</h3>
+          <p class="card__desc">ДЭГ и очно по дням</p>
+        </div>
+        <div class="card__panel">
+          <div class="card__body">
+            <canvas id="chart-day-format" role="img" aria-label="Способ голосования по дням"></canvas>
+          </div>
+        </div>
+      </article>
+
+      <article class="card card--chart card--wide card--1" id="card-dept-turnout">
+        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="7" cy="7" r="2.3" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="17" r="2.3" stroke="currentColor" stroke-width="1.8"/><path d="M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+        <div class="card__head">
+          <h3>Явка по отделам</h3>
+          <p class="card__desc">Доля проголосовавших в каждом отделе</p>
+        </div>
+        <div class="card__panel">
+          <div class="card__body">
+            <canvas id="chart-dept-turnout" role="img" aria-label="Явка по отделам"></canvas>
+          </div>
+        </div>
+      </article>
+
+      <article class="card card--chart card--wide card--2" id="card-instructor">
+        <span class="card__icon" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.7"/><circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M2.8 19c0-2.8 2.3-5 5.2-5s5.2 2.2 5.2 5M10.8 14.3c.8-.3 1.7-.5 2.7-.5 2.9 0 5.2 2.2 5.2 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+        <div class="card__head">
+          <h3>Нагрузка по инструкторам</h3>
+          <p class="card__desc">Количество закреплённых сотрудников и явка</p>
+        </div>
+        <div class="card__panel">
+          <div class="instructor-sort" id="instructor-sort" role="group" aria-label="Сортировка по явке">
+            <span class="instructor-sort__label">Сортировать:</span>
+            <button type="button" class="instructor-sort__btn" data-sort-key="voted">
+              Проголосовали<span class="instructor-sort__arrow" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="instructor-sort__btn" data-sort-key="notVoted">
+              Не проголосовали<span class="instructor-sort__arrow" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="card__body">
+            <div class="card__body-inner">
+              <canvas id="chart-instructor" role="img" aria-label="Нагрузка по инструкторам"></canvas>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <footer class="app-footer">
+      <span id="file-meta"></span>
+    </footer>
+  </section>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <div id="drilldown-overlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drilldown-title">
+      <div class="modal__head">
+        <div>
+          <h3 id="drilldown-title">Список сотрудников</h3>
+          <p class="modal__count" id="drilldown-count"></p>
+        </div>
+        <button type="button" class="btn btn--icon" id="drilldown-close" aria-label="Закрыть">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="modal__body">
+        <table class="stat-table drilldown-table">
+          <thead>
+            <tr>
+              <th>№</th>
+              <th>ФИО</th>
+              <th>Отдел</th>
+              <th>Таб.№</th>
+              <th>Инструктор</th>
+              <th>Дата</th>
+              <th>Факт</th>
+              <th>Способ</th>
+            </tr>
+          </thead>
+          <tbody id="drilldown-tbody"></tbody>
+        </table>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--primary" id="drilldown-export">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 4v12M12 16l-4-4M12 16l4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Выгрузить в Excel
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/chart.umd.min.js"></script>
+<script src="src/palette.js"></script>
+<script src="src/parser.js"></script>
+<script src="src/stats.js"></script>
+<script src="src/charts.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>
