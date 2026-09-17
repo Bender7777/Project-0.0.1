@@ -464,6 +464,18 @@ under `file://`, verified directly, not just on `localhost`/HTTPS), and `sha256H
 whatever's typed before comparing. **To change the password**, compute a new hash (the comment
 above `AUTH_PASSWORD_HASH` has a one-line browser-console snippet using
 `crypto.subtle.digest`) and replace the constant — there's no UI for this, it's a code change.
+The submit button (`.login-card__submit`) matches KPI card 4's own green hue in light mode via
+dedicated `--login-submit-bg`/`--login-submit-shadow` vars (`:root`, set to
+`var(--kpi-4-bg)`/`var(--kpi-4-shadow)`) rather than the generic `--gradient-blue`/`--shadow-blue`
+every other primary button uses — same reasoning and pattern as card 2's `--kpi-scope-active-bg`
+(see above): a themed accent reads better than a stock blue button dropped onto this one screen.
+Dark mode resets both back to `var(--gradient-blue)`/`var(--shadow-blue)` in both dark blocks,
+same as `--kpi-scope-active-bg` — dark KPI 4 is neutral frosted glass with no green of its own
+left to match. Applying the vars needed `.login-card__submit.btn--primary` (two classes, not
+one) for both the base and `:hover` rules: `.btn--primary`/`.btn--primary:hover` in `style.css`
+come later in the file and set `background`/`box-shadow` at the same one-class specificity, so a
+single-class `.login-card__submit` rule would lose to them on source order alone despite
+appearing to look more specific to this button.
 
 **Expected Excel columns** (header text, any order): `Отдел`, `Фамилия, Имя, Отчество`,
 `Таб.№`, `SAP таб`, `Декрет`, `Инструктор`, `Факт выполнения`, `ДАТА`, `ДЭГ/ОЧНО`. `Декрет`
