@@ -20,7 +20,7 @@
 html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; background: var(--bg); color: var(--text);
   font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-.wrap { max-width: 980px; margin: 0 auto; padding: 0 16px; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
 .top { background: var(--brand); color: var(--brand-ink); padding-top: env(safe-area-inset-top); }
 .top-in { display: flex; align-items: center; justify-content: space-between; min-height: 56px; }
 h1 { font-size: 1.15rem; margin: 0; }
@@ -51,14 +51,14 @@ main { padding-top: 16px; padding-bottom: 24px; }
 .result-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
 .actions { display: flex; gap: 8px; }
 .table-wrap { overflow-x: auto; margin: 0 -16px; padding: 0 16px; -webkit-overflow-scrolling: touch; }
-table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: .92rem; }
+table { border-collapse: collapse; width: 100%; min-width: 1080px; font-size: .92rem; }
 th { text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted);
   padding: 6px 4px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { padding: 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
 td input[type=text], td input[type=number], td input[type=date] { width: 100%; font: inherit; color: inherit; background: transparent;
   border: 1px solid transparent; border-radius: 6px; padding: 6px; min-height: 36px; }
 td input:hover { border-color: var(--line); } td input:focus { outline: 2px solid var(--brand); border-color: transparent; background: var(--card); }
-td input[type=number] { width: 78px; } td input.flight { width: 84px; } td input[type=date] { width: 140px; }
+td input[type=number] { width: 78px; } td.calc { white-space: nowrap; padding: 10px 8px 0; text-align: center; color: var(--muted); } td input.flight { width: 84px; } td input[type=date] { width: 140px; }
 td input[type=checkbox] { width: 20px; height: 20px; margin: 8px; }
 tr.warn td { background: var(--warn); }
 tr.off td { opacity: .45; }
@@ -74,6 +74,7 @@ tr.off td { opacity: .45; }
     border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-top: 10px; }
   td { display: block; border: 0; padding: 0; min-width: 0; }
   td[data-label]::before { content: attr(data-label); display: block; font-size: .7rem; text-transform: uppercase; color: var(--muted); padding-left: 6px; }
+  td.calc { padding: 0; text-align: left; }
   td[data-label="Дата"] { grid-column: 1 / 3; }
   td[data-label="Рейс"] { grid-column: 3; }
   td[data-label="Направление"], td[data-label="Комментарий"] { grid-column: 1 / 4; }
@@ -118,7 +119,7 @@ tr.off td { opacity: .45; }
           <thead>
             <tr>
               <th></th><th>Дата</th><th>Рейс</th><th>Направление</th>
-              <th>Загружено</th><th>PAX</th><th>Остаток</th><th>Комментарий</th><th></th>
+              <th>Загружено</th><th>PAX</th><th>Остаток</th><th>Перегруз</th><th>Не востр. (от PAX)</th><th>% от PAX</th><th>% от порций</th><th>Комментарий</th><th></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -555,11 +556,19 @@ function notesFor(r) {
   return n;
 }
 
+function calcCols(r) {
+  if (r.loaded == null || r.pax == null) return { g: '', h: '', i: '', j: '' };
+  const g = r.loaded - r.pax, h = (r.left ?? 0) - g;
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '');
+  return { g, h, i: pct(h, r.pax), j: pct(r.left ?? 0, r.loaded) };
+}
+
 function render() {
   el.result.hidden = state.rows.length === 0;
   el.count.textContent = state.rows.filter((r) => r.include).length;
   el.tbody.innerHTML = state.rows.map((r) => {
     const notes = notesFor(r);
+    const c = calcCols(r);
     const bad = notes.length || r.loaded == null || r.pax == null || !r.date;
     return `<tr data-id="${r.id}" class="${bad ? 'warn' : ''} ${r.include ? '' : 'off'}">
       <td><input type="checkbox" data-k="include" ${r.include ? 'checked' : ''} aria-label="Включить в файл"></td>
@@ -569,6 +578,10 @@ function render() {
       <td data-label="Загружено"><input type="number" data-k="loaded" min="0" inputmode="numeric" value="${r.loaded ?? ''}"></td>
       <td data-label="PAX"><input type="number" data-k="pax" min="0" inputmode="numeric" value="${r.pax ?? ''}"></td>
       <td data-label="Остаток"><input type="number" data-k="left" min="0" inputmode="numeric" value="${r.left ?? ''}"></td>
+      <td class="calc" data-label="Перегруз">${c.g}</td>
+      <td class="calc" data-label="Не востр. (PAX)">${c.h}</td>
+      <td class="calc" data-label="% от PAX">${c.i}</td>
+      <td class="calc" data-label="% от порций">${c.j}</td>
       <td data-label="Комментарий"><input type="text" data-k="comment" value="${esc(r.comment)}"></td>
       <td><button class="x" data-del title="Удалить" aria-label="Удалить">×</button></td></tr>`;
   }).join('');
