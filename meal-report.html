@@ -616,8 +616,16 @@ el.download.addEventListener('click', async () => {
     const wb = await buildWorkbook(ExcelJS, rows);
     const buf = await wb.xlsx.writeBuffer();
     const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const name = fileName(rows);
+    const file = new File([blob], name, { type: blob.type });
+    const isApple = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    // На iPad/iPhone ссылка на blob: блокируется некоторыми просмотрщиками HTML — там отдаём файл через меню «Поделиться».
+    if (isApple && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; }
+      catch (e) { if (e && e.name === 'AbortError') return; }
+    }
     const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = fileName(rows);
+    a.href = URL.createObjectURL(blob); a.download = name;
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
   } finally { el.download.disabled = false; }
