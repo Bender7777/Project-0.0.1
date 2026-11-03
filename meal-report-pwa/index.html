@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Мониторинг питания</title>
+  <meta name="description" content="Загрузите PDF-отчёты о питании на рейсе (или архив с ними) и получите Excel-файл мониторинга.">
+  <meta name="theme-color" content="#0b5cab">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap top-in">
+      <h1>Мониторинг питания</h1>
+      <button id="install" class="btn ghost" hidden>Установить</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <label id="drop" class="drop" for="file">
+        <input id="file" type="file" multiple accept=".pdf,.zip,application/pdf,application/zip,application/x-zip-compressed">
+        <span class="drop-title">Выберите PDF или ZIP-архив</span>
+        <span class="drop-sub">или перетащите файлы сюда · можно несколько сразу</span>
+      </label>
+      <p id="progress" class="muted" hidden></p>
+      <ul id="log" class="log" hidden></ul>
+    </section>
+
+    <section id="result" class="card" hidden>
+      <div class="result-head">
+        <h2>Рейсы: <span id="count">0</span></h2>
+        <div class="actions">
+          <button id="clear" class="btn ghost">Очистить</button>
+          <button id="download" class="btn primary">Скачать Excel</button>
+        </div>
+      </div>
+      <p class="muted small">Проверьте данные — любое поле можно исправить. Снимите галочку, чтобы не включать рейс в файл.</p>
+      <div class="table-wrap">
+        <table id="table">
+          <thead>
+            <tr>
+              <th></th><th>Дата</th><th>Рейс</th><th>Направление</th>
+              <th>Загружено</th><th>PAX</th><th>Остаток</th><th>Комментарий</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap muted small foot">Файлы обрабатываются прямо в браузере и никуда не отправляются.</footer>
+
+  <script src="vendor/jszip.min.js"></script>
+  <script src="vendor/exceljs.min.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
