@@ -52,13 +52,13 @@ main { padding-top: 16px; padding-bottom: 24px; }
 .actions { display: flex; gap: 8px; }
 .table-wrap { overflow-x: auto; margin: 0 -16px; padding: 0 16px; -webkit-overflow-scrolling: touch; }
 table { border-collapse: collapse; width: 100%; font-size: .9rem; }
-th { text-align: left; font-size: .68rem; text-transform: uppercase; letter-spacing: 0; color: var(--muted);
+th { text-align: center; font-size: .68rem; text-transform: uppercase; letter-spacing: 0; color: var(--muted);
   padding: 6px 2px; border-bottom: 1px solid var(--line); line-height: 1.2; vertical-align: bottom; }
 td { padding: 4px 2px; border-bottom: 1px solid var(--line); vertical-align: top; }
-td input[type=text], td input[type=number], td input[type=date] { width: 100%; font: inherit; color: inherit; background: transparent;
+td input[type=text], td input[type=date] { width: 100%; font: inherit; color: inherit; background: transparent;
   border: 1px solid transparent; border-radius: 6px; padding: 6px; min-height: 36px; }
 td input:hover { border-color: var(--line); } td input:focus { outline: 2px solid var(--brand); border-color: transparent; background: var(--card); }
-td input[type=number] { width: 58px; padding: 6px 2px; } td[data-label="Направление"] { min-width: 120px; } td[data-label="Комментарий"] { min-width: 150px; } td.calc { white-space: nowrap; padding: 10px 2px 0; text-align: center; color: var(--muted); } td input.flight { width: 56px; } td input[type=date] { width: 118px; padding: 6px 2px; }
+td input.num { width: 58px; padding: 6px 2px; } td[data-label="Направление"] { min-width: 120px; } td[data-label="Комментарий"] { min-width: 150px; } th.l, td[data-label="Направление"], td[data-label="Комментарий"] { text-align: left; } td { text-align: center; } td input.num, td input.flight, td input[type=date] { text-align: center; } td.calc { white-space: nowrap; padding: 10px 2px 0; text-align: center; color: var(--muted); } td input.flight { width: 56px; } td input[type=date] { width: 118px; padding: 6px 2px; }
 td input[type=checkbox] { width: 20px; height: 20px; margin: 8px 4px; }
 tr.warn td { background: var(--warn); }
 tr.off td { opacity: .45; }
@@ -109,8 +109,8 @@ svg .hit { touch-action: pan-y; }
   tr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 8px; position: relative;
     border: 1px solid var(--line); border-radius: 10px; padding: 8px; margin-top: 10px; }
   td { display: block; border: 0; padding: 0; min-width: 0; }
-  td[data-label]::before { content: attr(data-label); display: block; font-size: .7rem; text-transform: uppercase; color: var(--muted); padding-left: 6px; }
-  td.calc { padding: 0; text-align: left; }
+  td[data-label]::before { content: attr(data-label); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .7rem; text-transform: uppercase; color: var(--muted); padding-left: 6px; }
+  td, td.calc { text-align: left; } td.calc { padding: 0; }
   td[data-label="Дата"] { grid-column: 1 / 3; }
   td[data-label="Рейс"] { grid-column: 3; }
   td[data-label="Направление"], td[data-label="Комментарий"] { grid-column: 1 / 4; }
@@ -118,7 +118,7 @@ svg .hit { touch-action: pan-y; }
   td:first-child::after { content: 'Включить в файл'; font-size: .8rem; color: var(--muted); }
   td input[type=checkbox] { margin: 4px 6px; }
   td:last-child { position: absolute; top: 2px; right: 4px; }
-  td input[type=number], td input.flight, td input[type=date] { width: 100%; }
+  td input.num, td input.flight, td input[type=date] { width: 100%; text-align: left; }
   tr.warn { background: var(--warn); } tr.warn td { background: none; }
 }
 </style>
@@ -180,8 +180,8 @@ svg .hit { touch-action: pan-y; }
         <table id="table">
           <thead>
             <tr>
-              <th></th><th>Дата</th><th>Рейс</th><th>Направление</th>
-              <th>Загружено</th><th>PAX</th><th>Остаток</th><th>Перегруз</th><th>Не востр. (PAX)</th><th>% от PAX</th><th>Не востр. (порций)</th><th>% от порций</th><th>Комментарий</th><th></th>
+              <th></th><th>Дата</th><th>Рейс</th><th class="l">Направление</th>
+              <th>Загружено</th><th>PAX</th><th>Остаток</th><th>Перегруз</th><th>Не востр. (PAX)</th><th>% от PAX</th><th>Не востр. (порций)</th><th>% от порций</th><th class="l">Комментарий</th><th></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -648,13 +648,13 @@ function render() {
       <td data-label="Дата"><input type="date" data-k="date" value="${esc(r.date)}"></td>
       <td data-label="Рейс"><input type="text" class="flight" data-k="flight" inputmode="numeric" value="${esc(r.flight)}"></td>
       <td data-label="Направление"><input type="text" data-k="city" value="${esc(r.city)}">${notes.length ? `<span class="note">${esc(notes.join('; '))}</span>` : ''}</td>
-      <td data-label="Загружено"><input type="number" data-k="loaded" min="0" inputmode="numeric" value="${r.loaded ?? ''}"></td>
-      <td data-label="PAX"><input type="number" data-k="pax" min="0" inputmode="numeric" value="${r.pax ?? ''}"></td>
-      <td data-label="Остаток"><input type="number" data-k="left" min="0" inputmode="numeric" value="${r.left ?? ''}"></td>
+      <td data-label="Загружено"><input type="text" class="num" data-k="loaded" inputmode="numeric" autocomplete="off" value="${r.loaded ?? ''}"></td>
+      <td data-label="PAX"><input type="text" class="num" data-k="pax" inputmode="numeric" autocomplete="off" value="${r.pax ?? ''}"></td>
+      <td data-label="Остаток"><input type="text" class="num" data-k="left" inputmode="numeric" autocomplete="off" value="${r.left ?? ''}"></td>
       <td class="calc" data-label="Перегруз">${c.g}</td>
-      <td class="calc" data-label="Не востр. (PAX)">${c.h}</td>
+      <td class="calc" data-label="Не востр. PAX">${c.h}</td>
       <td class="calc" data-label="% от PAX">${c.i}</td>
-      <td class="calc" data-label="Не востр. (порций)">${c.j}</td>
+      <td class="calc" data-label="Не востр. порц.">${c.j}</td>
       <td class="calc" data-label="% от порций">${c.k}</td>
       <td data-label="Комментарий"><input type="text" data-k="comment" value="${esc(r.comment)}"></td>
       <td><button class="x" data-del title="Удалить" aria-label="Удалить">×</button></td></tr>`;
@@ -667,7 +667,7 @@ el.tbody.addEventListener('change', (e) => {
   const row = state.rows.find((r) => r.id === +input.closest('tr').dataset.id);
   const k = input.dataset.k;
   if (k === 'include') row.include = input.checked;
-  else if (['loaded', 'pax', 'left'].includes(k)) row[k] = input.value === '' ? null : Math.max(0, parseInt(input.value, 10) || 0);
+  else if (['loaded', 'pax', 'left'].includes(k)) row[k] = input.value.replace(/\D/g, '') === '' ? null : parseInt(input.value.replace(/\D/g, ''), 10);
   else if (k === 'flight') row.flight = input.value.replace(/\D/g, '').replace(/^0+/, '');
   else row[k] = input.value.trim();
   if (k === 'city') { row.citySource = 'learned'; if (row.flight) saveLearned(row.flight, row.city); }
