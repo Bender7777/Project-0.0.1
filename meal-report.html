@@ -51,7 +51,7 @@ main { padding-top: 16px; padding-bottom: 24px; }
 .result-head { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; }
 .actions { display: flex; gap: 8px; }
 .table-wrap { overflow-x: auto; margin: 0 -16px; padding: 0 16px; -webkit-overflow-scrolling: touch; }
-table { border-collapse: collapse; width: 100%; min-width: 1080px; font-size: .92rem; }
+table { border-collapse: collapse; width: 100%; min-width: 1100px; font-size: .92rem; }
 th { text-align: left; font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted);
   padding: 6px 4px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 td { padding: 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -119,7 +119,7 @@ tr.off td { opacity: .45; }
           <thead>
             <tr>
               <th></th><th>Дата</th><th>Рейс</th><th>Направление</th>
-              <th>Загружено</th><th>PAX</th><th>Остаток</th><th>Перегруз</th><th>Не востр. (от PAX)</th><th>% от PAX</th><th>% от порций</th><th>Комментарий</th><th></th>
+              <th>Загружено</th><th>PAX</th><th>Остаток</th><th>Перегруз</th><th>Не востр. (PAX)</th><th>% от PAX</th><th>Не востр. (порций)</th><th>% от порций</th><th>Комментарий</th><th></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -428,11 +428,11 @@ async function buildWorkbook(ExcelJS, inputRows) {
       set(7, { formula: `D${n}-E${n}`, result: g });
       set(8, { formula: `F${n}-G${n}`, result: h });
       set(9, { formula: `IFERROR(H${n}/E${n},"")`, result: r.pax ? h / r.pax : '' }, '0%');
-      set(10, { formula: `IFERROR(F${n}/D${n},"")`, result: r.loaded ? (r.left ?? 0) / r.loaded : '' }, '0%');
+      set(10, { formula: `F${n}`, result: r.left ?? 0 });
+      set(11, { formula: `IFERROR(J${n}/D${n},"")`, result: r.loaded ? (r.left ?? 0) / r.loaded : '' }, '0%');
     } else {
-      [7, 8, 9, 10].forEach((c) => set(c, null));
+      [7, 8, 9, 10, 11].forEach((c) => set(c, null));
     }
-    set(11, null);
     set(12, r.comment);
   });
 
@@ -557,10 +557,10 @@ function notesFor(r) {
 }
 
 function calcCols(r) {
-  if (r.loaded == null || r.pax == null) return { g: '', h: '', i: '', j: '' };
+  if (r.loaded == null || r.pax == null) return { g: '', h: '', i: '', j: '', k: '' };
   const g = r.loaded - r.pax, h = (r.left ?? 0) - g;
   const pct = (a, b) => (b ? Math.round((a / b) * 100) + '%' : '');
-  return { g, h, i: pct(h, r.pax), j: pct(r.left ?? 0, r.loaded) };
+  return { g, h, i: pct(h, r.pax), j: r.left ?? 0, k: pct(r.left ?? 0, r.loaded) };
 }
 
 function render() {
@@ -581,7 +581,8 @@ function render() {
       <td class="calc" data-label="Перегруз">${c.g}</td>
       <td class="calc" data-label="Не востр. (PAX)">${c.h}</td>
       <td class="calc" data-label="% от PAX">${c.i}</td>
-      <td class="calc" data-label="% от порций">${c.j}</td>
+      <td class="calc" data-label="Не востр. (порций)">${c.j}</td>
+      <td class="calc" data-label="% от порций">${c.k}</td>
       <td data-label="Комментарий"><input type="text" data-k="comment" value="${esc(r.comment)}"></td>
       <td><button class="x" data-del title="Удалить" aria-label="Удалить">×</button></td></tr>`;
   }).join('');
